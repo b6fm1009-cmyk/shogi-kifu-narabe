@@ -85,7 +85,10 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       if (!piece) continue;
 
       // 表示位置の計算（反転対応）
-      const displayFile = boardState.isFlipped ? 10 - file : file;
+      // 筋（file）は「非反転時：1筋が画面右端、9筋が画面左端」が将棋の標準表記。
+      // renderCoordinates() の座標ラベルはこの規則で描画しているため、駒側のX座標も
+      // 同じ規則（displayFile=1のとき右端＝9マス目）に合わせる必要がある。
+      const displayFile = boardState.isFlipped ? file : 10 - file;
       const displayRank = boardState.isFlipped ? 10 - rank : rank;
 
       const kingLabel = piece.side === 'SENTE' ? kingLabels.senteKingLabel : kingLabels.goteKingLabel;
