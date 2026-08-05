@@ -199,9 +199,13 @@ html, body {
 }
 
 .board-image {
+  /* 元画像(878x960)のアスペクト比を保つ。board-layout.jsonの margin_ratio / cell_ratio は
+     このアスペクト比のまま表示される前提で実測されているため、正方形に固定したり
+     object-fit: cover でクロップしたりすると、マス目の実測比率と実際の表示がズレる。 */
   width: 380px;
-  height: 380px;
-  object-fit: cover;
+  height: auto;
+  display: block;
+  max-height: 100%;
   user-select: none;
   -webkit-user-select: none;
 }
