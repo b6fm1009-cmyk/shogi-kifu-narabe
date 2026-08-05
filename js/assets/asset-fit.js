@@ -4,14 +4,40 @@
 
 /**
  * 盤マス1つの実ピクセルサイズを算出する。
+ *
+ * 注意: board-layout.json の margin_ratio（左右上下の余白）と cell_ratio（1マスのピッチ）を
+ * 単純に「左余白 + 9マス + 右余白」で足し合わせると、合計が画像全体の幅/高さ(=1.0)を
+ * 超えてしまう（実測時に線の中心同士のピッチを cell_ratio としているため、9マス分の
+ * 「線の中心から線の中心まで」の合計が、外枠の外側までを含む margin_ratio 分と
+ * 独立に決まっているわけではない）。そのため cell_ratio をそのまま使うのではなく、
+ * 「画像幅から左右の余白を引いた、実際の盤の内枠の幅」を9等分して算出する。
+ *
  * @param {{width: number, height: number}} boardImageSize - 現在表示中の盤画像の実表示サイズ（px）
  * @param {Object} boardLayout - board-layout.json をパースしたオブジェクト
  * @returns {{width: number, height: number}} 盤マス1つの実ピクセルサイズ
  */
 export function getSquareSizePx(boardImageSize, boardLayout) {
+  const innerWidthRatio = 1 - boardLayout.margin_ratio.left - boardLayout.margin_ratio.right;
+  const innerHeightRatio = 1 - boardLayout.margin_ratio.top - boardLayout.margin_ratio.bottom;
   return {
-    width: boardImageSize.width * boardLayout.cell_ratio.width,
-    height: boardImageSize.height * boardLayout.cell_ratio.height
+    width: (boardImageSize.width * innerWidthRatio) / boardLayout.grid.cols,
+    height: (boardImageSize.height * innerHeightRatio) / boardLayout.grid.rows
+  };
+}
+
+/**
+ * 盤の外枠（1マス目の左上）が画像の左上端から何pxオフセットしているかを算出する。
+ * board-layout.json の margin_ratio は「外枠の線の中心までの距離」の比率であり、
+ * これを使わずに (file-1)*squareWidth だけでマスを敷き詰めると、マスの罫線と
+ * 駒の位置が右・下に行くほどズレていく。
+ * @param {{width: number, height: number}} boardImageSize - 現在表示中の盤画像の実表示サイズ（px）
+ * @param {Object} boardLayout - board-layout.json をパースしたオブジェクト
+ * @returns {{x: number, y: number}} 盤の描画開始位置オフセット（px）
+ */
+export function getBoardOriginPx(boardImageSize, boardLayout) {
+  return {
+    x: boardImageSize.width * boardLayout.margin_ratio.left,
+    y: boardImageSize.height * boardLayout.margin_ratio.top
   };
 }
 

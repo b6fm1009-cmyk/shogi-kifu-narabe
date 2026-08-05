@@ -1,7 +1,7 @@
 /**
  * ④盤面・座標符号の描画（設計書 第5部）
  */
-import { getSquareSizePx, getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
+import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
 import { findBoardAsset, findPieceAsset } from '../assets/asset-manifest.js';
 import { determineKingLabels } from '../models/kifu.js';
 
@@ -73,6 +73,7 @@ function placePieces(boardState, pieceAsset, selectedSource) {
 
   const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
   const squareSize = getSquareSizePx(boardSize, boardLayout);
+  const boardOrigin = getBoardOriginPx(boardSize, boardLayout);
   const kingLabels = determineKingLabels(null); // 平手初期は玉/王
 
   const piecesLayer = document.createElement('div');
@@ -109,9 +110,9 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       // 駒画像をスプライトから切り出し
       renderPieceImage(pieceEl, pieceAsset, cell, squareSize);
 
-      // 配置位置
-      pieceEl.style.left = `${(displayFile - 1) * squareSize.width}px`;
-      pieceEl.style.top = `${(displayRank - 1) * squareSize.height}px`;
+      // 配置位置（盤の外枠オフセット分を加算する）
+      pieceEl.style.left = `${boardOrigin.x + (displayFile - 1) * squareSize.width}px`;
+      pieceEl.style.top = `${boardOrigin.y + (displayRank - 1) * squareSize.height}px`;
       pieceEl.style.width = `${squareSize.width}px`;
       pieceEl.style.height = `${squareSize.height}px`;
 
@@ -172,6 +173,7 @@ function renderCoordinates(isFlipped) {
   const boardRect = boardEl.getBoundingClientRect();
   const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
   const squareSize = getSquareSizePx(boardSize, boardLayout);
+  const boardOrigin = getBoardOriginPx(boardSize, boardLayout);
 
   // 筋（上）
   const files = isFlipped ? [1,2,3,4,5,6,7,8,9] : [9,8,7,6,5,4,3,2,1];
@@ -179,7 +181,7 @@ function renderCoordinates(isFlipped) {
     const label = document.createElement('div');
     label.className = 'coordinate-label coordinate-label--file';
     label.textContent = String(file);
-    label.style.left = `${i * squareSize.width + squareSize.width / 2}px`;
+    label.style.left = `${boardOrigin.x + i * squareSize.width + squareSize.width / 2}px`;
     label.style.top = '-16px';
     boardEl.appendChild(label);
   });
@@ -191,7 +193,7 @@ function renderCoordinates(isFlipped) {
     const label = document.createElement('div');
     label.className = 'coordinate-label coordinate-label--rank';
     label.textContent = kanji[rank - 1];
-    label.style.top = `${i * squareSize.height + squareSize.height / 2}px`;
+    label.style.top = `${boardOrigin.y + i * squareSize.height + squareSize.height / 2}px`;
     label.style.left = `${boardSize.width + 4}px`;
     boardEl.appendChild(label);
   });
