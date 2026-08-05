@@ -1,0 +1,483 @@
+/* ========================================
+   将棋 棋譜並べアプリ 共通スタイル
+   設計書 第1部2.6節：390×844基準 + scale()拡大
+   ======================================== */
+
+/* ---------- リセット ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  background-color: #2c2c2c;
+  /* 畳の背景（設計書 第1部2.6節） */
+  background-image: url("../assets/background/tatami.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* ---------- スケーリング ---------- */
+#scale-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#app-frame {
+  width: 390px;
+  height: 844px;
+  background-color: #f5f5f0;
+  display: flex;
+  flex-direction: column;
+  transform-origin: center center;
+  position: relative;
+}
+
+/* ---------- ①ヘッダー ---------- */
+.header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  background-color: #e8e4d8;
+  border-bottom: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.header-btn {
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #998;
+  border-radius: 4px;
+  background-color: #f5f0e8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.header-btn:disabled {
+  opacity: 0.4;
+}
+
+.header-btn--hamburger {
+  font-size: 20px;
+  padding: 0 10px;
+}
+
+.header-buttons {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+/* ---------- ②棋譜符号バー ---------- */
+.kifu-bar {
+  height: 56px;
+  background-color: #3a3a3a;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  gap: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+
+.kifu-bar--hidden {
+  visibility: hidden;
+}
+
+.kifu-move {
+  font-size: 18px;
+  white-space: nowrap;
+}
+
+.kifu-move--next {
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.kifu-move--upcoming {
+  color: #999999;
+}
+
+.kifu-move--branch {
+  color: #ffcc66;
+  font-weight: bold;
+}
+
+/* ---------- ③⑤プレイヤー情報 ---------- */
+.player-info {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.player-info--opponent {
+  justify-content: flex-start;
+}
+
+.player-info--self {
+  justify-content: flex-end;
+}
+
+.player-name {
+  font-size: 14px;
+  color: #333;
+  background-color: #e0dcd0;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.hand-pieces-container {
+  flex: 1;
+  display: flex;
+}
+
+.hand-pieces {
+  display: flex;
+}
+
+.hand-pieces--right {
+  justify-content: flex-end;
+}
+
+.hand-pieces--left {
+  justify-content: flex-start;
+}
+
+.hand-piece {
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hand-piece--selected {
+  background-color: #ffd0d0;
+  box-shadow: 0 0 0 2px #ff8090;
+}
+
+.hand-piece-count {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 11px;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 0 3px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* ---------- ④盤面 ---------- */
+.board-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.board-image {
+  width: 380px;
+  height: 380px;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pieces-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.board-piece {
+  position: absolute;
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+}
+
+.board-piece--selected {
+  background-color: rgba(255, 100, 100, 0.3);
+  border-radius: 4px;
+}
+
+.board-piece img {
+  pointer-events: none;
+}
+
+.coordinate-label {
+  position: absolute;
+  font-size: 10px;
+  color: #333;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.coordinate-label--file {
+  top: 0;
+}
+
+.coordinate-label--rank {
+  left: 100%;
+}
+
+/* ---------- ⑥下部操作列 ---------- */
+.bottom-controls {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  background-color: #e8e4d8;
+  border-top: 1px solid #ccc;
+  flex-shrink: 0;
+}
+
+.bottom-btn {
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid #998;
+  border-radius: 4px;
+  background-color: #f5f0e8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bottom-btn:disabled {
+  opacity: 0.4;
+}
+
+.bottom-btn--flip {
+  background-color: #b0d0f0;
+  border-color: #6a9ace;
+}
+
+.bottom-controls-group {
+  display: flex;
+  gap: 4px;
+}
+
+/* ---------- トースト ---------- */
+.toast-container {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.toast {
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  max-width: 340px;
+}
+
+.toast--visible {
+  opacity: 1;
+}
+
+/* ---------- 成りポップアップ ---------- */
+.nari-popup-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 500;
+}
+
+.nari-popup {
+  display: flex;
+  gap: 20px;
+  background-color: #f5f0e8;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.nari-popup-btn {
+  width: 100px;
+  height: 140px;
+  border: 1px solid #998;
+  border-radius: 8px;
+  background-color: #fff;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.nari-popup-btn--promote {
+  background-color: #ffe8e8;
+}
+
+.nari-popup-btn--not-promote {
+  background-color: #e8f0ff;
+}
+
+/* ---------- アセットドロワー ---------- */
+.asset-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
+  height: 100%;
+  background-color: #f5f0e8;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  z-index: 600;
+}
+
+.asset-drawer--open {
+  transform: translateX(0);
+}
+
+.asset-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 550;
+  display: none;
+}
+
+.asset-drawer-overlay--visible {
+  display: block;
+}
+
+.asset-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #e0dcd0;
+  border-bottom: 1px solid #ccc;
+}
+
+.asset-drawer-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.asset-drawer-tab {
+  padding: 6px 16px;
+  border: 1px solid #998;
+  border-radius: 4px;
+  background-color: #f5f0e8;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.asset-drawer-tab--active {
+  background-color: #4a90d9;
+  color: #fff;
+  border-color: #4a90d9;
+}
+
+.asset-drawer-close {
+  font-size: 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.asset-drawer-body {
+  overflow-y: auto;
+  max-height: calc(100% - 50px);
+}
+
+.asset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.asset-row--selected {
+  background-color: #d0e4f7;
+}
+
+.asset-row-thumbs {
+  display: flex;
+  gap: 4px;
+}
+
+.asset-thumb {
+  width: 40px;
+  height: 48px;
+  background-color: #e8e4d8;
+  border-radius: 4px;
+}
+
+.asset-row-label {
+  font-size: 13px;
+  flex: 1;
+}
+
+.asset-board-thumb {
+  width: 60px;
+  height: 60px;
+  background-color: #8b7355;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.asset-board-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

@@ -1,0 +1,98 @@
+{
+  "$comment": "選択可能な盤・駒のアセット一覧。比率レイアウト(board-layout.json / piece-layout.json)は全アセット共通のため、ここでは『画像パスと表示名の対応』のみを管理する。IDはスペースを含めず、アンダーバー区切りの英数字のみとする。labelは画面表示用の日本語名。",
+  "boards": [
+    {
+      "id": "wood",
+      "label": "木材（明）",
+      "image": "./assets/boards/wood.png",
+      "width": null,
+      "height": null,
+      "comment": "width/heightは現在未使用（board-layout.jsonのcell_ratioで比率計算するため）。将来、比率が異なる盤を追加する際に個別のサイズを持たせる拡張用フィールドとして予約。"
+    },
+    {
+      "id": "polyvinyl_chloride",
+      "label": "塩化ビニル",
+      "image": "./assets/boards/polyvinyl_chloride.png",
+      "width": null,
+      "height": null,
+      "comment": "width/heightは現在未使用（board-layout.jsonのcell_ratioで比率計算するため）。将来、比率が異なる盤を追加する際に個別のサイズを持たせる拡張用フィールドとして予約。"
+    },
+    {
+      "id": "dark",
+      "label": "ダーク",
+      "image": "./assets/boards/dark.png",
+      "width": null,
+      "height": null,
+      "comment": "width/heightは現在未使用（board-layout.jsonのcell_ratioで比率計算するため）。将来、比率が異なる盤を追加する際に個別のサイズを持たせる拡張用フィールドとして予約。"
+    }
+  ],
+  "pieces": [
+    {
+      "id": "maki_ryoko_1_letter",
+      "label": "巻菱湖（一字）",
+      "image": "./assets/pieces/maki_ryoko_1_letter.png",
+      "width": 1296,
+      "height": 720
+    },
+    {
+      "id": "maki_ryoko_2_letter",
+      "label": "巻菱湖（二字）",
+      "image": "./assets/pieces/maki_ryoko_2_letter.png",
+      "width": 1296,
+      "height": 720
+    },
+    {
+      "id": "kosho_1_letter",
+      "label": "光匠（一字）",
+      "image": "./assets/pieces/kosho_1_letter.png",
+      "width": 1296,
+      "height": 720
+    },
+    {
+      "id": "polyvinyl_chloride_1_letter",
+      "label": "塩化ビニル（一字）",
+      "image": "./assets/pieces/polyvinyl_chloride_1_letter.png",
+      "width": 1120,
+      "height": 592
+    },
+    {
+      "id": "polyvinyl_chloride_2_letter",
+      "label": "塩化ビニル（二字）",
+      "image": "./assets/pieces/polyvinyl_chloride_2_letter.png",
+      "width": 1120,
+      "height": 592
+    },
+    {
+      "id": "grain_wood_1_letter",
+      "label": "木目（一字）",
+      "image": "./assets/pieces/grain_wood_1_letter.png",
+      "width": 1120,
+      "height": 592
+    },
+    {
+      "id": "gothic_font_1_letter",
+      "label": "ゴシック体（一字）",
+      "image": "./assets/pieces/gothic_font_1_letter.png",
+      "width": 1120,
+      "height": 592
+    },
+    {
+      "id": "dark_1_letter",
+      "label": "ダーク（一字）",
+      "image": "./assets/pieces/dark_1_letter.png",
+      "width": 1120,
+      "height": 592
+    },
+    {
+      "id": "dark_gothic_font_1_letter",
+      "label": "ダーク・ゴシック体（一字）",
+      "image": "./assets/pieces/dark_gothic_font_1_letter.png",
+      "width": 1120,
+      "height": 592
+    }
+  ],
+  "defaults": {
+    "board": "wood",
+    "pieces": "maki_ryoko_1_letter"
+  }
+}

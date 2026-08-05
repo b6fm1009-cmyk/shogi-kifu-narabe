@@ -1,0 +1,22 @@
+{
+  "name": "将棋 棋譜並べ",
+  "short_name": "棋譜並べ",
+  "description": "棋譜を自分の手で並べる将棋アプリ",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#3a3a3a",
+  "icons": [
+    {
+      "src": "./assets/boards/wood.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/boards/wood.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
