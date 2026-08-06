@@ -6,6 +6,7 @@ import { findBoardAsset, findPieceAsset } from '../assets/asset-manifest.js';
 import { determineKingLabels } from '../models/kifu.js';
 
 let boardEl = null;
+let boardWrapEl = null;
 let boardImageEl = null;
 let boardLayout = null;
 let pieceLayout = null;
@@ -43,12 +44,22 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
   boardEl.innerHTML = '';
   boardEl.className = 'board-container';
 
+  // 盤画像と駒レイヤーの基準を一致させるためのラッパー。
+  // .board-container 自体はflexで中央寄せされる領域（画像より広い場合がある）ため、
+  // pieces-layer を直接 .board-container 基準（top:0,left:0,100%）で重ねると、
+  // 中央寄せによる余白の分だけ盤画像の実位置とズレる。
+  // このラッパーに position:relative を持たせ、画像とpieces-layerの両方をこの中に置くことで、
+  // ラッパー自体がflexで中央寄せされても、内部の座標系（top:0,left:0,100%）は常に画像に一致する。
+  boardWrapEl = document.createElement('div');
+  boardWrapEl.className = 'board-wrap';
+  boardEl.appendChild(boardWrapEl);
+
   // 盤画像
   boardImageEl = document.createElement('img');
   boardImageEl.src = boardAsset.image;
   boardImageEl.className = 'board-image';
   boardImageEl.draggable = false;
-  boardEl.appendChild(boardImageEl);
+  boardWrapEl.appendChild(boardImageEl);
 
   // 画像ロード後にマス計算と駒配置を行う
   if (boardImageEl.complete) {
@@ -67,8 +78,8 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
  * 駒を配置する。
  */
 function placePieces(boardState, pieceAsset, selectedSource) {
-  // 既存の駒要素をクリア
-  const existing = boardEl.querySelector('.pieces-layer');
+  // 既存の駒要素をクリア（pieces-layer は boardWrapEl 側に付け替えたため、そちらから探す）
+  const existing = boardWrapEl.querySelector('.pieces-layer');
   if (existing) existing.remove();
 
   const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
@@ -78,7 +89,9 @@ function placePieces(boardState, pieceAsset, selectedSource) {
 
   const piecesLayer = document.createElement('div');
   piecesLayer.className = 'pieces-layer';
-  boardEl.appendChild(piecesLayer);
+  // boardEl（flexで中央寄せされる領域）ではなく boardWrapEl（画像とサイズが一致するラッパー）に
+  // 追加することで、top:0/left:0/100% の基準を常に盤画像の実位置に一致させる。
+  boardWrapEl.appendChild(piecesLayer);
 
   for (let file = 1; file <= 9; file++) {
     for (let rank = 1; rank <= 9; rank++) {
@@ -93,7 +106,13 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       const displayRank = boardState.isFlipped ? 10 - rank : rank;
 
       const kingLabel = piece.side === 'SENTE' ? kingLabels.senteKingLabel : kingLabels.goteKingLabel;
-      const cell = resolvePieceCell(piece.type, piece.side, false, kingLabel, pieceLayout);
+      // 駒の向き（正立/倒立）は盤の実所属（piece.side）だけでなく、盤面反転(isFlipped)も
+      // 加味する必要がある。反転＝盤ごと180度回転して見ている状態なので、反転時は
+      // 見た目の向きが先手・後手で入れ替わる（asset-fit.js resolvePieceCell()のコメント参照）。
+      const displaySide = boardState.isFlipped
+        ? (piece.side === 'SENTE' ? 'GOTE' : 'SENTE')
+        : piece.side;
+      const cell = resolvePieceCell(piece.type, displaySide, false, kingLabel, pieceLayout);
 
       const pieceEl = document.createElement('div');
       pieceEl.className = 'board-piece';
@@ -168,14 +187,13 @@ function renderCoordinates(isFlipped) {
   const existing = document.querySelectorAll('.coordinate-label');
   existing.forEach(el => el.remove());
 
-  if (!boardEl) return;
+  if (!boardWrapEl) return;
 
-  const boardRect = boardEl.getBoundingClientRect();
   const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
   const squareSize = getSquareSizePx(boardSize, boardLayout);
   const boardOrigin = getBoardOriginPx(boardSize, boardLayout);
 
-  // 筋（上）
+  // 筋（上）※ boardWrapEl は画像と同サイズなので、pieces-layer と同じ基準（top:0,left:0）で配置できる
   const files = isFlipped ? [1,2,3,4,5,6,7,8,9] : [9,8,7,6,5,4,3,2,1];
   files.forEach((file, i) => {
     const label = document.createElement('div');
@@ -183,7 +201,7 @@ function renderCoordinates(isFlipped) {
     label.textContent = String(file);
     label.style.left = `${boardOrigin.x + i * squareSize.width + squareSize.width / 2}px`;
     label.style.top = '-16px';
-    boardEl.appendChild(label);
+    boardWrapEl.appendChild(label);
   });
 
   // 段（右）
@@ -195,6 +213,6 @@ function renderCoordinates(isFlipped) {
     label.textContent = kanji[rank - 1];
     label.style.top = `${boardOrigin.y + i * squareSize.height + squareSize.height / 2}px`;
     label.style.left = `${boardSize.width + 4}px`;
-    boardEl.appendChild(label);
+    boardWrapEl.appendChild(label);
   });
 }
