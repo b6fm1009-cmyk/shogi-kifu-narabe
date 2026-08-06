@@ -2,11 +2,30 @@
  * 成り選択ポップアップ（設計書 第4部6節）
  */
 import { PROMOTION_MAP } from '../models/board.js';
-import { resolvePieceCell } from '../assets/asset-fit.js';
-import { findPieceAsset } from '../assets/asset-manifest.js';
+import { resolvePieceCell, getPieceRenderRect } from '../assets/asset-fit.js';
+import { loadAssetManifest, findPieceAsset } from '../assets/asset-manifest.js';
 import { setNariPopupOpen } from '../state/app-state.js';
 
 let overlayEl = null;
+
+// piece-layout.json / piece-fit.json はアプリ内で不変のため、
+// asset-manifest.js の loadAssetManifest() 同様にモジュール内でキャッシュする。
+let cachedPieceLayout = null;
+let cachedPieceFit = null;
+
+function loadPieceLayout() {
+  if (cachedPieceLayout) return Promise.resolve(cachedPieceLayout);
+  return fetch('./assets/layout/piece-layout.json')
+    .then(r => r.json())
+    .then(json => (cachedPieceLayout = json));
+}
+
+function loadPieceFit() {
+  if (cachedPieceFit) return Promise.resolve(cachedPieceFit);
+  return fetch('./assets/layout/piece-fit.json')
+    .then(r => r.json())
+    .then(json => (cachedPieceFit = json));
+}
 
 /**
  * 成り選択ポップアップを表示する。
@@ -73,42 +92,50 @@ function closeNariPopup() {
 
 /**
  * ポップアップ内に駒アイコンを描画する。
+ *
+ * board-view.js / player-info.js と同じく、駒画像はスプライトシートなので
+ * 1コマを原寸のまま貼ると、駒本来の意図したサイズ（マスに収まるサイズ）を
+ * 無視してボタン全体に間延び・拡大されてしまう。そのため getPieceRenderRect()
+ * でボタンサイズ基準の表示矩形を計算してから background-size を決める。
  */
 function renderPieceIcon(btn, pieceType, side, promoted) {
-  // 駒画像を読み込んでスプライトから切り出す
-  // （簡易実装：asset-manifest のデフォルト駒セットを使用）
-  fetch('./assets/layout/assets-manifest.json')
-    .then(r => r.json())
-    .then(manifest => {
+  Promise.all([loadAssetManifest(), loadPieceLayout(), loadPieceFit()])
+    .then(([manifest, pieceLayout, pieceFit]) => {
       const pieceAsset = findPieceAsset(manifest, manifest.defaults.pieces);
-      const pieceLayout = { grid: { cols: 8, rows: 4 } };
-      loadJson('./assets/layout/piece-layout.json').then(layout => {
-        const cell = resolvePieceCell(pieceType, side, promoted, null, layout);
-        const cellWidth = pieceAsset.width / layout.grid.cols;
-        const cellHeight = pieceAsset.height / layout.grid.rows;
+      const cell = resolvePieceCell(pieceType, side, promoted, null, pieceLayout);
 
-        // board-view.js / player-info.js と同じ理由で、<img>のobject-fit:none +
-        // object-positionではなく、background-imageでスプライトを切り出す
-        // （<img>のobject-positionは切り出し位置の指定としては機能しない）。
-        const spriteEl = document.createElement('div');
-        spriteEl.style.position = 'absolute';
-        spriteEl.style.top = '0';
-        spriteEl.style.left = '0';
-        spriteEl.style.width = '100%';
-        spriteEl.style.height = '100%';
-        spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
-        spriteEl.style.backgroundRepeat = 'no-repeat';
-        spriteEl.style.backgroundSize = `${pieceAsset.width}px ${pieceAsset.height}px`;
-        spriteEl.style.backgroundPosition = `${-(cell.col * cellWidth)}px ${-(cell.row * cellHeight)}px`;
-        btn.appendChild(spriteEl);
-      }).catch(e => console.error('成りポップアップの駒アイコン描画に失敗しました:', e));
+      // ボタンの内寸（＝駒を収める枠）をピクセルで取得
+      const btnRect = btn.getBoundingClientRect();
+      const squareSizePx = { width: btnRect.width, height: btnRect.height };
+
+      const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
+      const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
+
+      const cols = pieceLayout.grid.cols;
+      const rows = pieceLayout.grid.rows;
+
+      // renderRect（1コマの表示サイズ）を基準に、スプライト画像全体の表示サイズを逆算する
+      const bgWidth = renderRect.width * cols;
+      const bgHeight = renderRect.height * rows;
+      const bgX = -(cell.col * renderRect.width);
+      const bgY = -(cell.row * renderRect.height);
+
+      // board-view.js / player-info.js と同じ理由で、<img>のobject-fit:none +
+      // object-positionではなく、background-imageでスプライトを切り出す
+      // （<img>のobject-positionは切り出し位置の指定としては機能しない）。
+      const spriteEl = document.createElement('div');
+      spriteEl.style.position = 'absolute';
+      spriteEl.style.left = `${renderRect.offsetX}px`;
+      spriteEl.style.top = `${renderRect.offsetY}px`;
+      spriteEl.style.width = `${renderRect.width}px`;
+      spriteEl.style.height = `${renderRect.height}px`;
+      spriteEl.style.overflow = 'hidden';
+      spriteEl.style.pointerEvents = 'none';
+      spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
+      spriteEl.style.backgroundRepeat = 'no-repeat';
+      spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+      spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+      btn.appendChild(spriteEl);
     })
-    .catch(e => console.error('成りポップアップのアセット読み込みに失敗しました:', e));
-}
-
-/**
- * JSONを読み込む簡易ヘルパー。
- */
-function loadJson(url) {
-  return fetch(url).then(r => r.json());
+    .catch(e => console.error('成りポップアップの駒アイコン描画に失敗しました:', e));
 }
