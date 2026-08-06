@@ -82,23 +82,26 @@ function createHirateSquares() {
   let idCounter = 0;
   const makePiece = (type, side) => ({ type, side, id: `p${idCounter++}` });
 
-  // 先手（下側、rank 1-3）
+  // 先手（画面手前、rank 7-9。design_document.md 7.4節：初手▲7六歩はrank=7であり、
+  // これが先手の駒であることから、先手陣地はrank7〜9側と確定する）
   const senteBackRank = ['KY', 'KE', 'GI', 'KI', 'OU', 'KI', 'GI', 'KE', 'KY'];
   for (let file = 1; file <= 9; file++) {
-    squares[file - 1][0] = makePiece(senteBackRank[file - 1], 'SENTE'); // 1段目
-    squares[file - 1][2] = makePiece('FU', 'SENTE'); // 3段目（歩）
+    squares[file - 1][8] = makePiece(senteBackRank[file - 1], 'SENTE'); // 9段目
+    squares[file - 1][6] = makePiece('FU', 'SENTE'); // 7段目（歩）
   }
-  squares[1][1] = makePiece('KA', 'SENTE'); // 2段目（角）
-  squares[7][1] = makePiece('HI', 'SENTE'); // 2段目（飛）
+  // 標準初形：2筋に飛車、8筋に角（file=2→squares[1]、file=8→squares[7]）
+  squares[1][7] = makePiece('HI', 'SENTE'); // 2八飛
+  squares[7][7] = makePiece('KA', 'SENTE'); // 8八角
 
-  // 後手（上側、rank 7-9）
+  // 後手（画面奥、rank 1-3）
   const goteBackRank = ['KY', 'KE', 'GI', 'KI', 'OU', 'KI', 'GI', 'KE', 'KY'];
   for (let file = 1; file <= 9; file++) {
-    squares[file - 1][8] = makePiece(goteBackRank[file - 1], 'GOTE'); // 9段目
-    squares[file - 1][6] = makePiece('FU', 'GOTE'); // 7段目（歩）
+    squares[file - 1][0] = makePiece(goteBackRank[file - 1], 'GOTE'); // 1段目
+    squares[file - 1][2] = makePiece('FU', 'GOTE'); // 3段目（歩）
   }
-  squares[1][7] = makePiece('KA', 'GOTE'); // 8段目（角）
-  squares[7][7] = makePiece('HI', 'GOTE'); // 8段目（飛）
+  // 標準初形：先手の2八飛・8八角と盤上で点対称になる配置（8二飛・2二角）
+  squares[7][1] = makePiece('HI', 'GOTE'); // 8二飛
+  squares[1][1] = makePiece('KA', 'GOTE'); // 2二角
 
   return squares;
 }
