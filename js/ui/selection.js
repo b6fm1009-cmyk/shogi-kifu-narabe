@@ -41,16 +41,22 @@ function handleBoardTap(square, boardState, currentSelected) {
     return;
   }
 
-  // 選択中 → 別の駒なら選び直し
-  if (piece && !(currentSelected.origin === 'BOARD'
+  // 選択中に、選択中の駒自身のマスを再タップ → 選択解除（自分自身への移動として処理しない）
+  if (currentSelected.origin === 'BOARD'
       && currentSelected.square && currentSelected.square.file === square.file
-      && currentSelected.square.rank === square.rank)) {
+      && currentSelected.square.rank === square.rank) {
+    clearSelection();
+    return;
+  }
+
+  // 選択中 → 別の駒なら選び直し
+  if (piece) {
     const source = { origin: 'BOARD', square, pieceType: piece.type, side: piece.side };
     selectSource(source);
     return;
   }
 
-  // 選択中 → 移動先タップ
+  // 選択中 → 移動先タップ（空マス）
   currentTarget = square;
   processMove(currentSelected, square, boardState);
 }
