@@ -107,8 +107,20 @@ export function getPieceRenderRect(squareSizePx, pieceImageNaturalSize, pieceLay
 
 /**
  * 駒種から piece-layout.json 上の座標を求める。
+ *
+ * facingの決定について：
+ * ここで言う「side」は「盤面反転(isFlipped)を加味した後の、画面上どちら向きに
+ * 見せるべきか」を表す値である。盤上の駒描画（board-view.js）では、駒本来の
+ * 所属（boardState上のSENTE/GOTE）をそのまま渡すのではなく、isFlippedと
+ * 組み合わせて「画面上で正立させるべきか」を呼び出し側で判定してから渡すこと。
+ * 反転時は先手・後手それぞれの見た目の向きが入れ替わる（盤ごと180度回転して
+ * 見ている状態のため）。
+ * 持ち駒欄（player-info.js）や成りポップアップ（nari-popup.js）のように、
+ * 盤の反転と無関係に「そのプレイヤーから見て正しく読める向き」を出したい
+ * 呼び出し元は、isFlippedを考慮せずそのままside（'SENTE'固定 等）を渡してよい。
+ *
  * @param {PieceType} pieceType - 駒種（成る前の駒種を渡す。OUの場合はkingLabelと組み合わせる）
- * @param {Side} side - 先手／後手
+ * @param {Side} side - 表示上の向きを決めるための先手／後手（呼び出し元の意図により、盤の実所属そのままの場合と、isFlipped加味後の場合がある。上記説明を参照）
  * @param {boolean} promoted - 成り状態かどうか
  * @param {'OU'|'GYOKU'|null} kingLabel - pieceType==='OU'の場合のみ使用。それ以外はnull。
  * @param {Object} pieceLayout - piece-layout.json をパースしたオブジェクト
