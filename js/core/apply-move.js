@@ -10,6 +10,14 @@ import { PROMOTION_MAP, PROMOTION_REVERSE_MAP } from '../models/board.js';
  * @returns {{ boardState: BoardState, move: Move }}
  */
 export function applyMoveToBoard(boardState, move) {
+  // 移動元と移動先が同一マスの手は、将棋のルール上存在しない不正な手であるため
+  // ここで確実にブロックする（UI層の選択解除漏れ等による自己移動を、盤面に反映させない
+  // 最終防波堤として。詳細はselection.jsのhandleBoardTap参照）。
+  if (move.kind === 'BOARD' && move.from
+      && move.from.file === move.to.file && move.from.rank === move.to.rank) {
+    throw new Error(`不正な手: 移動元と移動先が同一マスです (${move.from.file}${move.from.rank})`);
+  }
+
   // 盤面をコピー（不変更新）
   const squares = boardState.squares.map(row => row.slice());
   const handSente = { ...boardState.handSente };
