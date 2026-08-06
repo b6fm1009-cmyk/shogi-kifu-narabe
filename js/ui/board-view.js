@@ -4,6 +4,7 @@
 import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
 import { findBoardAsset, findPieceAsset } from '../assets/asset-manifest.js';
 import { determineKingLabels } from '../models/kifu.js';
+import { isPromotedPiece } from '../models/board.js';
 
 let boardEl = null;
 let boardWrapEl = null;
@@ -112,7 +113,12 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       const displaySide = boardState.isFlipped
         ? (piece.side === 'SENTE' ? 'GOTE' : 'SENTE')
         : piece.side;
-      const cell = resolvePieceCell(piece.type, displaySide, false, kingLabel, pieceLayout);
+      // piece.type は成り状態を含む駒種（例: TO, RY）を保持しているため、
+      // resolvePieceCell() には「成り後IDかどうか」を渡す必要がある。
+      // ただしOU（王/玉）は成りの概念がなく、promotedはkingLabelの読み替えに使われる
+      // 特殊仕様のため、常にfalseで固定する（board.js Piece.type の定義参照）。
+      const promotedFlag = piece.type === 'OU' ? false : isPromotedPiece(piece.type);
+      const cell = resolvePieceCell(piece.type, displaySide, promotedFlag, kingLabel, pieceLayout);
 
       const pieceEl = document.createElement('div');
       pieceEl.className = 'board-piece';

@@ -30,7 +30,7 @@ export function showNariPopup(pieceType, side, onResult) {
   const promoteBtn = document.createElement('button');
   promoteBtn.className = 'nari-popup-btn nari-popup-btn--promote';
   const promotedType = PROMOTION_MAP[pieceType] || pieceType;
-  renderPieceIcon(promoteBtn, promotedType, side);
+  renderPieceIcon(promoteBtn, promotedType, side, true);
   promoteBtn.addEventListener('click', () => {
     closeNariPopup();
     onResult(true);
@@ -39,7 +39,7 @@ export function showNariPopup(pieceType, side, onResult) {
   // 成らない側（右）
   const notPromoteBtn = document.createElement('button');
   notPromoteBtn.className = 'nari-popup-btn nari-popup-btn--not-promote';
-  renderPieceIcon(notPromoteBtn, pieceType, side);
+  renderPieceIcon(notPromoteBtn, pieceType, side, false);
   notPromoteBtn.addEventListener('click', () => {
     closeNariPopup();
     onResult(false);
@@ -74,7 +74,7 @@ function closeNariPopup() {
 /**
  * ポップアップ内に駒アイコンを描画する。
  */
-function renderPieceIcon(btn, pieceType, side) {
+function renderPieceIcon(btn, pieceType, side, promoted) {
   // 駒画像を読み込んでスプライトから切り出す
   // （簡易実装：asset-manifest のデフォルト駒セットを使用）
   fetch('./assets/layout/assets-manifest.json')
@@ -83,7 +83,7 @@ function renderPieceIcon(btn, pieceType, side) {
       const pieceAsset = findPieceAsset(manifest, manifest.defaults.pieces);
       const pieceLayout = { grid: { cols: 8, rows: 4 } };
       loadJson('./assets/layout/piece-layout.json').then(layout => {
-        const cell = resolvePieceCell(pieceType, side, false, null, layout);
+        const cell = resolvePieceCell(pieceType, side, promoted, null, layout);
         const cellWidth = pieceAsset.width / layout.grid.cols;
         const cellHeight = pieceAsset.height / layout.grid.rows;
 

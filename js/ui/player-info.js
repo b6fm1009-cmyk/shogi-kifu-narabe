@@ -19,8 +19,12 @@ import { findPieceAsset } from '../assets/asset-manifest.js';
  */
 export function renderHandPieces(pieces, alignment, order, containerEl, selectedPieceType, squareSizePx, selectedPieceId, pieceLayout, pieceFit, manifest) {
   // フル再描画
+  // 注意: containerEl（#opponent-hand/#self-hand）はHTML側で既に
+  // "hand-pieces-container" クラス（flex:1で親の幅を占有する役割）を持っている。
+  // ここを className = '...' で上書きすると hand-pieces-container が消え、
+  // 幅が潰れて持ち駒が実質見えなくなるため、classList で追加のみ行う。
   containerEl.innerHTML = '';
-  containerEl.className = `hand-pieces hand-pieces--${alignment.toLowerCase()}`;
+  containerEl.classList.add('hand-pieces', `hand-pieces--${alignment.toLowerCase()}`);
 
   const pieceAsset = findPieceAsset(manifest, selectedPieceId);
   const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
