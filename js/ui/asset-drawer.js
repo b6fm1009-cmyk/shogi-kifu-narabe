@@ -2,22 +2,28 @@
  * ハンバーガーメニュー：盤・駒選択ドロワー（設計書 第4部10章）
  */
 import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, getState } from '../state/app-state.js';
+import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
 
 let drawerEl = null;
 let overlayEl = null;
 let activeTab = 'PIECE';
 let manifest = null;
+let pieceLayout = null;
+let pieceFit = null;
 let renderCallback = null;
 
 /**
  * ドロワーの初期化。
  * @param {HTMLElement} containerEl - ドロワーコンテナ
  * @param {AssetManifest} assetManifest
+ * @param {Object} layouts - { pieceLayout, pieceFit }
  * @param {() => void} onRender - 選択変更後の再描画コールバック
  */
-export function initAssetDrawer(containerEl, assetManifest, onRender) {
+export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
   drawerEl = containerEl;
   manifest = assetManifest;
+  pieceLayout = layouts.pieceLayout;
+  pieceFit = layouts.pieceFit;
   renderCallback = onRender;
 
   // ドロワー構造を作成
@@ -105,6 +111,7 @@ function renderPieceTab(body) {
     for (const tc of thumbCells) {
       const thumb = document.createElement('span');
       thumb.className = 'asset-thumb';
+      renderPieceThumb(thumb, piece, tc);
       thumbs.appendChild(thumb);
     }
     row.appendChild(thumbs);
@@ -121,6 +128,38 @@ function renderPieceTab(body) {
     });
 
     body.appendChild(row);
+  }
+}
+
+/**
+ * 駒サムネイルにスプライト画像を描画する。
+ * board-view.js / player-info.js と同じく、スプライトシートを
+ * background-image + background-size + background-position で1コマ分切り出す。
+ */
+function renderPieceThumb(thumbEl, pieceAsset, tc) {
+  try {
+    const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
+    // .asset-thumb のCSSサイズ（40x48）を基準に、駒の表示矩形を算出する
+    const squareSizePx = { width: 40, height: 48 };
+
+    const cell = resolvePieceCell(tc.type, 'SENTE', tc.promoted, null, pieceLayout);
+    const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
+
+    const cols = pieceLayout.grid.cols;
+    const rows = pieceLayout.grid.rows;
+    const bgWidth = renderRect.width * cols;
+    const bgHeight = renderRect.height * rows;
+    const bgX = -(cell.col * renderRect.width);
+    const bgY = -(cell.row * renderRect.height);
+
+    thumbEl.style.backgroundImage = `url(${pieceAsset.image})`;
+    thumbEl.style.backgroundRepeat = 'no-repeat';
+    thumbEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    thumbEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    thumbEl.style.position = 'relative';
+    thumbEl.style.overflow = 'hidden';
+  } catch (e) {
+    console.error(`駒サムネイルの描画に失敗しました (piece=${pieceAsset.id}, type=${tc.type}, promoted=${tc.promoted}):`, e);
   }
 }
 

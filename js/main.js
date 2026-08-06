@@ -43,7 +43,7 @@ async function init() {
 
     // ハンバーガーメニュー（ドロワー）の初期化
     const drawerEl = document.getElementById('asset-drawer');
-    initAssetDrawer(drawerEl, manifest, renderAll);
+    initAssetDrawer(drawerEl, manifest, layouts, renderAll);
 
     // ドロワーオーバーレイのクリックで閉じる
     const overlayEl = document.getElementById('asset-drawer-overlay');
