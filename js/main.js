@@ -168,12 +168,16 @@ function setupBoardTapHandler() {
     const boardHeight = boardImageEl.clientHeight;
     const squareSize = getSquareSizePx({ width: boardWidth, height: boardHeight }, layouts.boardLayout);
 
-    const file = Math.floor(x / squareSize.width) + 1;
-    const rank = Math.floor(y / squareSize.height) + 1;
-    if (file >= 1 && file <= 9 && rank >= 1 && rank <= 9) {
-      // 反転時は座標を変換
-      const actualFile = getState().boardState.isFlipped ? 10 - file : file;
-      const actualRank = getState().boardState.isFlipped ? 10 - rank : rank;
+    // displayFile/displayRank: 画面左上を(1,1)とした「見た目上のマス位置」（1〜9）
+    const displayFile = Math.floor(x / squareSize.width) + 1;
+    const displayRank = Math.floor(y / squareSize.height) + 1;
+    if (displayFile >= 1 && displayFile <= 9 && displayRank >= 1 && displayRank <= 9) {
+      // 見た目上のマス位置から実際の筋・段への変換は、board-view.js の描画ロジック
+      // （displayFile = isFlipped ? file : 10 - file）の逆変換と一致させる必要がある。
+      // 非反転時：画面左端(displayFile=1)は9筋、画面右端(displayFile=9)は1筋 → file = 10 - displayFile
+      // 反転時：画面左端(displayFile=1)は1筋 → file = displayFile
+      const actualFile = getState().boardState.isFlipped ? displayFile : 10 - displayFile;
+      const actualRank = getState().boardState.isFlipped ? 10 - displayRank : displayRank;
       handleTap('BOARD', { file: actualFile, rank: actualRank }, null, null,
         getState().boardState, getState().selectedSource);
     }
