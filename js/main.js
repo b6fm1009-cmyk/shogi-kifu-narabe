@@ -10,7 +10,7 @@ import { renderHandPieces } from './ui/player-info.js';
 import { initAssetDrawer, openAssetDrawer, closeAssetDrawer } from './ui/asset-drawer.js';
 import { handleTap } from './ui/selection.js';
 import { getState, setRenderCallback, getKifuModeInfo } from './state/app-state.js';
-import { getSquareSizePx } from './assets/asset-fit.js';
+import { getSquareSizePx, getBoardOriginPx } from './assets/asset-fit.js';
 import { registerServiceWorker } from './pwa/register-sw.js';
 
 // レイアウトデータ
@@ -157,16 +157,26 @@ function setupBoardTapHandler() {
     }
 
     // 空マスタップ：座標を計算
-    const rect = boardEl.getBoundingClientRect();
-    const scale = getCurrentScale();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
-
     const boardImageEl = boardEl.querySelector('.board-image');
     if (!boardImageEl) return;
+
+    // 盤画像自体の実表示位置を基準にする（boardEl はflexで中央寄せされる領域のため、
+    // boardEl基準だとその余白の分だけ盤画像の実位置とズレる。board-view.js の
+    // boardWrapEl と同じ考え方）。
+    const rect = boardImageEl.getBoundingClientRect();
+    const scale = getCurrentScale();
+    const rawX = (e.clientX - rect.left) / scale;
+    const rawY = (e.clientY - rect.top) / scale;
+
     const boardWidth = boardImageEl.clientWidth;
     const boardHeight = boardImageEl.clientHeight;
     const squareSize = getSquareSizePx({ width: boardWidth, height: boardHeight }, layouts.boardLayout);
+    const boardOrigin = getBoardOriginPx({ width: boardWidth, height: boardHeight }, layouts.boardLayout);
+
+    // boardOrigin（外枠の余白分）を差し引いてから、マス目に対する相対座標にする。
+    // board-view.js の駒配置（boardOrigin + (displayFile-1)*squareSize）と対になる変換。
+    const x = rawX - boardOrigin.x;
+    const y = rawY - boardOrigin.y;
 
     // displayFile/displayRank: 画面左上を(1,1)とした「見た目上のマス位置」（1〜9）
     const displayFile = Math.floor(x / squareSize.width) + 1;
