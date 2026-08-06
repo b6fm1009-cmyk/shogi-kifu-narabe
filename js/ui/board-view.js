@@ -118,7 +118,17 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       // ただしOU（王/玉）は成りの概念がなく、promotedはkingLabelの読み替えに使われる
       // 特殊仕様のため、常にfalseで固定する（board.js Piece.type の定義参照）。
       const promotedFlag = piece.type === 'OU' ? false : isPromotedPiece(piece.type);
-      const cell = resolvePieceCell(piece.type, displaySide, promotedFlag, kingLabel, pieceLayout);
+
+      // 1マスのセル解決に失敗しても他マスの描画を止めないようにする。
+      // resolvePieceCell()はpiece-layout.jsonに該当セルが無いとthrowする仕様のため、
+      // ここでcatchしないと for ループ全体が中断し、以降の駒が軒並み描画されなくなる。
+      let cell;
+      try {
+        cell = resolvePieceCell(piece.type, displaySide, promotedFlag, kingLabel, pieceLayout);
+      } catch (e) {
+        console.error(`駒の描画に失敗しました (file=${file}, rank=${rank}, type=${piece.type}):`, e);
+        continue;
+      }
 
       const pieceEl = document.createElement('div');
       pieceEl.className = 'board-piece';

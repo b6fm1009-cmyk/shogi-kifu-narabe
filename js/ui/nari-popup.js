@@ -95,8 +95,9 @@ function renderPieceIcon(btn, pieceType, side, promoted) {
         img.style.objectFit = 'none';
         img.style.objectPosition = `${-(cell.col * cellWidth)}px ${-(cell.row * cellHeight)}px`;
         btn.appendChild(img);
-      });
-    });
+      }).catch(e => console.error('成りポップアップの駒アイコン描画に失敗しました:', e));
+    })
+    .catch(e => console.error('成りポップアップのアセット読み込みに失敗しました:', e));
 }
 
 /**
