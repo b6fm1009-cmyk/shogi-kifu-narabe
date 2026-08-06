@@ -49,14 +49,14 @@ function handleBoardTap(square, boardState, currentSelected) {
     return;
   }
 
-  // 選択中 → 別の駒なら選び直し
-  if (piece) {
+  // 選択中 → タップ先に自分の駒があれば選び直し
+  if (piece && piece.side === currentSelected.side) {
     const source = { origin: 'BOARD', square, pieceType: piece.type, side: piece.side };
     selectSource(source);
     return;
   }
 
-  // 選択中 → 移動先タップ（空マス）
+  // 選択中 → 移動先タップ（空マス、または相手の駒＝取る）
   currentTarget = square;
   processMove(currentSelected, square, boardState);
 }

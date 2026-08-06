@@ -70,9 +70,8 @@ function formatMoveText(move, prevMove) {
     return `${sideMark}${sameText || toText}${pieceLabel}打`;
   }
 
-  const fromText = move.from ? `${move.from.file}${kanjiRank(move.from.rank)}` : '';
   const toText = sameText || `${move.to.file}${kanjiRank(move.to.rank)}`;
-  return `${sideMark}${fromText}${toText}${pieceLabel}${promoteText}`;
+  return `${sideMark}${toText}${pieceLabel}${promoteText}`;
 }
 
 /**
