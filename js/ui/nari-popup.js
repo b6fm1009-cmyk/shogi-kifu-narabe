@@ -87,14 +87,20 @@ function renderPieceIcon(btn, pieceType, side, promoted) {
         const cellWidth = pieceAsset.width / layout.grid.cols;
         const cellHeight = pieceAsset.height / layout.grid.rows;
 
-        const img = document.createElement('img');
-        img.src = pieceAsset.image;
-        img.style.position = 'absolute';
-        img.style.width = `${cellWidth}px`;
-        img.style.height = `${cellHeight}px`;
-        img.style.objectFit = 'none';
-        img.style.objectPosition = `${-(cell.col * cellWidth)}px ${-(cell.row * cellHeight)}px`;
-        btn.appendChild(img);
+        // board-view.js / player-info.js と同じ理由で、<img>のobject-fit:none +
+        // object-positionではなく、background-imageでスプライトを切り出す
+        // （<img>のobject-positionは切り出し位置の指定としては機能しない）。
+        const spriteEl = document.createElement('div');
+        spriteEl.style.position = 'absolute';
+        spriteEl.style.top = '0';
+        spriteEl.style.left = '0';
+        spriteEl.style.width = '100%';
+        spriteEl.style.height = '100%';
+        spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
+        spriteEl.style.backgroundRepeat = 'no-repeat';
+        spriteEl.style.backgroundSize = `${pieceAsset.width}px ${pieceAsset.height}px`;
+        spriteEl.style.backgroundPosition = `${-(cell.col * cellWidth)}px ${-(cell.row * cellHeight)}px`;
+        btn.appendChild(spriteEl);
       }).catch(e => console.error('成りポップアップの駒アイコン描画に失敗しました:', e));
     })
     .catch(e => console.error('成りポップアップのアセット読み込みに失敗しました:', e));

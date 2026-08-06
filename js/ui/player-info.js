@@ -43,24 +43,38 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
       item.classList.add('hand-piece--selected');
     }
 
-    // 駒画像
-    const cell = resolvePieceCell(pieceType, 'SENTE', false, null, pieceLayout);
+    // 駒画像（board-view.js と同じ理由で、<img>のobject-fit:none + object-positionではなく
+    // background-image + background-size + background-positionでスプライトを切り出す）
+    let cell;
+    try {
+      cell = resolvePieceCell(pieceType, 'SENTE', false, null, pieceLayout);
+    } catch (e) {
+      console.error(`持ち駒の描画に失敗しました (pieceType=${pieceType}):`, e);
+      containerEl.appendChild(item);
+      continue;
+    }
     const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
-    const cellWidth = pieceAsset.width / pieceLayout.grid.cols;
-    const cellHeight = pieceAsset.height / pieceLayout.grid.rows;
 
-    const img = document.createElement('img');
-    img.src = pieceAsset.image;
-    img.draggable = false;
-    img.style.position = 'absolute';
-    img.style.left = `${renderRect.offsetX}px`;
-    img.style.top = `${renderRect.offsetY}px`;
-    img.style.width = `${renderRect.width}px`;
-    img.style.height = `${renderRect.height}px`;
-    img.style.objectFit = 'none';
-    img.style.objectPosition = `${-(cell.col * cellWidth)}px ${-(cell.row * cellHeight)}px`;
-    img.style.pointerEvents = 'none';
-    item.appendChild(img);
+    const cols = pieceLayout.grid.cols;
+    const rows = pieceLayout.grid.rows;
+    const bgWidth = renderRect.width * cols;
+    const bgHeight = renderRect.height * rows;
+    const bgX = -(cell.col * renderRect.width);
+    const bgY = -(cell.row * renderRect.height);
+
+    const spriteEl = document.createElement('div');
+    spriteEl.style.position = 'absolute';
+    spriteEl.style.left = `${renderRect.offsetX}px`;
+    spriteEl.style.top = `${renderRect.offsetY}px`;
+    spriteEl.style.width = `${renderRect.width}px`;
+    spriteEl.style.height = `${renderRect.height}px`;
+    spriteEl.style.overflow = 'hidden';
+    spriteEl.style.pointerEvents = 'none';
+    spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
+    spriteEl.style.backgroundRepeat = 'no-repeat';
+    spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    item.appendChild(spriteEl);
 
     // 複数枚の場合は右下に数字
     if (count > 1) {
