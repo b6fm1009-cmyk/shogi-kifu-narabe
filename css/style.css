@@ -46,12 +46,18 @@ html, body {
   align-items: center;
 }
 
-/* スマホ幅時（js/main.jsが付与）。幅基準でscaleするため高さが画面と一致しない場合があり、
-   その分は上詰め＋縦スクロールで吸収する（横方向は常に画面ぴったり）。 */
+/* スマホ幅時（js/main.jsが付与）。幅基準でscaleするため高さが画面と一致しない場合がある。
+   app-frame(拡縮後)の高さが画面より低ければ上下中央、高ければ上端寄せ＋縦スクロールにしたい。
+   flexのalign-items:centerのままoverflow-y:autoだと、コンテンツが親より大きい時に
+   上側へはみ出た分にスクロールできない（ブラウザ側で負方向のスクロールが発生しない）ため、
+   はみ出るかどうかをJS側で判定し(.scale-root--overflowing)、その場合だけ上寄せに切り替える。 */
 #scale-root.scale-root--phone {
-  align-items: flex-start;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+#scale-root.scale-root--phone.scale-root--overflowing {
+  align-items: flex-start;
 }
 
 #scale-root.scale-root--phone #app-frame {
@@ -60,7 +66,8 @@ html, body {
 
 #app-frame {
   width: 390px;
-  height: 844px;
+  height: auto;
+  min-height: 0;
   background-color: #f5f5f0;
   display: flex;
   flex-direction: column;
@@ -212,13 +219,14 @@ html, body {
 
 /* ---------- ④盤面 ---------- */
 .board-container {
-  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
-  flex-shrink: 1;
-  min-height: 0;
+  /* 盤は幅いっぱい(.board-image: width:100%)に対してアスペクト比通りの高さを持つため、
+     このコンテナ自体もその実高さぶんだけ確保すればよい（flex:1で余らせない）。
+     これにより盤の上下に余分な空白が生まれず、app-frame全体の高さも
+     画面に収まりやすくなる（要望：盤の上下の大きな余白を詰めたい）。 */
   /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
      盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
   padding: 18px 22px 4px 6px;
