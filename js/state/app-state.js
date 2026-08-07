@@ -84,10 +84,18 @@ export function isForwardNavigationEnabled() {
  * 盤面を再構築する（全手再生方式）。
  * @param {Move[]} moveHistory
  * @param {InitialPosition|null} initial
+ * @param {boolean} [isFlipped=false]
+ *   再構築後の盤面に引き継ぐ反転状態。createInitialBoardState()は常にfalseを返すため、
+ *   「盤面反転」ボタンでisFlippedをtrueにした後にrebuildBoardState()が呼ばれる
+ *   （＝棋譜再生モードで「前」「次」「最初」「最後」を押す）と、ここを指定しない限り
+ *   反転状態が失われてしまう。呼び出し側は必ず現在のstate.boardState.isFlippedを渡すこと。
  * @returns {BoardState}
  */
-export function rebuildBoardState(moveHistory, initial) {
+export function rebuildBoardState(moveHistory, initial, isFlipped = false) {
   let boardState = createInitialBoardState(initial);
+  if (isFlipped) {
+    boardState = { ...boardState, isFlipped: true };
+  }
   for (const move of moveHistory) {
     const result = applyMoveToBoard(boardState, move);
     boardState = result.boardState;
@@ -150,7 +158,7 @@ export function undoLastMove() {
   if (state.moveHistory.length === 0) return;
   const newHistory = state.moveHistory.slice(0, -1);
   const initial = state.kifuData ? state.kifuData.initial : null;
-  const boardState = rebuildBoardState(newHistory, initial);
+  const boardState = rebuildBoardState(newHistory, initial, state.boardState.isFlipped);
   state = { ...state, moveHistory: newHistory, boardState, selectedSource: null };
   notifyRender();
 }
@@ -161,7 +169,7 @@ export function jumpToKifuProgress(targetProgress) {
   const clamped = Math.min(targetProgress, state.moveHistory.length);
   const newHistory = state.moveHistory.slice(0, clamped);
   const initial = state.kifuData ? state.kifuData.initial : null;
-  const boardState = rebuildBoardState(newHistory, initial);
+  const boardState = rebuildBoardState(newHistory, initial, state.boardState.isFlipped);
   state = { ...state, moveHistory: newHistory, boardState, selectedSource: null };
   notifyRender();
 }
@@ -176,7 +184,7 @@ export function advanceToKifuProgress(targetProgress) {
   const movesToAdd = kifuMoves.slice(kifuProgress, targetProgress);
   const newHistory = [...state.moveHistory, ...movesToAdd];
   const initial = state.kifuData.initial;
-  const boardState = rebuildBoardState(newHistory, initial);
+  const boardState = rebuildBoardState(newHistory, initial, state.boardState.isFlipped);
   state = { ...state, moveHistory: newHistory, boardState, selectedSource: null };
   notifyRender();
 }
