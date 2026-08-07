@@ -117,11 +117,13 @@ function renderAll() {
 
   renderHandPieces(topPieces, 'RIGHT', OPPONENT_HAND_ORDER,
     document.getElementById('opponent-hand'), topSelected, squareSize,
-    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef);
+    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+    'GOTE'); // 修正③: 画面奥は常に倒立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
   renderHandPieces(bottomPieces, 'LEFT', SELF_HAND_ORDER,
     document.getElementById('self-hand'), bottomSelected, squareSize,
-    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef);
+    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+    'SENTE'); // 修正③: 画面手前は常に正立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
   // 対戦者名（反転時は入れ替え）
   const senteName = state.kifuData ? state.kifuData.header.senteName : '先手';
