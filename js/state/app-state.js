@@ -172,7 +172,7 @@ export function advanceToKifuProgress(targetProgress) {
   const { kifuProgress } = getKifuModeInfo();
   if (targetProgress < kifuProgress) return;
 
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null);
+  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
   const movesToAdd = kifuMoves.slice(kifuProgress, targetProgress);
   const newHistory = [...state.moveHistory, ...movesToAdd];
   const initial = state.kifuData.initial;
