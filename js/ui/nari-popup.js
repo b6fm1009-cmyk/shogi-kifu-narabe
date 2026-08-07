@@ -30,7 +30,9 @@ function loadPieceFit() {
 /**
  * 成り選択ポップアップを表示する。
  * @param {PieceType} pieceType - 成る前の駒種
- * @param {Side} side - 成る駒の所属
+ * @param {Side} side - 駒画像の正立/倒立を決める向き。修正④（将棋ウォーズ準拠）により、
+ *   駒の実所属（先手/後手）ではなく、常に'SENTE'（正立）を渡す運用とする。
+ *   呼び出し元はsource.side（実所属）をそのまま渡さないこと。
  * @param {(result: boolean|'CANCEL') => void} onResult
  */
 export function showNariPopup(pieceType, side, onResult) {

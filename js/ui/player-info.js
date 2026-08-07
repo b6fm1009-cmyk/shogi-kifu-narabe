@@ -16,8 +16,13 @@ import { findPieceAsset } from '../assets/asset-manifest.js';
  * @param {Object} pieceLayout - piece-layout.json
  * @param {Object} pieceFit - piece-fit.json
  * @param {AssetManifest} manifest - アセットマニフェスト
+ * @param {'SENTE'|'GOTE'} facingSide - 駒の正立/倒立を決める向き（将棋ウォーズ準拠の仕様変更）。
+ *   持ち駒の実際の所属（先手/後手）とは無関係に、画面上の表示位置だけで決まる：
+ *   画面奥（③対戦相手側）は常に 'GOTE'（倒立）、画面手前（⑤自分側）は常に 'SENTE'（正立）を渡す。
+ *   盤面反転（isFlipped）時も③④の表示位置自体が入れ替わるだけで、
+ *   「画面奥は倒立・画面手前は正立」というこのルール自体は変化しない。
  */
-export function renderHandPieces(pieces, alignment, order, containerEl, selectedPieceType, squareSizePx, selectedPieceId, pieceLayout, pieceFit, manifest) {
+export function renderHandPieces(pieces, alignment, order, containerEl, selectedPieceType, squareSizePx, selectedPieceId, pieceLayout, pieceFit, manifest, facingSide) {
   // フル再描画
   // 注意: containerEl（#opponent-hand/#self-hand）はHTML側で既に
   // "hand-pieces-container" クラス（flex:1で親の幅を占有する役割）を持っている。
@@ -47,7 +52,7 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
     // background-image + background-size + background-positionでスプライトを切り出す）
     let cell;
     try {
-      cell = resolvePieceCell(pieceType, 'SENTE', false, null, pieceLayout);
+      cell = resolvePieceCell(pieceType, facingSide, false, null, pieceLayout);
     } catch (e) {
       console.error(`持ち駒の描画に失敗しました (pieceType=${pieceType}):`, e);
       containerEl.appendChild(item);

@@ -3,6 +3,7 @@
  */
 import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, getState } from '../state/app-state.js';
 import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
+import { PROMOTION_MAP } from '../models/board.js';
 
 let drawerEl = null;
 let overlayEl = null;
@@ -142,7 +143,15 @@ function renderPieceThumb(thumbEl, pieceAsset, tc) {
     // .asset-thumb のCSSサイズ（40x48）を基準に、駒の表示矩形を算出する
     const squareSizePx = { width: 40, height: 48 };
 
-    const cell = resolvePieceCell(tc.type, 'SENTE', tc.promoted, null, pieceLayout);
+    // 追加修正②: resolvePieceCell()（asset-fit.js）は「成り状態を含む駒種」を
+    // pieceTypeとして受け取る仕様（board-view.js の piece.type と同じ扱い。
+    // 例: 成った飛車なら'HI'ではなく'RY'を渡す）。tc.type は常に成る前のID
+    // （'HI'/'KE'）で保持しているため、tc.promoted===true の場合は
+    // PROMOTION_MAP で成り後のIDに変換してから渡す。これを怠ると
+    // resolvePieceCell内部の列検索（c.promotedId === pieceType）が一致せず
+    // 例外が投げられ、成り駒サムネイルが空白のまま描画されない。
+    const resolvedType = tc.promoted ? PROMOTION_MAP[tc.type] : tc.type;
+    const cell = resolvePieceCell(resolvedType, 'SENTE', tc.promoted, null, pieceLayout);
     const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
 
     const cols = pieceLayout.grid.cols;
@@ -152,12 +161,29 @@ function renderPieceThumb(thumbEl, pieceAsset, tc) {
     const bgX = -(cell.col * renderRect.width);
     const bgY = -(cell.row * renderRect.height);
 
-    thumbEl.style.backgroundImage = `url(${pieceAsset.image})`;
-    thumbEl.style.backgroundRepeat = 'no-repeat';
-    thumbEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-    thumbEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    // 修正②: board-view.js / player-info.js と同様、thumbEl（40x48固定の枠）に
+    // 直接背景を貼るのではなく、内側に renderRect のサイズ・offsetX/offsetY を反映した
+    // 「切り出し窓」spriteEl を作り、そこへ背景画像を敷く。これにより
+    // ・fit_mode:contain で生まれる余白（bottom寄せ分のoffsetY）が正しく反映される
+    // ・spriteEl自体がoverflow:hiddenの窓になるため、隣接する行・列の絵柄が
+    //   はみ出て見えることがなくなる
+    thumbEl.innerHTML = '';
     thumbEl.style.position = 'relative';
     thumbEl.style.overflow = 'hidden';
+
+    const spriteEl = document.createElement('div');
+    spriteEl.style.position = 'absolute';
+    spriteEl.style.left = `${renderRect.offsetX}px`;
+    spriteEl.style.top = `${renderRect.offsetY}px`;
+    spriteEl.style.width = `${renderRect.width}px`;
+    spriteEl.style.height = `${renderRect.height}px`;
+    spriteEl.style.overflow = 'hidden';
+    spriteEl.style.pointerEvents = 'none';
+    spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
+    spriteEl.style.backgroundRepeat = 'no-repeat';
+    spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+    spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    thumbEl.appendChild(spriteEl);
   } catch (e) {
     console.error(`駒サムネイルの描画に失敗しました (piece=${pieceAsset.id}, type=${tc.type}, promoted=${tc.promoted}):`, e);
   }

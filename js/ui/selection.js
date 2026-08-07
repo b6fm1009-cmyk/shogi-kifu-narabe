@@ -78,7 +78,10 @@ function processMove(source, target, boardState) {
   if (canPromoteResult) {
     // 成りポップアップを表示
     import('./nari-popup.js').then(({ showNariPopup }) => {
-      showNariPopup(source.pieceType, source.side, (result) => {
+      // 修正④: 将棋ウォーズ準拠のため、成りポップアップの駒画像は常に正立で表示する。
+      // source.side（駒の実所属=先手/後手）をそのまま渡すと後手の駒が倒立表示になって
+      // しまうため、向き決定用の引数には駒の実所属ではなく固定で'SENTE'（正立扱い）を渡す。
+      showNariPopup(source.pieceType, 'SENTE', (result) => {
         if (result === 'CANCEL') {
           clearSelection();
           return;
