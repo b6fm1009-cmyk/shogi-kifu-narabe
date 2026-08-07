@@ -21,6 +21,12 @@ html, body {
   background-image: url("../assets/background/tatami.png");
   background-size: cover;
   background-position: center;
+  /* 修正①: iPhone Safariで盤操作中に画面が上下に動いてしまう対策のベース。
+     html/body自体はページ全体のバウンス・ズームスクロールを止める役割のみとし、
+     個別にスクロールが必要な要素（.asset-drawer-body等）ではtouch-action: pan-y等で
+     明示的に許可し直す設計とする（後述）。overflow:hiddenと合わせて二重に止める。 */
+  touch-action: none;
+  overscroll-behavior: none;
 }
 
 /* ---------- スケーリング ----------
@@ -54,6 +60,10 @@ html, body {
 #scale-root.scale-root--phone {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* app-frameが画面より縦長になった際の意図的な縦スクロール領域のため、
+     html/bodyのtouch-action: noneを上書きしてpan-y（縦スクロール）のみ許可する。
+     横方向のパン・ピンチズーム等は許可しない。 */
+  touch-action: pan-y;
 }
 
 #scale-root.scale-root--phone.scale-root--overflowing {
@@ -198,6 +208,8 @@ html, body {
   border-radius: 2px;
   cursor: pointer;
   flex-shrink: 0;
+  /* 修正①: 持ち駒タップ時もダブルタップズーム等のジェスチャーを抑制する */
+  touch-action: manipulation;
 }
 
 .hand-piece--selected {
@@ -230,6 +242,10 @@ html, body {
   /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
      盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
   padding: 18px 22px 4px 6px;
+  /* 修正①: 盤操作（タップ）はドラッグを伴わないため、ダブルタップズーム等の
+     ブラウザジェスチャーだけ止めればよい。盤タップ中に画面全体がスクロールする
+     問題への対処として明示的に指定する。 */
+  touch-action: manipulation;
 }
 
 .board-wrap {
@@ -303,11 +319,18 @@ html, body {
 
 /* ---------- ⑥下部操作列 ---------- */
 .bottom-controls {
-  height: 56px;
+  /* 修正⑤: iPhoneでの誤タップ防止のためボタン群を大きくする（56px→72px）。
+     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。 */
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  /* 修正⑤: 「反転」（表示の向きを変えるだけの操作）と「最初/前/次/最後」
+     （棋議を進退する操作）は性質が異なるため、間隔を広めに取って視覚的に分ける。
+     グループ内部（bottom-controls-groupのgap）はこれより狭くし、
+     反転ボタンとの間だけが際立って離れて見えるようにする。
+     390px幅に5ボタンを収める必要があるため、gapは横paddingとのバランスを見て決める。 */
+  gap: 14px;
   padding: 0 8px;
   background-color: #e8e4d8;
   border-top: 1px solid #ccc;
@@ -315,13 +338,18 @@ html, body {
 }
 
 .bottom-btn {
-  font-size: 12px;
-  padding: 6px 8px;
+  /* 修正⑤: 高さ・フォントを拡大してタップしやすくする。横paddingは
+     390px幅に5ボタンを収める都合上、控えめにして高さ方向で領域を稼ぐ。 */
+  font-size: 14px;
+  padding: 12px 8px;
+  min-height: 48px;
   border: 1px solid #998;
-  border-radius: 4px;
+  border-radius: 6px;
   background-color: #f5f0e8;
   cursor: pointer;
   white-space: nowrap;
+  touch-action: manipulation;
+  flex: 1 1 auto;
 }
 
 .bottom-btn:disabled {
@@ -331,11 +359,14 @@ html, body {
 .bottom-btn--flip {
   background-color: #b0d0f0;
   border-color: #6a9ace;
+  flex: 0 0 auto;
 }
 
 .bottom-controls-group {
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* ---------- トースト ---------- */
@@ -423,6 +454,9 @@ html, body {
   transform: translateX(-100%);
   transition: transform 0.3s ease;
   z-index: 600;
+  /* 修正①: ドロワー本体そのものはスクロールしない（スクロールは.asset-drawer-bodyのみ）。
+     タブ切り替え等のタップ操作でのジェスチャー干渉を防ぐ。 */
+  touch-action: manipulation;
 }
 
 .asset-drawer--open {
@@ -484,6 +518,11 @@ html, body {
 .asset-drawer-body {
   overflow-y: auto;
   max-height: calc(100% - 50px);
+  -webkit-overflow-scrolling: touch;
+  /* 修正①: html/bodyのtouch-action: noneに対して、この個別スクロール領域だけは
+     縦スクロールを明示的に許可し直す。将来ここに棋譜リスト等の他のスクロール領域を
+     追加する場合も、同様にoverflow-y: auto; touch-action: pan-y;をセットで指定すること。 */
+  touch-action: pan-y;
 }
 
 .asset-row {
