@@ -225,18 +225,30 @@ function getCurrentScale() {
 
 /**
  * 画面スケーリングの設定（設計書 第1部2.6節）。
+ *
+ * iPhone等のスマホ幅では、幅を画面いっぱいにフィットさせることを優先する
+ * （= scale は window.innerWidth / 390 のみで決める）。詳細はstyle.cssのコメント参照。
+ * 高さの余剰・不足分は #scale-root 側の縦スクロールで吸収する。
+ *
+ * iPad等の広い画面では、従来通りMath.minで全体を画面内に収め、余白に畳を見せる。
  */
 function setupScaling() {
   const scaleRoot = document.getElementById('scale-root');
   const appFrame = document.getElementById('app-frame');
 
+  // スマホ幅とみなす閾値。iPhone Pro Max等の最大幅より少し余裕を持たせる。
+  const PHONE_WIDTH_THRESHOLD = 500;
+
   function applyScale() {
-    const scale = Math.min(
-      window.innerWidth / 390,
-      window.innerHeight / 844
-    );
+    const isPhoneWidth = window.innerWidth <= PHONE_WIDTH_THRESHOLD;
+
+    const scale = isPhoneWidth
+      ? window.innerWidth / 390
+      : Math.min(window.innerWidth / 390, window.innerHeight / 844);
+
     appFrame.style.transform = `scale(${scale})`;
     scaleRoot.dataset.scale = String(scale);
+    scaleRoot.classList.toggle('scale-root--phone', isPhoneWidth);
   }
 
   window.addEventListener('resize', applyScale);
