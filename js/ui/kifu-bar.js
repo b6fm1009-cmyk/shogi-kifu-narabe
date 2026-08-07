@@ -17,15 +17,28 @@ export function getKifuBarContent(isKifuMode, kifuProgress, kifuData, moveHistor
   if (isKifuMode && kifuData) {
     // 棋譜モード：残りの棋譜符号を先頭7手分表示
     const kifuMoves = kifuData.entries.filter(e => e.move !== null);
-    const upcoming = kifuMoves.slice(kifuProgress, kifuProgress + MAX_KIFU_BAR_MOVES);
-    const moves = upcoming.map((entry, index) => {
+
+    // 表示専用リスト：指し手をすべて消化した後は、entries末尾に続く特殊表記
+    // （投了・中断・切れ負け等）も表示候補に含める。特殊表記はkifuProgressの
+    // カウント対象外（kifu-judge.js／bottom-controls.jsのボタン活性判定と同じ前提）
+    // なので、ここで新たに数えることはせず、あくまで「表示する項目」を追加するだけ。
+    // entries内でmove!==nullの要素を先頭からkifuProgress個スキップし、
+    // それ以降（残りの指し手＋末尾の特殊表記）を表示対象として取り出す。
+    let skipped = 0;
+    let startIndex = kifuData.entries.length;
+    for (let i = 0; i < kifuData.entries.length; i++) {
+      if (skipped === kifuProgress) { startIndex = i; break; }
+      if (kifuData.entries[i].move !== null) skipped++;
+    }
+    const upcomingEntries = kifuData.entries.slice(startIndex, startIndex + MAX_KIFU_BAR_MOVES);
+
+    const moves = upcomingEntries.map((entry, index) => {
       const prevMove = index === 0
         ? (kifuMoves[kifuProgress - 1]?.move ?? null)
-        : (kifuMoves[kifuProgress + index - 1]?.move ?? null);
-      return {
-        text: formatMoveText(entry.move, prevMove),
-        emphasis: index === 0 ? 'NEXT' : 'UPCOMING'
-      };
+        : (upcomingEntries[index - 1].move ?? null);
+      return entry.move !== null
+        ? { text: formatMoveText(entry.move, prevMove), emphasis: index === 0 ? 'NEXT' : 'UPCOMING' }
+        : { text: formatSpecialText(entry.specialNotation), emphasis: index === 0 ? 'NEXT' : 'UPCOMING' };
     });
     return { mode: 'KIFU', moves };
   }
@@ -72,6 +85,35 @@ function formatMoveText(move, prevMove) {
 
   const toText = sameText || `${move.to.file}${kanjiRank(move.to.rank)}`;
   return `${sideMark}${toText}${pieceLabel}${promoteText}`;
+}
+
+/**
+ * 特殊表記コード（KifuEntry.specialNotation）を日本語ラベルに変換する。
+ * コード体系はCSA形式由来で、json-kifu-formatのKIFパーサーが実際に出力する値。
+ * 未知のコードが来た場合はコードをそのまま表示する（表示が消えるよりは情報量が多い方を優先）。
+ * @param {string} code
+ * @returns {string}
+ */
+const SPECIAL_NOTATION_LABEL_JA = {
+  TORYO: '投了',
+  CHUDAN: '中断',
+  SENNICHITE: '千日手',
+  TIME_UP: '切れ負け',
+  JISHOGI: '持将棋',
+  KACHI: '勝ち宣言',
+  HIKIWAKE: '引き分け宣言',
+  MATTA: '待った',
+  TSUMI: '詰み',
+  FUZUMI: '不詰',
+  ILLEGAL_MOVE: '反則負け',
+  '+ILLEGAL_ACTION': '先手反則負け',
+  '-ILLEGAL_ACTION': '後手反則負け',
+  ILLEGAL_ACTION: '反則勝ち',
+  ERROR: 'エラー'
+};
+
+function formatSpecialText(code) {
+  return SPECIAL_NOTATION_LABEL_JA[code] || code;
 }
 
 /**
