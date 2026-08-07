@@ -23,7 +23,18 @@ html, body {
   background-position: center;
 }
 
-/* ---------- スケーリング ---------- */
+/* ---------- スケーリング ----------
+   390×844を基準サイズとして transform: scale() で拡大縮小する。
+   iPhoneのようなスマホ幅の画面では「幅を画面いっぱいにフィットさせる」ことを優先する
+   （scale = window.innerWidth / 390 のみで決定）。390×844という比率は実機のどの機種とも
+   完全には一致しない（例: iPhone SEは375×667、iPhone 15 Proは393×852、
+   Pro Maxは430×932）ため、高さも基準にして小さい方を採用すると、画面の縦横比によっては
+   幅方向に余白が生まれてしまい、盤が画面いっぱいに広がらない。
+   幅基準にすることでヘッダー・盤・フッターは常に画面幅ぴったりになり、
+   高さ方向の余剰・不足分だけ縦スクロールで吸収する（畳の背景はスクロールしないと
+   見えない領域にのみ現れるため、実質iPhoneでは見えなくなる）。
+   iPadやPC等の広い画面（js/main.js: setupScalingがJS側で判定）では、
+   従来通り幅・高さの小さい方に合わせて全体を画面内に収め、余白に畳を見せる。 */
 #scale-root {
   position: fixed;
   top: 0;
@@ -33,6 +44,18 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* スマホ幅時（js/main.jsが付与）。幅基準でscaleするため高さが画面と一致しない場合があり、
+   その分は上詰め＋縦スクロールで吸収する（横方向は常に画面ぴったり）。 */
+#scale-root.scale-root--phone {
+  align-items: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+#scale-root.scale-root--phone #app-frame {
+  transform-origin: top center;
 }
 
 #app-frame {
@@ -121,7 +144,7 @@ html, body {
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
 .player-info {
-  height: 80px;
+  height: 52px;
   display: flex;
   align-items: center;
   padding: 0 10px;
@@ -196,6 +219,9 @@ html, body {
   position: relative;
   flex-shrink: 1;
   min-height: 0;
+  /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
+     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
+  padding: 18px 22px 4px 6px;
 }
 
 .board-wrap {
@@ -212,8 +238,9 @@ html, body {
 .board-image {
   /* 元画像(878x960)のアスペクト比を保つ。board-layout.jsonの margin_ratio / cell_ratio は
      このアスペクト比のまま表示される前提で実測されているため、正方形に固定したり
-     object-fit: cover でクロップしたりすると、マス目の実測比率と実際の表示がズレる。 */
-  width: 380px;
+     object-fit: cover でクロップしたりすると、マス目の実測比率と実際の表示がズレる。
+     幅はコンテナ(画面幅)ほぼいっぱいまで広げ、左右の余白は最小限にする。 */
+  width: 100%;
   height: auto;
   display: block;
   max-height: 100%;
@@ -271,7 +298,8 @@ html, body {
   height: 56px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 10px;
   padding: 0 8px;
   background-color: #e8e4d8;
   border-top: 1px solid #ccc;
