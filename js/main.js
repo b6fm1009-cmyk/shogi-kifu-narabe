@@ -12,6 +12,7 @@ import { handleTap } from './ui/selection.js';
 import { getState, setRenderCallback, getKifuModeInfo } from './state/app-state.js';
 import { getSquareSizePx, getBoardOriginPx } from './assets/asset-fit.js';
 import { registerServiceWorker } from './pwa/register-sw.js';
+import { suppressDoubleTapZoom } from './ui/touch-guard.js';
 
 // レイアウトデータ
 let layouts = null;
@@ -54,6 +55,12 @@ async function init() {
     // ヘッダー・下部操作列のイベント登録
     initHeaderButtons();
     initBottomControls();
+
+    // 修正②: ボタン連打によるダブルタップズームを抑制する（「次」「最後」の連打が主因）。
+    // disabled状態のbuttonにはtouch-action指定が効かない場合があるため、常に有効な
+    // 親コンテナ（.header, .bottom-controls）側で監視する。
+    suppressDoubleTapZoom(document.querySelector('.header'));
+    suppressDoubleTapZoom(document.querySelector('.bottom-controls'));
 
     // 盤面タップイベント
     setupBoardTapHandler();
