@@ -13,19 +13,24 @@ let boardLayout = null;
 let pieceLayout = null;
 let pieceFit = null;
 let manifest = null;
+let imageLoadCallback = null;
 
 /**
  * 盤面描画の初期化。
  * @param {HTMLElement} containerEl - 盤面コンテナ
  * @param {Object} layouts - { boardLayout, pieceLayout, pieceFit }
  * @param {AssetManifest} assetManifest
+ * @param {() => void} [onImageLoad] - 盤画像のロード完了時に呼ばれるコールバック（任意）。
+ *   app-frameがheight:autoのため、画像ロード前後で実高さが変わりうる。
+ *   呼び出し側（main.js）はこれを使ってscale再計算のタイミングを取る。
  */
-export function initBoardView(containerEl, layouts, assetManifest) {
+export function initBoardView(containerEl, layouts, assetManifest, onImageLoad) {
   boardEl = containerEl;
   boardLayout = layouts.boardLayout;
   pieceLayout = layouts.pieceLayout;
   pieceFit = layouts.pieceFit;
   manifest = assetManifest;
+  imageLoadCallback = onImageLoad || null;
 }
 
 /**
@@ -65,9 +70,11 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
   // 画像ロード後にマス計算と駒配置を行う
   if (boardImageEl.complete) {
     placePieces(boardState, pieceAsset, selectedSource);
+    if (imageLoadCallback) imageLoadCallback();
   } else {
     boardImageEl.addEventListener('load', () => {
       placePieces(boardState, pieceAsset, selectedSource);
+      if (imageLoadCallback) imageLoadCallback();
     });
   }
 
