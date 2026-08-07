@@ -98,7 +98,8 @@ html, body {
 }
 
 .header-btn {
-  font-size: 12px;
+  /* 修正④: ヘッダーボタンの文字をわずかに拡大（12px→13px）。視認性向上のための調整。 */
+  font-size: 13px;
   padding: 4px 6px;
   border: 1px solid #998;
   border-radius: 4px;
@@ -125,12 +126,13 @@ html, body {
 
 /* ---------- ②棋譜符号バー ---------- */
 .kifu-bar {
-  height: 56px;
+  /* 修正④: 上下の余白を詰める（56px→50px）。文字サイズは可読性のため維持。 */
+  height: 50px;
   background-color: #3a3a3a;
   display: flex;
   align-items: center;
-  padding: 0 8px;
-  gap: 10px;
+  padding: 0 7px;
+  gap: 9px;
   overflow: hidden;
   flex-shrink: 0;
   transition: opacity 0.2s;
@@ -240,8 +242,9 @@ html, body {
      これにより盤の上下に余分な空白が生まれず、app-frame全体の高さも
      画面に収まりやすくなる（要望：盤の上下の大きな余白を詰めたい）。 */
   /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
-     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
-  padding: 18px 22px 4px 6px;
+     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。
+     修正④: 上下の余白をさらに約90%に圧縮（18px→16px, 4px→4pxのまま最小値のため維持）。 */
+  padding: 16px 20px 4px 6px;
   /* 修正①: 盤操作（タップ）はドラッグを伴わないため、ダブルタップズーム等の
      ブラウザジェスチャーだけ止めればよい。盤タップ中に画面全体がスクロールする
      問題への対処として明示的に指定する。 */
@@ -320,8 +323,10 @@ html, body {
 /* ---------- ⑥下部操作列 ---------- */
 .bottom-controls {
   /* 修正⑤: iPhoneでの誤タップ防止のためボタン群を大きくする（56px→72px）。
-     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。 */
-  height: 72px;
+     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。
+     修正④: 上下の余白をさらに約90%に圧縮（72px→65px）。ボタンのmin-heightは
+     44px（タップ領域推奨値の下限）を維持したまま、外側のpadding分だけを詰める。 */
+  height: 65px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,8 +334,9 @@ html, body {
      （棋議を進退する操作）は性質が異なるため、間隔を広めに取って視覚的に分ける。
      グループ内部（bottom-controls-groupのgap）はこれより狭くし、
      反転ボタンとの間だけが際立って離れて見えるようにする。
-     390px幅に5ボタンを収める必要があるため、gapは横paddingとのバランスを見て決める。 */
-  gap: 14px;
+     390px幅に5ボタンを収める必要があるため、gapは横paddingとのバランスを見て決める。
+     修正④: gapも約90%に圧縮（14px→12px）。 */
+  gap: 12px;
   padding: 0 8px;
   background-color: #e8e4d8;
   border-top: 1px solid #ccc;
@@ -339,10 +345,12 @@ html, body {
 
 .bottom-btn {
   /* 修正⑤: 高さ・フォントを拡大してタップしやすくする。横paddingは
-     390px幅に5ボタンを収める都合上、控えめにして高さ方向で領域を稼ぐ。 */
+     390px幅に5ボタンを収める都合上、控えめにして高さ方向で領域を稼ぐ。
+     修正④: 上下paddingを約90%に圧縮（12px→10px）。min-heightは44px
+     （タップ領域推奨値の下限）を維持し、これ以上は詰めない。 */
   font-size: 14px;
-  padding: 12px 8px;
-  min-height: 48px;
+  padding: 10px 8px;
+  min-height: 44px;
   border: 1px solid #998;
   border-radius: 6px;
   background-color: #f5f0e8;
