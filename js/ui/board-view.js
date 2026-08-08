@@ -225,7 +225,7 @@ function renderCoordinates(isFlipped) {
     label.className = 'coordinate-label coordinate-label--file';
     label.textContent = String(file);
     label.style.left = `${boardOrigin.x + i * squareSize.width + squareSize.width / 2}px`;
-    label.style.top = '-12px';
+    label.style.top = '-8px';
     boardWrapEl.appendChild(label);
   });
 
