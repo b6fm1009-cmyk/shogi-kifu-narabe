@@ -65,7 +65,7 @@ export function getKifuBarContent(isKifuMode, kifuProgress, kifuData, moveHistor
  * @param {Move|null} prevMove - 「同」判定用の直前手
  * @returns {string}
  */
-function formatMoveText(move, prevMove) {
+export function formatMoveText(move, prevMove) {
   const sideMark = move.side === 'SENTE' ? '▲' : '△';
   const pieceLabel = PIECE_TYPE_LABEL_JA[move.pieceType] || move.pieceType;
 
@@ -112,7 +112,7 @@ const SPECIAL_NOTATION_LABEL_JA = {
   ERROR: 'エラー'
 };
 
-function formatSpecialText(code) {
+export function formatSpecialText(code) {
   return SPECIAL_NOTATION_LABEL_JA[code] || code;
 }
 

@@ -3,7 +3,7 @@
  */
 import { importFromClipboard } from '../kifu-io/clipboard-import.js';
 import { importFromFile } from '../kifu-io/file-import.js';
-import { getState, toggleKifuBarVisibility, jumpToKifuProgress, getKifuModeInfo } from '../state/app-state.js';
+import { getState, toggleKifuBarVisibility, jumpToKifuProgress, getKifuModeInfo, isAnyControlDisabled } from '../state/app-state.js';
 import { openAssetDrawer, closeAssetDrawer } from './asset-drawer.js';
 
 let fileInput = null;
@@ -63,7 +63,7 @@ export function initHeaderButtons() {
  * ヘッダーボタンの表示状態を更新する。
  */
 export function updateHeaderButtons() {
-  const { isKifuBarVisible, isAssetDrawerOpen, isNariPopupOpen } = getState();
+  const { isKifuBarVisible } = getState();
   const { isKifuMode } = getKifuModeInfo();
 
   const disabled = isAnyControlDisabled();
@@ -83,9 +83,4 @@ export function updateHeaderButtons() {
 
   // ハンバーガーメニューは常に活性
   document.getElementById('btn-hamburger').disabled = false;
-}
-
-function isAnyControlDisabled() {
-  const { isNariPopupOpen, isAssetDrawerOpen } = getState();
-  return isNariPopupOpen || isAssetDrawerOpen;
 }

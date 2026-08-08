@@ -380,11 +380,38 @@ html, body {
   flex: 0 0 auto;
 }
 
+/* 追加①: 「◀」「▶」（最初・最後へ一気に移動）はヒアリングの結果、
+   実際の棋譜並べでは使用頻度が低いことが分かったため、記号1文字のみの
+   最小幅ボタンにする。flex-growを持たせず、内容量に応じた幅のみ確保する。 */
+.bottom-btn--compact {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+}
+
+/* 追加①: 「＜前」「次＞」（1手ずつの進退）は使用頻度が最も高いため、
+   ◀／▶を圧縮した分の幅をこちらに多めに配分する。 */
+.bottom-btn--wide {
+  flex: 2 1 auto;
+}
+
 .bottom-controls-group {
   display: flex;
-  gap: 6px;
+  /* 追加①②: ボタン数が4→6に増えるため、既存の6pxのままだと窮屈になる。
+     390px幅に収めるため気持ち詰める。 */
+  gap: 5px;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* 追加②: 手数選択ボタン。⇅反転ボタンと同じ理由（性質の異なる独立した操作を
+   視覚的に区別する、要件定義書5.6節の既存方針を踏襲）で、進退操作グループとは
+   別の見た目・間隔にする。ただし反転ボタンほど頻繁には使わないと想定されるため、
+   色は控えめ（進退ボタンと同系色のまま太枠のみ変える）にとどめる。 */
+.bottom-btn--movelist {
+  flex: 0 0 auto;
+  border-width: 2px;
+  border-color: #6a9ace;
+  padding: 10px 10px;
 }
 
 /* ---------- トースト ---------- */
@@ -585,6 +612,98 @@ html, body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+/* ---------- 手数選択モーダル（追加②：n手目ジャンプ） ---------- */
+.move-list-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(20, 16, 8, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 700;
+  padding: 32px 16px;
+}
+
+.move-list-popup {
+  width: 100%;
+  max-width: 320px;
+  max-height: 100%;
+  background-color: #f5f0e8;
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.move-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background-color: #e8c477;
+  border-bottom: 1px solid #c9a35a;
+  flex-shrink: 0;
+}
+
+.move-list-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #2a2010;
+}
+
+.move-list-close {
+  font-size: 20px;
+  line-height: 1;
+  border: none;
+  background: none;
+  color: #2a2010;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.move-list-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* 修正①（既存方針の踏襲）: html/bodyのtouch-action: noneに対し、
+     このスクロール領域だけ縦スクロールを明示的に許可し直す。 */
+  touch-action: pan-y;
+  padding: 6px;
+}
+
+.move-list-row {
+  font-size: 16px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  color: #333;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.move-list-row:not(.move-list-row--disabled):active {
+  background-color: #e0dcd0;
+}
+
+.move-list-row--current {
+  background-color: #e8c477;
+  color: #2a2010;
+  font-weight: bold;
+}
+
+.move-list-row--special {
+  color: #999;
+  font-size: 13px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.move-list-row--disabled {
+  cursor: default;
 }
 
 .asset-board-thumb img {

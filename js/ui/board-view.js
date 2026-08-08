@@ -67,19 +67,21 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
   boardImageEl.draggable = false;
   boardWrapEl.appendChild(boardImageEl);
 
-  // 画像ロード後にマス計算と駒配置を行う
-  if (boardImageEl.complete) {
+  // 画像ロード後にマス計算・駒配置・座標符号の描画を行う。
+  // 3つとも boardImageEl.clientWidth/clientHeight（盤画像の実表示サイズ）に
+  // 依存する計算のため、ロード完了を待たずに呼ぶと座標が0基準のまま描画されてしまう。
+  // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
+  const renderDependents = () => {
     placePieces(boardState, pieceAsset, selectedSource);
+    renderCoordinates(boardState.isFlipped);
     if (imageLoadCallback) imageLoadCallback();
-  } else {
-    boardImageEl.addEventListener('load', () => {
-      placePieces(boardState, pieceAsset, selectedSource);
-      if (imageLoadCallback) imageLoadCallback();
-    });
-  }
+  };
 
-  // 座標符号
-  renderCoordinates(boardState.isFlipped);
+  if (boardImageEl.complete) {
+    renderDependents();
+  } else {
+    boardImageEl.addEventListener('load', renderDependents);
+  }
 }
 
 /**

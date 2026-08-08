@@ -1,7 +1,8 @@
 /**
  * ⑥下部操作列（設計書 第5部）
  */
-import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo } from '../state/app-state.js';
+import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo, isAnyControlDisabled } from '../state/app-state.js';
+import { openMoveListPopup } from './move-list-popup.js';
 
 /**
  * 下部操作列のイベント登録。
@@ -40,13 +41,20 @@ export function initBottomControls() {
     const kifuMoves = kifuData.entries.filter(e => e.move !== null);
     advanceToKifuProgress(kifuMoves.length);
   });
+
+  // 手数選択（追加②：n手目ジャンプ）
+  document.getElementById('btn-move-list').addEventListener('click', () => {
+    if (isAnyControlDisabled()) return;
+    const { kifuData } = getState();
+    if (!kifuData) return;
+    openMoveListPopup();
+  });
 }
 
 /**
  * 下部操作列の表示状態を更新する。
  */
 export function updateBottomControls() {
-  const { isNariPopupOpen, isAssetDrawerOpen } = getState();
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
   const { kifuData } = getState();
 
@@ -65,9 +73,8 @@ export function updateBottomControls() {
   }
   document.getElementById('btn-next').disabled = disabled || !forwardEnabled;
   document.getElementById('btn-last').disabled = disabled || !forwardEnabled;
-}
 
-function isAnyControlDisabled() {
-  const { isNariPopupOpen, isAssetDrawerOpen } = getState();
-  return isNariPopupOpen || isAssetDrawerOpen;
+  // 手数選択：棋譜データが読み込まれていれば、棋譜モード／分岐モードを問わず活性
+  // （分岐中でも棋譜側の手数へ戻れる仕様のため。次・最後ボタンとは活性条件が異なる）
+  document.getElementById('btn-move-list').disabled = disabled || !kifuData;
 }

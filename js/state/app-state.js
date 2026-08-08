@@ -22,6 +22,7 @@ import { judgeKifuMode } from '../core/kifu-judge.js';
  * @property {boolean} isKifuBarVisible
  * @property {boolean} isNariPopupOpen
  * @property {boolean} isAssetDrawerOpen
+ * @property {boolean} isMoveListOpen
  * @property {string} selectedBoardId
  * @property {string} selectedPieceId
  */
@@ -35,6 +36,7 @@ let state = {
   isKifuBarVisible: true,
   isNariPopupOpen: false,
   isAssetDrawerOpen: false,
+  isMoveListOpen: false,
   selectedBoardId: 'wood',
   selectedPieceId: 'maki_ryoko_1_letter'
 };
@@ -63,7 +65,7 @@ export function getKifuModeInfo() {
 
 /** 派生値：isAnyControlDisabled */
 export function isAnyControlDisabled() {
-  return state.isNariPopupOpen || state.isAssetDrawerOpen;
+  return state.isNariPopupOpen || state.isAssetDrawerOpen || state.isMoveListOpen;
 }
 
 /** 派生値：isBackToKifuButtonEnabled */
@@ -189,6 +191,35 @@ export function advanceToKifuProgress(targetProgress) {
   notifyRender();
 }
 
+/**
+ * 棋譜上の指定手数の局面へ直接移動する（手数選択リストからのジャンプ専用）。
+ * targetMoveNumberは「棋譜データ上の何手目まで進めた状態にするか」（0=開始局面）。
+ * 分岐モード中に棋譜側の手数（kifuProgressより前）へ戻る場合と、棋譜モード中に
+ * 先の手数へ進める場合の両方を1つの入口でまとめて扱う。
+ * - moveHistory.length以下（現在地より過去または同じ）へ移動する場合：単純に
+ *   moveHistoryを切り詰める（jumpToKifuProgress()と同じロジック）。分岐中でも
+ *   棋譜側の手数へ戻せる。
+ * - moveHistory.lengthより先へ移動する場合：現在のmoveHistoryの続きとして
+ *   棋譜データの手を追加する。ただしこれは「分岐していない（moveHistoryが
+ *   kifuProgressまでは棋譜と一致している）」場合のみ意味を持つため、
+ *   isKifuMode===falseの状態で先の手数を指定した場合は何もしない
+ *   （分岐中は「次に指すべき棋譜の手」という概念自体が存在しないため。
+ *   要件定義書6.3節）。
+ * @param {number} targetMoveNumber
+ */
+export function goToKifuMoveNumber(targetMoveNumber) {
+  if (state.kifuData === null) return;
+
+  if (targetMoveNumber <= state.moveHistory.length) {
+    jumpToKifuProgress(targetMoveNumber);
+    return;
+  }
+
+  const { isKifuMode, kifuProgress } = getKifuModeInfo();
+  if (!isKifuMode) return; // 分岐中は先の棋譜手数へは進められない
+  advanceToKifuProgress(targetMoveNumber);
+}
+
 /** 成りポップアップの開閉状態を設定する */
 export function setNariPopupOpen(isOpen) {
   state = { ...state, isNariPopupOpen: isOpen };
@@ -198,6 +229,12 @@ export function setNariPopupOpen(isOpen) {
 /** アセットドロワーの開閉状態を設定する */
 export function setAssetDrawerOpen(isOpen) {
   state = { ...state, isAssetDrawerOpen: isOpen };
+  notifyRender();
+}
+
+/** 手数選択リスト（追加②）の開閉状態を設定する */
+export function setMoveListOpen(isOpen) {
+  state = { ...state, isMoveListOpen: isOpen };
   notifyRender();
 }
 
