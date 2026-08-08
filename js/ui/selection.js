@@ -1,7 +1,7 @@
 /**
  * 選択・移動操作の共通ルール（設計書 第4部5節）
  */
-import { selectSource, clearSelection, commitMove } from '../state/app-state.js';
+import { selectSource, clearSelection, commitMove, getState } from '../state/app-state.js';
 import { applyMove } from '../core/apply-move.js';
 import { canPromote } from '../core/nari-judge.js';
 
@@ -81,7 +81,9 @@ function processMove(source, target, boardState) {
       // 修正④: 将棋ウォーズ準拠のため、成りポップアップの駒画像は常に正立で表示する。
       // source.side（駒の実所属=先手/後手）をそのまま渡すと後手の駒が倒立表示になって
       // しまうため、向き決定用の引数には駒の実所属ではなく固定で'SENTE'（正立扱い）を渡す。
-      showNariPopup(source.pieceType, 'SENTE', (result) => {
+      // 修正③: 現在ユーザーが選択中の駒アセットID（デフォルト固定ではない）を渡し、
+      // ポップアップの駒画像を盤面の駒と一致させる。
+      showNariPopup(source.pieceType, 'SENTE', getState().selectedPieceId, (result) => {
         if (result === 'CANCEL') {
           clearSelection();
           return;

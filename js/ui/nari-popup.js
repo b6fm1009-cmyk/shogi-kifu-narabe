@@ -33,9 +33,12 @@ function loadPieceFit() {
  * @param {Side} side - 駒画像の正立/倒立を決める向き。修正④（将棋ウォーズ準拠）により、
  *   駒の実所属（先手/後手）ではなく、常に'SENTE'（正立）を渡す運用とする。
  *   呼び出し元はsource.side（実所属）をそのまま渡さないこと。
+ * @param {string} pieceId - 修正③: 現在ユーザーが選択中の駒アセットID（state.selectedPieceId）。
+ *   ポップアップに表示する駒画像を、盤面に表示されている駒と一致させるために必要。
+ *   呼び出し元は必ずgetState().selectedPieceIdを渡すこと（デフォルト駒IDへの固定はしない）。
  * @param {(result: boolean|'CANCEL') => void} onResult
  */
-export function showNariPopup(pieceType, side, onResult) {
+export function showNariPopup(pieceType, side, pieceId, onResult) {
   setNariPopupOpen(true);
 
   // 既存のポップアップを削除
@@ -51,7 +54,7 @@ export function showNariPopup(pieceType, side, onResult) {
   const promoteBtn = document.createElement('button');
   promoteBtn.className = 'nari-popup-btn nari-popup-btn--promote';
   const promotedType = PROMOTION_MAP[pieceType] || pieceType;
-  renderPieceIcon(promoteBtn, promotedType, side, true);
+  renderPieceIcon(promoteBtn, promotedType, side, true, pieceId);
   promoteBtn.addEventListener('click', () => {
     closeNariPopup();
     onResult(true);
@@ -60,7 +63,7 @@ export function showNariPopup(pieceType, side, onResult) {
   // 成らない側（右）
   const notPromoteBtn = document.createElement('button');
   notPromoteBtn.className = 'nari-popup-btn nari-popup-btn--not-promote';
-  renderPieceIcon(notPromoteBtn, pieceType, side, false);
+  renderPieceIcon(notPromoteBtn, pieceType, side, false, pieceId);
   notPromoteBtn.addEventListener('click', () => {
     closeNariPopup();
     onResult(false);
@@ -100,10 +103,14 @@ function closeNariPopup() {
  * 無視してボタン全体に間延び・拡大されてしまう。そのため getPieceRenderRect()
  * でボタンサイズ基準の表示矩形を計算してから background-size を決める。
  */
-function renderPieceIcon(btn, pieceType, side, promoted) {
+function renderPieceIcon(btn, pieceType, side, promoted, pieceId) {
   Promise.all([loadAssetManifest(), loadPieceLayout(), loadPieceFit()])
     .then(([manifest, pieceLayout, pieceFit]) => {
-      const pieceAsset = findPieceAsset(manifest, manifest.defaults.pieces);
+      // 修正③: 常にデフォルト駒(manifest.defaults.pieces)を参照していたため、
+      // ユーザーが別の駒セットを選択していてもポップアップだけデフォルト駒のまま
+      // だった。呼び出し元から渡された選択中のpieceIdを使う（未指定時のみ
+      // フォールバックとしてデフォルトを使う）。
+      const pieceAsset = findPieceAsset(manifest, pieceId || manifest.defaults.pieces);
       const cell = resolvePieceCell(pieceType, side, promoted, null, pieceLayout);
 
       // ボタンの内寸（＝駒を収める枠）をピクセルで取得
