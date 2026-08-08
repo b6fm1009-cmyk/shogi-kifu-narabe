@@ -12,7 +12,7 @@ import { handleTap } from './ui/selection.js';
 import { getState, setRenderCallback, getKifuModeInfo } from './state/app-state.js';
 import { getSquareSizePx, getBoardOriginPx } from './assets/asset-fit.js';
 import { registerServiceWorker } from './pwa/register-sw.js';
-import { suppressDoubleTapZoom } from './ui/touch-guard.js';
+import { suppressDoubleTapZoom, suppressImageSaveGestures } from './ui/touch-guard.js';
 
 // レイアウトデータ
 let layouts = null;
@@ -61,6 +61,12 @@ async function init() {
     // 親コンテナ（.header, .bottom-controls）側で監視する。
     suppressDoubleTapZoom(document.querySelector('.header'));
     suppressDoubleTapZoom(document.querySelector('.bottom-controls'));
+
+    // 修正②: 盤・駒画像は配布素材のため、長押しでの画像保存を防止する。
+    // 盤・駒レイヤー、成りポップアップ、アセットドロワーのサムネイルはすべて動的に
+    // 生成される要素なので、document.body単位でイベント委譲することで、
+    // 生成タイミングに関わらずまとめて対象にする。
+    suppressImageSaveGestures(document.body);
 
     // 盤面タップイベント
     setupBoardTapHandler();
