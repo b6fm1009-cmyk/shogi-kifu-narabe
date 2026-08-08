@@ -273,6 +273,9 @@ html, body {
   max-height: 100%;
   user-select: none;
   -webkit-user-select: none;
+  /* 修正②: iOS Safariで長押しすると出る「画像を保存」等のコールアウトメニューを抑制する。
+     user-select:noneだけでは防げず、-webkit-touch-calloutの指定が必要。 */
+  -webkit-touch-callout: none;
 }
 
 .pieces-layer {
@@ -282,6 +285,10 @@ html, body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  /* 修正②: 駒素材も配布素材のため、盤画像と同様に長押し保存を抑制する（念のための統一対応） */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .board-piece {
@@ -292,6 +299,9 @@ html, body {
   align-items: center;
   justify-content: center;
   background-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .board-piece--selected {
@@ -440,6 +450,9 @@ html, body {
   justify-content: center;
   align-items: center;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .nari-popup-btn--promote {
@@ -575,6 +588,9 @@ html, body {
 }
 
 .asset-board-thumb img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   width: 100%;
   height: 100%;
   object-fit: cover;
