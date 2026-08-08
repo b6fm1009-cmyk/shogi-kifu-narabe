@@ -100,7 +100,7 @@ html, body {
 .header-btn {
   /* 修正④: ヘッダーボタンの文字をわずかに拡大（12px→14px）。視認性向上のための調整。 */
   font-size: 14px;
-  padding: 4px 6px;
+  padding: 4px 8px;
   border: 1px solid #998;
   border-radius: 4px;
   background-color: #f5f0e8;
@@ -283,9 +283,8 @@ html, body {
      これにより盤の上下に余分な空白が生まれず、app-frame全体の高さも
      画面に収まりやすくなる（要望：盤の上下の大きな余白を詰めたい）。 */
   /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
-     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。
-     修正④: 上下の余白をさらに約90%に圧縮（18px→16px, 4px→4pxのまま最小値のため維持）。 */
-  padding: 16px 20px 4px 6px;
+     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
+  padding: 12px 12px 4px 6px;
   /* 修正①: 盤操作（タップ）はドラッグを伴わないため、ダブルタップズーム等の
      ブラウザジェスチャーだけ止めればよい。盤タップ中に画面全体がスクロールする
      問題への対処として明示的に指定する。 */
@@ -375,7 +374,7 @@ html, body {
 .bottom-controls {
   /* iPhoneでの誤タップ防止のためボタン群を大きくする。
      タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。*/
-  height: 58px;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
