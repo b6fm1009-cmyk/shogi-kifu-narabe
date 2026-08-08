@@ -93,7 +93,10 @@ export function getPieceRenderRect(squareSizePx, pieceImageNaturalSize, pieceLay
   }
 
   if (pieceFit.vertical_align === 'bottom') {
-    offsetY = squareSizePx.height - renderHeight;
+    // 下辺接地（squareSizePx.height - renderHeight）と上下中央（(squareSizePx.height - renderHeight) / 2）の
+    // ちょうど中間（下寄り具合を50%緩和）。実物の将棋盤では駒がマスに対してやや下寄りに見えるが、
+    // 完全な下辺接地だと全体的に下寄りに見えるため、中央寄せに50%だけ寄せる。
+    offsetY = (squareSizePx.height - renderHeight) * 0.75;
   } else if (pieceFit.vertical_align === 'top') {
     offsetY = 0;
   } else if (pieceFit.vertical_align === 'center') {
