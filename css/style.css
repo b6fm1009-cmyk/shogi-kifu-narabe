@@ -246,7 +246,8 @@ html, body {
 
 .hand-piece {
   position: relative;
-  background-color: rgba(0, 0, 0, 0.08);
+  /* 持ち駒のグレー背景を撤去し、駒画像の透過を活かす（選択時のピンク背景は残す） */
+  background-color: transparent;
   border-radius: 2px;
   cursor: pointer;
   flex-shrink: 0;
