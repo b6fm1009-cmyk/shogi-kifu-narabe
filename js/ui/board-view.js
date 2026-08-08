@@ -225,7 +225,7 @@ function renderCoordinates(isFlipped) {
     label.className = 'coordinate-label coordinate-label--file';
     label.textContent = String(file);
     label.style.left = `${boardOrigin.x + i * squareSize.width + squareSize.width / 2}px`;
-    label.style.top = '-16px';
+    label.style.top = '-12px';
     boardWrapEl.appendChild(label);
   });
 
@@ -237,7 +237,7 @@ function renderCoordinates(isFlipped) {
     label.className = 'coordinate-label coordinate-label--rank';
     label.textContent = kanji[rank - 1];
     label.style.top = `${boardOrigin.y + i * squareSize.height + squareSize.height / 2}px`;
-    label.style.left = `${boardSize.width + 4}px`;
+    label.style.left = `${boardSize.width + 6}px`;
     boardWrapEl.appendChild(label);
   });
 }
