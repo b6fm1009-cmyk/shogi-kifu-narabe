@@ -45,8 +45,8 @@
       "id": "kosho_1_letter",
       "label": "光匠（一字）",
       "image": "./assets/pieces/kosho_1_letter.png",
-      "width": 1296,
-      "height": 720
+      "width": 648,
+      "height": 360
     },
     {
       "id": "polyvinyl_chloride_1_letter",
