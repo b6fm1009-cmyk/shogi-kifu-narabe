@@ -357,7 +357,7 @@ html, body {
      修正④: 上下paddingを約90%に圧縮（12px→10px）。min-heightは44px
      （タップ領域推奨値の下限）を維持し、これ以上は詰めない。 */
   font-size: 16px;
-  padding: 6px 6px;
+  padding: 6px 8px;
   min-height: 44px;
   border: 1px solid #998;
   border-radius: 6px;
