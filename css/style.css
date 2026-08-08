@@ -332,11 +332,9 @@ html, body {
 
 /* ---------- ⑥下部操作列 ---------- */
 .bottom-controls {
-  /* 修正⑤: iPhoneでの誤タップ防止のためボタン群を大きくする（56px→72px）。
-     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。
-     修正④: 上下の余白をさらに約90%に圧縮（72px→65px）。ボタンのmin-heightは
-     44px（タップ領域推奨値の下限）を維持したまま、外側のpadding分だけを詰める。 */
-  height: 65px;
+  /* iPhoneでの誤タップ防止のためボタン群を大きくする。
+     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。*/
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
