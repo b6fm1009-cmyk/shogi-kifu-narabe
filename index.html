@@ -2,7 +2,18 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- 修正⑥: maximum-scale=1, user-scalable=noを追加し、iOS Safariのピンチズーム／
+       ダブルタップズーム自体を起こさないようにする。従来はtouch-guard.jsの
+       suppressDoubleTapZoom()でダブルタップの2回目のtouchendだけをpreventDefault()して
+       いたが、これは「監視対象の親要素配下」でしか効かず、監視対象外の要素（対局者名欄・
+       盤面など）を連打された場合や、ピンチズーム（2本指操作）には無力だった。一度ズーム
+       すると、iOS Safariの挙動として画面の大部分がズーム状態のままロックされ、リロード以外に
+       解除手段がなくなる（このアプリは#scale-root自体でtransform: scale()による独自の
+       拡縮を行っており、通常のページスクロールを前提としたズーム解除操作＝ダブルタップや
+       ピンチアウトが正しく機能しない構造になっているため、ブラウザ標準のズーム解除に頼れない）。
+       ズームという現象そのものをviewportレベルで止めるほうが、個別要素ごとにJSで
+       ダブルタップを監視するより確実かつシンプル。 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>将棋 棋譜並べ</title>
