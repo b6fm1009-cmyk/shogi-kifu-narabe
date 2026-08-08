@@ -179,12 +179,52 @@ html, body {
   justify-content: flex-end;
 }
 
+/* 修正③: 名前欄を固定幅ボックス化する。
+   根拠：持ち駒を7種（歩香桂銀金角飛）すべて持った状態でもレイアウトが破綻しない
+   幅を確保する必要がある。盤マスの実測サイズ（390px画面で約39px角）×7種で
+   持ち駒欄は最大約275px必要なため、画面幅390px・左右padding20px・gap8pxを
+   差し引くと名前欄に使える幅は残り約87pxとなる。ここから安全マージンを見て
+   固定幅86pxとした（player-info.js側でこの幅に文字が収まるかを実測し、
+   収まらない場合のみフォントサイズを段階的に縮小する。省略記号での切り捨ては
+   行わない）。 */
+.player-info-box {
+  flex-shrink: 0;
+  width: 86px;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 3px 4px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fbfaf6 0%, #efece2 100%);
+  border: 1px solid #c9c2ac;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.player-label {
+  font-size: 10px;
+  line-height: 1.2;
+  color: #8a6a2f;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.player-label:empty {
+  display: none;
+}
+
 .player-name {
   font-size: 14px;
-  color: #333;
-  background-color: #e0dcd0;
-  padding: 4px 8px;
-  border-radius: 4px;
+  line-height: 1.25;
+  color: #2b2b2b;
+  font-weight: 600;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .hand-pieces-container {

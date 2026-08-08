@@ -6,7 +6,7 @@ import { initBoardView, renderBoard } from './ui/board-view.js';
 import { initHeaderButtons, updateHeaderButtons } from './ui/header-buttons.js';
 import { initBottomControls, updateBottomControls } from './ui/bottom-controls.js';
 import { renderKifuBar, getKifuBarContent } from './ui/kifu-bar.js';
-import { renderHandPieces } from './ui/player-info.js';
+import { renderHandPieces, renderPlayerInfoBox } from './ui/player-info.js';
 import { initAssetDrawer, openAssetDrawer, closeAssetDrawer } from './ui/asset-drawer.js';
 import { handleTap } from './ui/selection.js';
 import { getState, setRenderCallback, getKifuModeInfo } from './state/app-state.js';
@@ -138,11 +138,22 @@ function renderAll() {
     state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
     'SENTE'); // 修正③: 画面手前は常に正立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
-  // 対戦者名（反転時は入れ替え）
+  // 対戦者名・段級位（反転時は入れ替え）
   const senteName = state.kifuData ? state.kifuData.header.senteName : '先手';
   const goteName = state.kifuData ? state.kifuData.header.goteName : '後手';
-  document.getElementById('opponent-name').textContent = state.boardState.isFlipped ? senteName : goteName;
-  document.getElementById('self-name').textContent = state.boardState.isFlipped ? goteName : senteName;
+  const senteRank = state.kifuData ? state.kifuData.header.senteRank : null;
+  const goteRank = state.kifuData ? state.kifuData.header.goteRank : null;
+
+  const opponentSide = state.boardState.isFlipped ? 'SENTE' : 'GOTE';
+  const selfSide = state.boardState.isFlipped ? 'GOTE' : 'SENTE';
+  renderPlayerInfoBox(
+    document.getElementById('opponent-label'), document.getElementById('opponent-name'),
+    opponentSide, opponentSide === 'SENTE' ? senteName : goteName, opponentSide === 'SENTE' ? senteRank : goteRank
+  );
+  renderPlayerInfoBox(
+    document.getElementById('self-label'), document.getElementById('self-name'),
+    selfSide, selfSide === 'SENTE' ? senteName : goteName, selfSide === 'SENTE' ? senteRank : goteRank
+  );
 
   // ボタン更新
   updateHeaderButtons();

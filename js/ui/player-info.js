@@ -92,3 +92,35 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
     containerEl.appendChild(item);
   }
 }
+
+// 修正③: 名前が固定幅ボックスに収まらない場合に段階的に縮小するフォントサイズ候補。
+// 通常サイズ(14px)を基本としつつ、はみ出る場合のみ縮小する。将棋ウォーズのユーザー名は
+// 半角15文字が上限、プロ棋士名でも全角5〜6文字程度（例：「三枚堂 達也」）が実用上の
+// 上限帯であるため、通常はこの範囲で14px運用に収まる想定。極端に長い例外名への対処として
+// フォントサイズ縮小を用意する（省略記号での切り捨てだと対局者名が判読不能になるため避ける）。
+const PLAYER_NAME_FONT_SIZES = [14, 12, 10, 9];
+
+/**
+ * ③⑤対局者名ボックス（先手/後手ラベル＋段級位＋名前）を描画する単一関数。
+ * @param {HTMLElement} labelEl - ラベル（「先手 六段」等）を表示する要素
+ * @param {HTMLElement} nameEl - 名前を表示する要素
+ * @param {'SENTE'|'GOTE'} side - このボックスに表示する対局者の陣営
+ *   （画面上の位置＝奥/手前ではなく、実際にどちらの駒か。反転時の入れ替えは
+ *   呼び出し元（main.js）が既存のisFlippedルールに従って解決済みの値を渡す）
+ * @param {string} name - 表示する名前（デフォルト値「先手」「後手」は呼び出し元で解決済み）
+ * @param {string|null} rank - 段級位。KIFヘッダーに存在しない場合はnull。
+ */
+export function renderPlayerInfoBox(labelEl, nameEl, side, name, rank) {
+  const sideLabel = side === 'SENTE' ? '先手' : '後手';
+  labelEl.textContent = rank ? `${sideLabel} ${rank}` : sideLabel;
+  nameEl.textContent = name;
+
+  // 修正③: 固定幅ボックスに収まるかを実測し、収まらなければフォントサイズを
+  // 段階的に縮小する。まず基本サイズにリセットしてから測定する
+  // （前回描画時に縮小された状態が残っていると正しく測定できないため）。
+  nameEl.style.fontSize = '';
+  for (const size of PLAYER_NAME_FONT_SIZES) {
+    if (nameEl.scrollWidth <= nameEl.clientWidth) break;
+    nameEl.style.fontSize = `${size}px`;
+  }
+}

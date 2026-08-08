@@ -1,7 +1,7 @@
 /**
  * ⑥下部操作列（設計書 第5部）
  */
-import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo, isAnyControlDisabled } from '../state/app-state.js';
+import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo, isAnyControlDisabled, isBackwardNavigationEnabled } from '../state/app-state.js';
 import { openMoveListPopup } from './move-list-popup.js';
 
 /**
@@ -60,10 +60,15 @@ export function updateBottomControls() {
 
   const disabled = isAnyControlDisabled();
 
-  // 常に活性（要件定義書5.6節）：盤面反転・最初・前
+  // 盤面反転：常に活性（要件定義書5.6節）
   document.getElementById('btn-flip').disabled = disabled;
-  document.getElementById('btn-first').disabled = disabled;
-  document.getElementById('btn-prev').disabled = disabled;
+
+  // 修正①: 最初・前は「1手でも指した後（moveHistoryが空でない）」のみ活性化する。
+  // 初期局面（moveHistory.length === 0）より前の局面は存在しないため、
+  // 「次」「最後」ボタン（isForwardNavigationEnabled）と対称的に無効化する。
+  const backwardEnabled = isBackwardNavigationEnabled();
+  document.getElementById('btn-first').disabled = disabled || !backwardEnabled;
+  document.getElementById('btn-prev').disabled = disabled || !backwardEnabled;
 
   // 次・最後：棋譜モードかつ棋譜の末尾に未到達の場合のみ活性化
   let forwardEnabled = false;

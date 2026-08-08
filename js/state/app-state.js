@@ -83,6 +83,19 @@ export function isForwardNavigationEnabled() {
 }
 
 /**
+ * 派生値：isBackwardNavigationEnabled（最初・前ボタン）
+ * 修正①: 初期局面（moveHistory.length === 0）より前の局面は存在しないため、
+ * この状態では「最初」「前」ボタンを無効化する。isForwardNavigationEnabled()
+ * （次・最後ボタン）と対称的に、後退方向にこれ以上進める余地があるかどうかを
+ * 単一の判定関数として提供する。棋譜未読込（kifuData === null）でも
+ * moveHistoryが空である限り無効化の判定は成立する（棋譜のインポート有無に
+ * かかわらず「動かした手がゼロなら戻れない」という条件のみで判定できるため）。
+ */
+export function isBackwardNavigationEnabled() {
+  return state.moveHistory.length > 0;
+}
+
+/**
  * 盤面を再構築する（全手再生方式）。
  * @param {Move[]} moveHistory
  * @param {InitialPosition|null} initial

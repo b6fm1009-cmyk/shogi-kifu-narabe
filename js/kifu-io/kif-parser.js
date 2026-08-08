@@ -31,9 +31,14 @@ export function parseKifText(kifText) {
     }
 
     // ヘッダー情報
+    // 修正②: 段級位（先手段級／後手段級）も取得する。KIFヘッダーに存在しない場合は
+    // null とし、表示側で「段級位欄ごと非表示にする」判定に使う（名前のような
+    // デフォルト文言は設けない。要件定義書8.8節rev3参照）。
     const header = {
       senteName: kifu.header['先手'] || '先手',
-      goteName: kifu.header['後手'] || '後手'
+      goteName: kifu.header['後手'] || '後手',
+      senteRank: kifu.header['先手段級'] || null,
+      goteRank: kifu.header['後手段級'] || null
     };
 
     // 初期局面
