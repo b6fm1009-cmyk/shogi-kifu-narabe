@@ -29,7 +29,10 @@
 
       <!-- ③対戦相手情報＋持ち駒 -->
       <div class="player-info player-info--opponent">
-        <span id="opponent-name" class="player-name">後手</span>
+        <div id="opponent-info-box" class="player-info-box">
+          <span id="opponent-label" class="player-label"></span>
+          <span id="opponent-name" class="player-name">後手</span>
+        </div>
         <div id="opponent-hand" class="hand-pieces-container"></div>
       </div>
 
@@ -38,8 +41,11 @@
 
       <!-- ⑤自分の情報＋持ち駒 -->
       <div class="player-info player-info--self">
-        <span id="self-name" class="player-name">先手</span>
         <div id="self-hand" class="hand-pieces-container"></div>
+        <div id="self-info-box" class="player-info-box">
+          <span id="self-label" class="player-label"></span>
+          <span id="self-name" class="player-name">先手</span>
+        </div>
       </div>
 
       <!-- ⑥下部操作列 -->
