@@ -99,7 +99,7 @@ html, body {
 
 .header-btn {
   /* 修正④: ヘッダーボタンの文字をわずかに拡大（12px→13px）。視認性向上のための調整。 */
-  font-size: 13px;
+  font-size: 16px;
   padding: 4px 6px;
   border: 1px solid #998;
   border-radius: 4px;
