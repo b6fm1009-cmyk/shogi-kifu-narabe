@@ -99,7 +99,10 @@ function renderAll() {
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
 
   // 盤面
-  renderBoard(state.boardState, state.selectedBoardId, state.selectedPieceId, state.selectedSource);
+  // 修正①（新規要望）: 先手用・後手用の駒セットを別々に渡す
+  renderBoard(state.boardState, state.selectedBoardId,
+    { sente: state.selectedPieceIdSente, gote: state.selectedPieceIdGote },
+    state.selectedSource);
 
   // 棋譜符号バー
   const kifuBarContent = getKifuBarContent(isKifuMode, kifuProgress, state.kifuData, state.moveHistory);
@@ -119,6 +122,12 @@ function renderAll() {
   const topPieces = state.boardState.isFlipped ? state.boardState.handSente : state.boardState.handGote;
   const bottomPieces = state.boardState.isFlipped ? state.boardState.handGote : state.boardState.handSente;
 
+  // 修正①（新規要望）: 持ち駒欄も「今その駒を保有している陣営」の駒セットを使う。
+  // topPieces/bottomPiecesの由来（handSente/handGote）と同じ式で、どちらの陣営の
+  // 駒セットIDを使うかを対応させる（画面上の位置=奥/手前ではなく、実際の所属で決める）。
+  const topPieceId = state.boardState.isFlipped ? state.selectedPieceIdSente : state.selectedPieceIdGote;
+  const bottomPieceId = state.boardState.isFlipped ? state.selectedPieceIdGote : state.selectedPieceIdSente;
+
   // 選択中ハイライトの対象駒種
   const selected = state.selectedSource;
   const topSelected = selected && selected.origin === 'HAND'
@@ -130,12 +139,12 @@ function renderAll() {
 
   renderHandPieces(topPieces, 'RIGHT', OPPONENT_HAND_ORDER,
     document.getElementById('opponent-hand'), topSelected, squareSize,
-    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+    topPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
     'GOTE'); // 修正③: 画面奥は常に倒立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
   renderHandPieces(bottomPieces, 'LEFT', SELF_HAND_ORDER,
     document.getElementById('self-hand'), bottomSelected, squareSize,
-    state.selectedPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+    bottomPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
     'SENTE'); // 修正③: 画面手前は常に正立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
   // 対戦者名・段級位（反転時は入れ替え）

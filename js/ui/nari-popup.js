@@ -33,9 +33,11 @@ function loadPieceFit() {
  * @param {Side} side - 駒画像の正立/倒立を決める向き。修正④（将棋ウォーズ準拠）により、
  *   駒の実所属（先手/後手）ではなく、常に'SENTE'（正立）を渡す運用とする。
  *   呼び出し元はsource.side（実所属）をそのまま渡さないこと。
- * @param {string} pieceId - 修正③: 現在ユーザーが選択中の駒アセットID（state.selectedPieceId）。
+ * @param {string} pieceId - 修正③: 現在ユーザーが選択中の駒アセットID。
  *   ポップアップに表示する駒画像を、盤面に表示されている駒と一致させるために必要。
- *   呼び出し元は必ずgetState().selectedPieceIdを渡すこと（デフォルト駒IDへの固定はしない）。
+ *   修正①（新規要望）: 先手用・後手用に駒セットが分かれたため、呼び出し元
+ *   （selection.js）は「今動かしている駒の実所属（source.side）」に対応する
+ *   selectedPieceIdSente/selectedPieceIdGoteのいずれかを解決してから渡すこと。
  * @param {(result: boolean|'CANCEL') => void} onResult
  */
 export function showNariPopup(pieceType, side, pieceId, onResult) {

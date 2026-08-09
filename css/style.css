@@ -629,6 +629,37 @@ html, body {
   touch-action: pan-y;
 }
 
+/* 修正①（新規要望）: 駒タブ内の「先手用」「後手用」切り替え。
+   .asset-drawer-body自体がスクロール領域のため、リストと一緒に流れてしまわないよう
+   sticky指定で常に上部に見える状態を保つ（スクロールしても切り替えを見失わないため）。 */
+.asset-piece-side-switch {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  background-color: #f5f0e8;
+  border-bottom: 1px solid #ddd;
+}
+
+.asset-piece-side-switch-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid #998;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.asset-piece-side-switch-btn--active {
+  background-color: #333;
+  color: #fff;
+  border-color: #333;
+}
+
 .asset-row {
   display: flex;
   align-items: center;

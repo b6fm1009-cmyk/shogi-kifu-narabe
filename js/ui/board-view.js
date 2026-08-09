@@ -37,14 +37,19 @@ export function initBoardView(containerEl, layouts, assetManifest, onImageLoad) 
  * 盤面を描画する。
  * @param {BoardState} boardState
  * @param {string} selectedBoardId
- * @param {string} selectedPieceId
+ * @param {{sente: string, gote: string}} selectedPieceIds - 修正①（新規要望）:
+ *   先手用・後手用それぞれの駒セットID。盤上の各駒は piece.side（今その駒を
+ *   保有している陣営）に応じてどちらの画像セットを使うかを決める。
  * @param {SelectedSource|null} selectedSource
  */
-export function renderBoard(boardState, selectedBoardId, selectedPieceId, selectedSource) {
+export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selectedSource) {
   if (!boardEl) return;
 
   const boardAsset = findBoardAsset(manifest, selectedBoardId);
-  const pieceAsset = findPieceAsset(manifest, selectedPieceId);
+  const pieceAssetBySide = {
+    SENTE: findPieceAsset(manifest, selectedPieceIds.sente),
+    GOTE: findPieceAsset(manifest, selectedPieceIds.gote)
+  };
 
   // 盤画像コンテナ
   boardEl.innerHTML = '';
@@ -72,7 +77,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
   // 依存する計算のため、ロード完了を待たずに呼ぶと座標が0基準のまま描画されてしまう。
   // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
   const renderDependents = () => {
-    placePieces(boardState, pieceAsset, selectedSource);
+    placePieces(boardState, pieceAssetBySide, selectedSource);
     renderCoordinates(boardState.isFlipped);
     if (imageLoadCallback) imageLoadCallback();
   };
@@ -86,8 +91,15 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceId, select
 
 /**
  * 駒を配置する。
+ * @param {BoardState} boardState
+ * @param {{SENTE: Object, GOTE: Object}} pieceAssetBySide - 修正①（新規要望）:
+ *   陣営ごとの駒画像アセット。各駒の描画時は piece.side（現在の保有者。取った駒は
+ *   持ち駒になった時点で保有者側のsideに書き換わる既存仕様＝apply-move.js）で
+ *   引くため、成り駒や相手から取った駒であっても「今それを持っている側」の
+ *   見た目になる（要望の「取った瞬間に持ってる側の駒に変換される」と一致）。
+ * @param {SelectedSource|null} selectedSource
  */
-function placePieces(boardState, pieceAsset, selectedSource) {
+function placePieces(boardState, pieceAssetBySide, selectedSource) {
   // 既存の駒要素をクリア（pieces-layer は boardWrapEl 側に付け替えたため、そちらから探す）
   const existing = boardWrapEl.querySelector('.pieces-layer');
   if (existing) existing.remove();
@@ -152,6 +164,9 @@ function placePieces(boardState, pieceAsset, selectedSource) {
       }
 
       // 駒画像をスプライトから切り出し
+      // 修正①（新規要望）: piece.side（今この駒を保有している陣営。表示上の反転とは無関係の
+      // 実所属）に応じて、先手用／後手用いずれの画像セットを使うかを決める。
+      const pieceAsset = pieceAssetBySide[piece.side];
       renderPieceImage(pieceEl, pieceAsset, cell, squareSize);
 
       // 配置位置（盤の外枠オフセット分を加算する）

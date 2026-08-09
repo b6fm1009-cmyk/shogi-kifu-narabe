@@ -12,7 +12,10 @@ import { findPieceAsset } from '../assets/asset-manifest.js';
  * @param {HTMLElement} containerEl - 描画先のDOM要素
  * @param {PieceType|null} selectedPieceType - 選択中の駒種（なければnull）
  * @param {{width: number, height: number}} squareSizePx - 盤マス1つの実ピクセルサイズ
- * @param {string} selectedPieceId - 選択中の駒セットID
+ * @param {string} selectedPieceId - 描画対象の持ち駒欄に使う駒セットID。修正①（新規要望）で
+ *   先手用・後手用の駒セットが分かれたため、呼び出し元（main.js）が「この持ち駒欄が
+ *   今どちらの陣営の持ち駒か」に応じてselectedPieceIdSente/selectedPieceIdGoteのいずれかを
+ *   解決してから渡す（このため引数の意味自体は従来と同じ「使う駒セットID」のまま変わらない）。
  * @param {Object} pieceLayout - piece-layout.json
  * @param {Object} pieceFit - piece-fit.json
  * @param {AssetManifest} manifest - アセットマニフェスト

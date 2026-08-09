@@ -8,6 +8,13 @@ import { PROMOTION_MAP } from '../models/board.js';
 let drawerEl = null;
 let overlayEl = null;
 let activeTab = 'PIECE';
+// 修正①（新規要望）: 駒タブ内で「先手用」「後手用」どちらの駒セットを選んでいるかを
+// 保持する内部状態。ドロワーの開閉自体はapp-state.js（isAssetDrawerOpen）が正本だが、
+// このactiveSideはドロワー内部のUI状態（どのタブ・どちらの陣営を表示中か）に過ぎず、
+// 他画面の描画に影響しないため、activeTabと同様このモジュール内のプライベート変数として
+// 保持する（app-stateに含めるとselectedSource等と同列の「アプリ全体の状態」に
+// 見えてしまい、実態（ドロワーを閉じれば意味を失う一時的なUI状態）とずれるため）。
+let activeSide = 'SENTE';
 let manifest = null;
 let pieceLayout = null;
 let pieceFit = null;
@@ -54,6 +61,7 @@ export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
  */
 export function openAssetDrawer() {
   activeTab = 'PIECE'; // 開くたびに駒タブにリセット（要件定義書5.9節）
+  activeSide = 'SENTE'; // 修正①（新規要望）: 開くたびに先手用にリセット（駒タブと同じ考え方で毎回同じ状態から始める）
   setAssetDrawerOpen(true);
   updateTabs();
   renderBody();
@@ -82,6 +90,7 @@ function renderBody() {
   const body = drawerEl.querySelector('.asset-drawer-body');
   body.innerHTML = '';
   if (activeTab === 'PIECE') {
+    renderPieceSideSwitch(body);
     renderPieceTab(body);
   } else {
     renderBoardTab(body);
@@ -89,7 +98,36 @@ function renderBody() {
 }
 
 /**
+ * 修正①（新規要望）: 駒タブ上部に「先手用」「後手用」の切り替えセグメントを描画する。
+ * 盤タブには成りの概念がなく先手/後手で見た目を分ける要望も出ていないため、この
+ * 切り替えは駒タブ限定とする。
+ */
+function renderPieceSideSwitch(body) {
+  const switchEl = document.createElement('div');
+  switchEl.className = 'asset-piece-side-switch';
+
+  const sides = [
+    { side: 'SENTE', label: '先手用' },
+    { side: 'GOTE', label: '後手用' }
+  ];
+  for (const s of sides) {
+    const btn = document.createElement('button');
+    btn.className = 'asset-piece-side-switch-btn';
+    btn.textContent = s.label;
+    btn.classList.toggle('asset-piece-side-switch-btn--active', activeSide === s.side);
+    btn.addEventListener('click', () => {
+      activeSide = s.side;
+      renderBody();
+    });
+    switchEl.appendChild(btn);
+  }
+  body.appendChild(switchEl);
+}
+
+/**
  * 駒タブを描画する。
+ * 修正①（新規要望）: 行タップ時にどちら側（activeSide）の選択を更新するかを渡す。
+ * 選択中ハイライトの判定（isPieceSelected）もactiveSide基準に変わる。
  */
 function renderPieceTab(body) {
   for (const piece of manifest.pieces) {
@@ -123,7 +161,7 @@ function renderPieceTab(body) {
     row.appendChild(label);
 
     row.addEventListener('click', () => {
-      selectPieceAsset(piece.id);
+      selectPieceAsset(piece.id, activeSide);
       renderBody();
       if (renderCallback) renderCallback();
     });
@@ -226,6 +264,8 @@ function renderBoardTab(body) {
 
 /**
  * 選択中の駒セットかどうか。
+ * 修正①（新規要望）: activeSide（今表示中の先手用/後手用切り替え）に対応する
+ * state側の駒セットIDと比較する。
  */
 function isPieceSelected(id) {
   return getSelectedPieceId() === id;
@@ -239,7 +279,7 @@ function isBoardSelected(id) {
 }
 
 function getSelectedPieceId() {
-  return getState().selectedPieceId;
+  return activeSide === 'SENTE' ? getState().selectedPieceIdSente : getState().selectedPieceIdGote;
 }
 
 function getSelectedBoardId() {

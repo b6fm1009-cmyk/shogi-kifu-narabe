@@ -81,9 +81,15 @@ function processMove(source, target, boardState) {
       // 修正④: 将棋ウォーズ準拠のため、成りポップアップの駒画像は常に正立で表示する。
       // source.side（駒の実所属=先手/後手）をそのまま渡すと後手の駒が倒立表示になって
       // しまうため、向き決定用の引数には駒の実所属ではなく固定で'SENTE'（正立扱い）を渡す。
-      // 修正③: 現在ユーザーが選択中の駒アセットID（デフォルト固定ではない）を渡し、
-      // ポップアップの駒画像を盤面の駒と一致させる。
-      showNariPopup(source.pieceType, 'SENTE', getState().selectedPieceId, (result) => {
+      // 修正①（新規要望）: 駒画像セット自体は「今動かしている駒の実所属」
+      // （source.side）に対応するものを使う。向き（正立/倒立）と画像セットの選択は
+      // 別レイヤーの話であり、上記の「向きは常に正立固定」というルールとは独立に、
+      // 「どちらの駒セットの絵柄を使うか」はsource.sideに従う必要がある
+      // （例：後手の駒を成らせる場面では、後手用に選んだ駒セットの絵柄を出すべき）。
+      const pieceIdForNariPopup = source.side === 'SENTE'
+        ? getState().selectedPieceIdSente
+        : getState().selectedPieceIdGote;
+      showNariPopup(source.pieceType, 'SENTE', pieceIdForNariPopup, (result) => {
         if (result === 'CANCEL') {
           clearSelection();
           return;

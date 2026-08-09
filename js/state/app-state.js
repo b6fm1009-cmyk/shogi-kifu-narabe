@@ -24,10 +24,15 @@ import { judgeKifuMode } from '../core/kifu-judge.js';
  * @property {boolean} isAssetDrawerOpen
  * @property {boolean} isMoveListOpen
  * @property {string} selectedBoardId
- * @property {string} selectedPieceId
+ * @property {string} selectedPieceIdSente - 先手側（自分の駒・自分の持ち駒欄）に使う駒セットID
+ * @property {string} selectedPieceIdGote - 後手側（相手の駒・相手の持ち駒欄）に使う駒セットID
  */
 
 // モジュール内プライベート状態
+// 修正①（新規要望）: 先手用・後手用の駒セットを別々に選択できるよう、selectedPieceId（単一）を
+// selectedPieceIdSente / selectedPieceIdGote の2つに分割した。両方の初期値は同じデフォルト駒
+// （assets-manifest.jsonのdefaults.pieces）にしておくことで、従来通り「先手も後手も同じ駒」の
+// 見た目から始まる（ユーザーが片方だけ変更しない限り旧来の挙動と同じに見える）。
 let state = {
   boardState: createInitialBoardState(null),
   moveHistory: [],
@@ -38,7 +43,8 @@ let state = {
   isAssetDrawerOpen: false,
   isMoveListOpen: false,
   selectedBoardId: 'wood',
-  selectedPieceId: 'maki_ryoko_1_letter'
+  selectedPieceIdSente: 'maki_ryoko_1_letter',
+  selectedPieceIdGote: 'maki_ryoko_1_letter'
 };
 
 // 再描画コールバック（main.js が登録する）
@@ -251,9 +257,20 @@ export function setMoveListOpen(isOpen) {
   notifyRender();
 }
 
-/** 選択中の駒セットIDを更新する */
-export function selectPieceAsset(pieceId) {
-  state = { ...state, selectedPieceId: pieceId };
+/**
+ * 選択中の駒セットIDを更新する。
+ * 修正①（新規要望）: 先手用・後手用を別々に選べるようにしたため、どちら側の変更かを
+ * side引数で明示する。呼び出し側（asset-drawer.js）はドロワー内の先手/後手切り替えに
+ * 応じてこの引数を渡し分ける。
+ * @param {string} pieceId
+ * @param {'SENTE'|'GOTE'} side
+ */
+export function selectPieceAsset(pieceId, side) {
+  if (side === 'SENTE') {
+    state = { ...state, selectedPieceIdSente: pieceId };
+  } else {
+    state = { ...state, selectedPieceIdGote: pieceId };
+  }
   notifyRender();
 }
 
