@@ -24,7 +24,25 @@ export function parseKifText(kifText) {
     const jkf = getLibrary();
     // parseKIF() は { header, initial?, moves } を直接持つオブジェクトを返す
     // （JKFPlayerインスタンスではない。Node.js検証で確認済み）。
-    const kifu = jkf.Parsers.parseKIF(kifText);
+    //
+    // 【2026-08-09 修正】Normalizer.normalizeKIF() を挟む理由：
+    // KIF記法自体には「何を取ったか」を示すマーカーが無く、取った駒種（capture）は
+    // 盤面を実際にシミュレートしないと判定できない。ライブラリ内部では
+    // normalizeKIF() が Shogi インスタンスで全手を1手ずつ再生し、取った駒があれば
+    // move.capture に補完する設計になっている（json-kifu-format側の一次資料：
+    // lib/json-kifu-format.min.js 内 Normalizer.normalizeKIF の実装を参照）。
+    // raw の Parsers.parseKIF() はテキストの構文解析のみを行い、この補完を一切
+    // 行わないため、normalizeKIF を通さないと m.capture が常に undefined になり、
+    // 下記の capturedPieceType が全指し手で null になる（実際に119手中119手で
+    // 発生することをNode.js上で確認済み。E2E Instructions for Claude.md 参照）。
+    // normalizeKIF は kifu.initial を書き換えない（HIRATE以外はそのまま保持する
+    // 実装になっている）ため、駒落ち等のinitial処理には影響しない。
+    // 副作用として m.color（手番）も同時に補完されるが、下記122-124行目の
+    // 「m.color があれば優先」ロジックと矛盾しない値になるため問題ない。
+    // 不正な棋譜（合法手でない手を含む棋譜）が渡された場合、normalizeKIF内部の
+    // Shogiシミュレーションが例外をthrowするが、これは既存のtry/catchが
+    // 「不正な棋譜です」エラーとして正しく拾う（元々の意図した動作と変わらない）。
+    const kifu = jkf.Normalizer.normalizeKIF(jkf.Parsers.parseKIF(kifText));
 
     if (!kifu || !kifu.moves || !kifu.header) {
       return { success: false, error: '不正な棋譜です。インポートに対応しているのはKIF (.kif / .kifu) のみです。' };
