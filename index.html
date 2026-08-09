@@ -16,6 +16,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- PWA（ホーム画面追加）用の設定。
+       theme-color はモバイルブラウザのアドレスバー色で、manifest.webmanifest の
+       theme_color と一致させる（揃えないと起動時に色が切り替わって見える）。
+       apple-touch-icon は iOS Safari の「ホーム画面に追加」用。iOS は manifest の
+       アイコンを参照しないことが多く、この link が無いと画面上のスクリーンショット
+       を代用アイコンにされてしまうため、正方形の専用アイコンを明示する。 -->
+  <meta name="theme-color" content="#3a3a3a">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
   <title>将棋 棋譜並べ</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./css/style.css">

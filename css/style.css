@@ -483,6 +483,23 @@ html, body {
   opacity: 1;
 }
 
+/* なぜ: SW更新の案内のように「明示操作で初めて処理を進めたい」トーストのために、
+   本文と並ぶアクションボタンを用意する。黒背景上で視認できるよう、半透明の明るい
+   塗りと白い枠線で独立させ、押した感覚が得られるよう active で濃くする。 */
+.toast-action {
+  margin-left: 10px;
+  padding: 4px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.toast-action:active {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+
 /* ---------- 成りポップアップ ---------- */
 /* 修正⑦: 旧配色（背景ピンク#ffe8e8／水色#e8f0ff）はユーザーからの見た目の指摘を受けて
    ニュートラルなグレー基調に変更した。左＝成る／右＝成らないという配置（要件定義書7章）
