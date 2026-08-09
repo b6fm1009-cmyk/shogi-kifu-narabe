@@ -412,6 +412,32 @@ html, body {
   opacity: 0.4;
 }
 
+/* 新規要望：棋譜分岐中モードの「次」ボタンに、長押しで複数の変化を
+   選び直せることを示すマークを付ける。⎇ (U+2387, "Alternative Way")は
+   分岐路そのものを表す記号のため採用。右上に小さめのバッジとして重ねる。 */
+.bottom-btn--branchable {
+  position: relative;
+}
+
+.bottom-btn--branchable::after {
+  content: '⎇';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  line-height: 1;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #e8c477;
+  border: 1px solid #c9a35a;
+  color: #2a2010;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
 .bottom-btn--flip {
   background-color: #b0d0f0;
   border-color: #6a9ace;
@@ -718,7 +744,9 @@ html, body {
   overflow: hidden;
 }
 
-/* ---------- 手数選択モーダル（追加②：n手目ジャンプ） ---------- */
+/* ---------- 手数選択モーダル（追加②：n手目ジャンプ）／分岐選択モーダル（新規要望）共通 ----------
+   両モーダルは見た目が同一のため、.move-list-* クラスを共有する
+   （branch-popup.js も同じクラス名でDOMを組み立てる）。 */
 .move-list-overlay {
   position: absolute;
   top: 0;

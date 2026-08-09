@@ -4,6 +4,7 @@
 import { createInitialBoardState } from '../models/board.js';
 import { applyMoveToBoard } from '../core/apply-move.js';
 import { judgeKifuMode } from '../core/kifu-judge.js';
+import { movesEqual } from '../models/move.js';
 
 /**
  * @typedef {Object} SelectedSource
@@ -23,6 +24,7 @@ import { judgeKifuMode } from '../core/kifu-judge.js';
  * @property {boolean} isNariPopupOpen
  * @property {boolean} isAssetDrawerOpen
  * @property {boolean} isMoveListOpen
+ * @property {boolean} isBranchPopupOpen - 分岐選択モーダル（新規要望）の開閉状態
  * @property {string} selectedBoardId
  * @property {string} selectedPieceIdSente - 先手側（自分の駒・自分の持ち駒欄）に使う駒セットID
  * @property {string} selectedPieceIdGote - 後手側（相手の駒・相手の持ち駒欄）に使う駒セットID
@@ -42,10 +44,91 @@ let state = {
   isNariPopupOpen: false,
   isAssetDrawerOpen: false,
   isMoveListOpen: false,
+  isBranchPopupOpen: false,
   selectedBoardId: 'wood',
   selectedPieceIdSente: 'maki_ryoko_1_letter',
   selectedPieceIdGote: 'maki_ryoko_1_letter'
 };
+
+/**
+ * 分岐「次」キャッシュ（新規要望：棋譜分岐中モードの「次」を選択可能にする）。
+ *
+ * 目的：分岐モード中に「前」で局面を戻した後、再度「次」を押すだけで
+ * 直前まで検討していた変化に戻れるようにする。さらに、ある局面から複数の
+ * 変化を検討していた場合（例：▲7六歩の次に△3四歩と△8四歩の両方を試した）、
+ * 「次」の長押しでそれらの候補を選び直せるようにする。
+ *
+ * 構造：Map<prefixKey, BranchEntry[]>
+ * - prefixKey：「その1手を指す直前の局面」を表すキー。moveHistoryのうち
+ *   その手より前の部分（＝その手を指した時点でのprefix）をmovesKey()で
+ *   文字列化したもの。「初期局面から何を指したか」ではなく「どの局面から
+ *   分岐したか」を示すキーであることに注意。
+ * - BranchEntry：{ move: Move, lastUsedAt: number }
+ *   その局面から指した1手と、最後に検討（到達）した時刻。同じmoveが
+ *   再度指されたらlastUsedAtを更新するだけで、エントリは重複させない
+ *   （movesEqual()で同一判定）。
+ * - 配列は「最後に検討した順（新しい変化が先頭）」でソートして保持する。
+ *   長押しメニューの表示順・「次」の単押しでどちらへ進むかの両方に使う。
+ *
+ * ライフサイクル：loadKifu()（新規棋譜インポート）で全クリアする。
+ * 1つの棋譜を並べている間は保持し続ける（アプリ全体で1つのMapのみ）。
+ */
+let branchCache = new Map();
+
+/**
+ * moveHistoryの配列（の一部）を、Mapのキーとして使える文字列に変換する。
+ * @param {Move[]} moves
+ * @returns {string}
+ */
+function movesKey(moves) {
+  return JSON.stringify(moves.map(m => [
+    m.kind, m.from ? [m.from.file, m.from.rank] : null,
+    [m.to.file, m.to.rank], m.pieceType, m.side, m.promoted
+  ]));
+}
+
+/**
+ * 分岐キャッシュに1手を記録する（指し手確定時に呼ぶ）。
+ * @param {Move[]} prefix - その手を指す直前のmoveHistory
+ * @param {Move} move - 実際に指した手
+ */
+function recordBranchMove(prefix, move) {
+  const key = movesKey(prefix);
+  const entries = branchCache.get(key) || [];
+  const existingIndex = entries.findIndex(e => movesEqual(e.move, move));
+  if (existingIndex !== -1) {
+    // 既存の候補を再度指した＝再検討とみなし、最新扱いに更新する
+    const [existing] = entries.splice(existingIndex, 1);
+    existing.lastUsedAt = Date.now();
+    entries.unshift(existing);
+  } else {
+    entries.unshift({ move, lastUsedAt: Date.now() });
+  }
+  branchCache.set(key, entries);
+}
+
+/**
+ * 指定局面（moveHistoryのprefix）から分岐キャッシュに記録されている候補を取得する。
+ * 「最後に検討した順」（新しい変化が先頭）で返す。
+ * @param {Move[]} prefix
+ * @returns {{ move: Move, lastUsedAt: number }[]}
+ */
+export function getBranchCandidates(prefix) {
+  return branchCache.get(movesKey(prefix)) || [];
+}
+
+/**
+ * 現在の局面から「次」を押した際に進める先の候補一覧を返す（長押しメニュー用）。
+ * 棋譜モード中は棋譜本来の次の手を候補の一つとして含める必要はない
+ * （棋譜モードでは通常のadvanceToKifuProgress()の対象なので、この関数は
+ * 分岐モード中の利用を想定する）。分岐モード中に棋譜側の次の手を検討して
+ * 「前」で戻ってきた場合も、その手はrecordBranchMove()で記録済みのため
+ * 自動的に候補へ含まれる。
+ * @returns {{ move: Move, lastUsedAt: number }[]}
+ */
+export function getNextBranchCandidates() {
+  return getBranchCandidates(state.moveHistory);
+}
 
 // 再描画コールバック（main.js が登録する）
 let renderCallback = null;
@@ -71,7 +154,7 @@ export function getKifuModeInfo() {
 
 /** 派生値：isAnyControlDisabled */
 export function isAnyControlDisabled() {
-  return state.isNariPopupOpen || state.isAssetDrawerOpen || state.isMoveListOpen;
+  return state.isNariPopupOpen || state.isAssetDrawerOpen || state.isMoveListOpen || state.isBranchPopupOpen;
 }
 
 /** 派生値：isBackToKifuButtonEnabled */
@@ -79,13 +162,80 @@ export function isBackToKifuButtonEnabled() {
   return !getKifuModeInfo().isKifuMode;
 }
 
-/** 派生値：isForwardNavigationEnabled（次・最後ボタン） */
+/**
+ * 派生値：isForwardNavigationEnabled（次ボタン専用）
+ *
+ * 新規要望を踏まえた考え方：「次」は棋譜モード／分岐モードを問わず、
+ * 「直近に検討していた変化」（分岐キャッシュの最新候補）があればそれを優先する。
+ * 例：▲7六歩の局面で△3四歩（棋譜本譜）→△8四歩（分岐）の順に検討した場合、
+ * ▲7六歩まで「前」で戻ると（△3四歩自体は棋譜通りの手のため）isKifuModeはtrueに
+ * 戻るが、直近に検討していたのは△8四歩なので、「次」はそちらを優先する必要がある。
+ * 分岐キャッシュに候補が無ければ、棋譜モード中は棋譜本譜の次の手にフォールバックする
+ * （＝従来通りの挙動。今まで一度も分岐を試していない大多数のケースはこちらに該当する）。
+ */
 export function isForwardNavigationEnabled() {
+  if (getNextBranchCandidates().length > 0) return true;
+
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
-  if (!isKifuMode) return false;
-  if (state.kifuData === null) return false;
+  if (!isKifuMode || state.kifuData === null) return false;
   const kifuMoves = state.kifuData.entries.filter(e => e.move !== null);
   return kifuProgress < kifuMoves.length;
+}
+
+/**
+ * 派生値：isLastButtonEnabled（「最後」ボタン専用）。
+ * こちらは分岐キャッシュを見ず、常に「棋譜モードで末尾未到達」のみで判定する
+ * （要件定義書5.6節：分岐モード中は「棋譜の末尾」という概念が存在しないため。
+ * 「次」とは異なり、分岐キャッシュに候補があっても「最後」は活性化しない）。
+ */
+export function isLastButtonEnabled() {
+  const { isKifuMode, kifuProgress } = getKifuModeInfo();
+  if (!isKifuMode || state.kifuData === null) return false;
+  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null);
+  return kifuProgress < kifuMoves.length;
+}
+
+/**
+ * 新規要望：「次」を押した際、進める先の手を1つ返す（長押しでない通常タップの挙動）。
+ * 優先順位：
+ *   1. 分岐キャッシュに候補があれば「最後に検討した変化」（先頭要素）
+ *   2. 候補が無ければ、棋譜モード中は棋譜本譜の次の手
+ *   3. どちらも無ければ null（＝「次」は無効化されているはずなので通常到達しない）
+ * @returns {Move|null}
+ */
+export function getDefaultForwardMove() {
+  const candidates = getNextBranchCandidates();
+  if (candidates.length > 0) return candidates[0].move;
+
+  const { isKifuMode, kifuProgress } = getKifuModeInfo();
+  if (!isKifuMode || state.kifuData === null) return null;
+  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
+  return kifuMoves[kifuProgress] || null;
+}
+
+/**
+ * 新規要望：「次」を押して1手進める（分岐キャッシュ対応版）。
+ * advanceToKifuProgress()（手数選択・最後ボタン等、複数手をまとめて進める用途）とは別に、
+ * 「次」ボタン専用の1手進める入口として用意する。
+ * 対象の手が指定されなければ、getDefaultForwardMove()の優先順位に従う。
+ * @param {Move} [move] - 長押しメニューで選んだ特定の変化。省略時は既定の優先手。
+ */
+export function advanceBranch(move) {
+  const targetMove = move || getDefaultForwardMove();
+  if (!targetMove) return;
+
+  // 指定手が現在の分岐キャッシュの候補と一致するか確認し、最新扱いに更新する
+  // （これにより、この手をさらに「次」で辿った後「前」で戻っても、
+  // 今回選んだ変化が引き続き最新＝単押しの対象として残る）。
+  // 棋譜本譜の手をフォールバックで進めた場合も、以後の「前後」往復で選択が
+  // ブレないよう同様に記録しておく。
+  recordBranchMove(state.moveHistory, targetMove);
+
+  const newHistory = [...state.moveHistory, targetMove];
+  const initial = state.kifuData ? state.kifuData.initial : null;
+  const boardState = rebuildBoardState(newHistory, initial, state.boardState.isFlipped);
+  state = { ...state, moveHistory: newHistory, boardState, selectedSource: null };
+  notifyRender();
 }
 
 /**
@@ -138,6 +288,11 @@ export function clearSelection() {
 
 /** 指し手を確定し、moveHistory と boardState を更新する */
 export function commitMove(move, newBoardState) {
+  // 新規要望：分岐「次」キャッシュへの記録。棋譜モード中に棋譜通りの手を
+  // 指した場合も含めて常に記録する（分岐モードへ入った後に「前」で
+  // 棋譜モード側の局面まで戻り、「次」で再度この手へ進めるようにするため）。
+  recordBranchMove(state.moveHistory, move);
+
   state = {
     ...state,
     moveHistory: [...state.moveHistory, move],
@@ -149,6 +304,12 @@ export function commitMove(move, newBoardState) {
 
 /** 棋譜を読み込む */
 export function loadKifu(kifuData) {
+  // 新規要望：他の棋譜をインポートした時点で分岐「次」キャッシュをクリアする。
+  // 局面（moveHistoryのprefix）をキーにしているため、棋譜が変わると
+  // キーの意味自体が変わってしまう（別の対局の同じ手順が偶然一致するなど）ので、
+  // 保持し続けず必ずここで破棄する。
+  branchCache = new Map();
+
   state = {
     ...state,
     kifuData,
@@ -254,6 +415,12 @@ export function setAssetDrawerOpen(isOpen) {
 /** 手数選択リスト（追加②）の開閉状態を設定する */
 export function setMoveListOpen(isOpen) {
   state = { ...state, isMoveListOpen: isOpen };
+  notifyRender();
+}
+
+/** 分岐選択モーダル（新規要望）の開閉状態を設定する */
+export function setBranchPopupOpen(isOpen) {
+  state = { ...state, isBranchPopupOpen: isOpen };
   notifyRender();
 }
 

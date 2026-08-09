@@ -65,37 +65,68 @@ export function parseKifText(kifText) {
     if (kifu.initial && kifu.initial.preset && kifu.initial.preset !== 'HIRATE') {
       isHandicap = true;
       // JKFのinitialから盤面を構築（平手以外のプリセットの場合）
-      // 現バージョンでは簡易対応：initial.dataがあればそれを使う
       const squares = Array.from({ length: 9 }, () => Array(9).fill(null));
       const handSente = createEmptyHandPieces();
       const handGote = createEmptyHandPieces();
 
+      // json-kifu-format の initial には2通りの形がある：
+      // (A) BOD形式（盤面ダンプ）で書かれたKIF → kifu.initial.data に
+      //     { board, hands } が入っている。
+      // (B) 「手合割：四枚落ち」等、標準駒落ち名のみが書かれたKIF → data は
+      //     存在せず、kifu.initial.preset にプリセット名（'4'など）だけが入る。
+      //     この場合は jkf.Shogi.Shogi クラスに { preset } を渡すと標準駒落ち
+      //     局面を組み立ててくれる（lib/json-kifu-format.min.js 実測で確認済み）。
+      // どちらの経路で得た盤面も、board は9x9の二次元配列
+      // board[file-1][rank-1] = { color, kind } | null | {} という共通の形。
+      // hands は [先手, 後手] の順の配列で、要素は { FU: n, ... } という
+      // 駒種→枚数のオブジェクト（キーは本アプリの内部駒種表記と一致する）。
+      let board = null;
+      let hands = null;
       if (kifu.initial.data) {
-        const data = kifu.initial.data;
-        // data.squares / data.hands から盤面を構築
-        if (data.squares) {
-          for (const sq of data.squares) {
-            const file = sq.x;
-            const rank = sq.y;
+        board = kifu.initial.data.board || null;
+        hands = kifu.initial.data.hands || null;
+      } else {
+        const ShogiCtor = jkf.Shogi && jkf.Shogi.Shogi;
+        if (ShogiCtor) {
+          const shogi = new ShogiCtor({ preset: kifu.initial.preset });
+          board = shogi.board;
+          hands = shogi.hands;
+        }
+      }
+
+      if (board) {
+        let idCounter = 0;
+        for (let file = 1; file <= 9; file++) {
+          const column = board[file - 1];
+          if (!column) continue;
+          for (let rank = 1; rank <= 9; rank++) {
+            const sq = column[rank - 1];
+            if (!sq || !sq.kind) continue;
             squares[file - 1][rank - 1] = {
-              type: sq.piece,
+              type: sq.kind,
               side: sq.color === 0 ? 'SENTE' : 'GOTE',
-              id: `init_p${file}_${rank}`
+              id: `init_p${file}_${rank}_${idCounter++}`
             };
           }
         }
-        if (data.hands) {
-          if (data.hands[0]) {
-            for (const [type, count] of Object.entries(data.hands[0])) {
-              if (type in handSente) handSente[type] = count;
+      }
+      if (hands) {
+        // data.hands は { FU: n, ... } 形式、Shogiインスタンスの hands は
+        // 枚数分だけ要素が並んだ配列 [{kind:'FU'}, {kind:'FU'}, ...] 形式と、
+        // 経路によって内部形式が異なるため、両方に対応する。
+        const applyHand = (target, src) => {
+          if (Array.isArray(src)) {
+            for (const p of src) {
+              if (p && p.kind && p.kind in target) target[p.kind] += 1;
+            }
+          } else {
+            for (const [type, count] of Object.entries(src)) {
+              if (type in target) target[type] = count;
             }
           }
-          if (data.hands[1]) {
-            for (const [type, count] of Object.entries(data.hands[1])) {
-              if (type in handGote) handGote[type] = count;
-            }
-          }
-        }
+        };
+        if (hands[0]) applyHand(handSente, hands[0]);
+        if (hands[1]) applyHand(handGote, hands[1]);
       }
 
       initial = { squares, handSente, handGote, isHandicap: true };
