@@ -359,6 +359,13 @@ html, body {
   color: #333;
   transform: translate(-50%, -50%);
   pointer-events: none;
+  /* 修正⑨（新規要望）: 盤の周囲の筋・段の数字もコピー可能な状態だったため抑止する。
+     コピーできるメリットはない一方、長押しでテキスト選択されると操作の邪魔になる。
+     盤・駒と同じ3種（user-select系＋-webkit-touch-callout:none）で確実に止める。
+     pointer-events:none はタップを盤に素通しするための指定で、本指定とは別目的。 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   z-index: 10;
 }
 
@@ -405,6 +412,16 @@ html, body {
   cursor: pointer;
   white-space: nowrap;
   touch-action: manipulation;
+  /* 修正⑨（新規要望）: iOS Safariで「前」「次」などを長押しすると、
+     テキスト「前」「次」が選択されコピーされる問題を抑止する。
+     「次」は長押しで分岐選択という本来の機能があるため、長押しのたびに
+     コピーが発生するのはナンセンス。これら3種は盤・駒と同じ既定パターンで、
+     user-select:noneだけでは防げず -webkit-touch-callout:none も必須。
+     user-select系はテキスト選択にしか作用せず、pointerdownを起点にした
+     長押し分岐機能（bottom-controls.js）には影響しない。 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   flex: 1 1 auto;
 }
 
