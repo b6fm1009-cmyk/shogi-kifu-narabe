@@ -50,7 +50,10 @@ export async function importFromClipboard() {
   }
 
   // 【一時診断 2026-08-11】取得できたテキストの実体を画面上で確認する。
-  showToast('DEBUG: text.length=' + (text ? text.length : 'null/undefined') + ' head=[' + (text ? JSON.stringify(text.slice(0, 30)) : 'N/A') + ']', 8000);
+  showToast('DEBUG: text.length=' + (text ? text.length : 'null/undefined') + ' head=[' + (text ? JSON.stringify(text.slice(0, 30)) : 'N/A') + ']', 15000);
+  if (text) {
+    showToast('DEBUG tail=[' + JSON.stringify(text.slice(-60)) + ']', 15000);
+  }
 
   if (!text || !text.trim()) {
     showToast('クリップボードにテキストがありません');
@@ -61,7 +64,7 @@ export async function importFromClipboard() {
     loadKifu(result.data);
   } else {
     // 【一時診断 2026-08-11】どの段階でパースが失敗したかを表示する。
-    showToast('DEBUG parse fail: ' + result.error, 8000);
+    showToast('DEBUG parse fail: ' + result.error, 15000);
   }
 }
 
