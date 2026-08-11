@@ -82,7 +82,7 @@ function createHirateSquares() {
   let idCounter = 0;
   const makePiece = (type, side) => ({ type, side, id: `p${idCounter++}` });
 
-  // 先手（画面手前、rank 7-9。design_document.md 7.4節：初手▲7六歩はrank=7であり、
+  // 先手（画面手前、rank 7-9。domain-model.md 7.4節：初手▲7六歩はrank=7であり、
   // これが先手の駒であることから、先手陣地はrank7〜9側と確定する）
   const senteBackRank = ['KY', 'KE', 'GI', 'KI', 'OU', 'KI', 'GI', 'KE', 'KY'];
   for (let file = 1; file <= 9; file++) {

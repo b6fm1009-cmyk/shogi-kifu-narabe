@@ -1,5 +1,5 @@
 {
-  "$comment": "駒スプライト画像の『構造』の定義。ShogiHome/ShogiGUI互換フォーマット（縦4段・横8列）。将棋ソフト取り込み用として確立された標準フォーマットに準拠する。画像固有のサイズ（幅・高さ）はここには持たず、assets-manifest.jsonの各pieces要素で管理する。ここに書くのは、どの駒画像にも共通する『列・行が何を意味するか』という構造情報のみ。base/promotedIdはPieceType（USI準拠、design_document.md第2部2.2節）に統一している。",
+  "$comment": "駒スプライト画像の『構造』の定義。ShogiHome/ShogiGUI互換フォーマット（縦4段・横8列）。将棋ソフト取り込み用として確立された標準フォーマットに準拠する。画像固有のサイズ（幅・高さ）はここには持たず、assets-manifest.jsonの各pieces要素で管理する。ここに書くのは、どの駒画像にも共通する『列・行が何を意味するか』という構造情報のみ。base/promotedIdはPieceType（USI準拠、domain-model.md 2.2節のPieceType定義に統一）に統一している。",
 
   "grid": {
     "cols": 8,
