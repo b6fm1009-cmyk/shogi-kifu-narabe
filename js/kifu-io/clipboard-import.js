@@ -42,10 +42,15 @@ export async function importFromClipboard() {
         onClick: () => document.getElementById('btn-load')?.click()
       });
     } else {
-      showToast('クリップボードを読み込めませんでした。Safariの設定でこのサイトのクリップボード利用を許可してください');
+      // 【一時診断 2026-08-11】実機でのみ再現する不具合の切り分け用。
+      // 原因特定後に削除すること。
+      showToast('DEBUG: readClipboardText failed: ' + (e && e.name) + ' / ' + (e && e.message), 8000);
     }
     return;
   }
+
+  // 【一時診断 2026-08-11】取得できたテキストの実体を画面上で確認する。
+  showToast('DEBUG: text.length=' + (text ? text.length : 'null/undefined') + ' head=[' + (text ? JSON.stringify(text.slice(0, 30)) : 'N/A') + ']', 8000);
 
   if (!text || !text.trim()) {
     showToast('クリップボードにテキストがありません');
@@ -55,7 +60,8 @@ export async function importFromClipboard() {
   if (result.success) {
     loadKifu(result.data);
   } else {
-    showToast(result.error);
+    // 【一時診断 2026-08-11】どの段階でパースが失敗したかを表示する。
+    showToast('DEBUG parse fail: ' + result.error, 8000);
   }
 }
 

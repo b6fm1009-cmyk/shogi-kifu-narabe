@@ -193,9 +193,10 @@ export function parseKifText(kifText) {
       data: { header, initial, entries }
     };
   } catch (e) {
+    // 【一時診断 2026-08-11】実機不具合切り分け用。原因特定後に元に戻すこと。
     return {
       success: false,
-      error: '不正な棋譜です。インポートに対応しているのはKIF (.kif / .kifu) のみです。'
+      error: '不正な棋譜です（DEBUG: ' + (e && e.name) + ': ' + (e && e.message) + '）'
     };
   }
 }
