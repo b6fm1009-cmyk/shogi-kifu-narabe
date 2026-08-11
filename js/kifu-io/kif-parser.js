@@ -22,6 +22,22 @@ function getLibrary() {
 export function parseKifText(kifText) {
   try {
     const jkf = getLibrary();
+
+    // 【不具合修正 2026-08-11】json-kifu-format の parseKIF()（PEG.js生成の
+    // KIFパーサー）は、末尾に改行が無いKIFテキストを渡すと
+    // 「Expected ... but end of input found」という構文エラーを投げる
+    // （最終行の後に改行が来る文法規則になっているため、末尾行の直後で
+    // 入力が尽きると「まだ続きがあるはず」と判定してしまう）。
+    // .kifファイルは保存時に慣習的に末尾改行が付くため file-import.js 経由では
+    // 表面化しないが、クリップボード経由（本関数の主な呼び出し元の一つ）では
+    // コピー元アプリ（将棋ウォーズ等）が末尾に改行を含めずにクリップボードへ
+    // 書き込むことがあり、実機（iPhone Safari）でのみ「不正な棋譜です」に
+    // なる不具合として顕在化した（Node.js上での再現・原因特定済み）。
+    // 対策：パーサーに渡す前に、末尾が改行で終わっていなければ1つ補う。
+    // 末尾に改行がある場合は何もしないため、file-import.js経由の従来の
+    // 挙動（末尾改行済みのKIFファイル）には影響しない。
+    const normalizedKifText = /\r?\n$/.test(kifText) ? kifText : kifText + '\n';
+
     // parseKIF() は { header, initial?, moves } を直接持つオブジェクトを返す
     // （JKFPlayerインスタンスではない。Node.js検証で確認済み）。
     //
@@ -42,7 +58,7 @@ export function parseKifText(kifText) {
     // 不正な棋譜（合法手でない手を含む棋譜）が渡された場合、normalizeKIF内部の
     // Shogiシミュレーションが例外をthrowするが、これは既存のtry/catchが
     // 「不正な棋譜です」エラーとして正しく拾う（元々の意図した動作と変わらない）。
-    const kifu = jkf.Normalizer.normalizeKIF(jkf.Parsers.parseKIF(kifText));
+    const kifu = jkf.Normalizer.normalizeKIF(jkf.Parsers.parseKIF(normalizedKifText));
 
     if (!kifu || !kifu.moves || !kifu.header) {
       return { success: false, error: '不正な棋譜です。インポートに対応しているのはKIF (.kif / .kifu) のみです。' };
@@ -193,10 +209,9 @@ export function parseKifText(kifText) {
       data: { header, initial, entries }
     };
   } catch (e) {
-    // 【一時診断 2026-08-11】実機不具合切り分け用。原因特定後に元に戻すこと。
     return {
       success: false,
-      error: '不正な棋譜です（DEBUG: ' + (e && e.name) + ': ' + (e && e.message) + '）'
+      error: '不正な棋譜です。インポートに対応しているのはKIF (.kif / .kifu) のみです。'
     };
   }
 }
