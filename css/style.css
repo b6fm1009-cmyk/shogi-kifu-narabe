@@ -126,8 +126,8 @@ html, body {
 
 /* ---------- ②棋譜符号バー ---------- */
 .kifu-bar {
-  /* 修正④: 上下の余白を詰める（56px→48px）。文字サイズは可読性のため維持。 */
-  height: 48px;
+  /* 修正④: 上下の余白を詰める（56px→40px）。文字サイズは可読性のため維持。 */
+  height: 40px;
   background-color: #3a3a3a;
   display: flex;
   align-items: center;
