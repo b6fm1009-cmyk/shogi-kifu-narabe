@@ -126,8 +126,8 @@ html, body {
 
 /* ---------- ②棋譜符号バー ---------- */
 .kifu-bar {
-  /* 修正④: 上下の余白を詰める（56px→44px）。文字サイズは可読性のため維持。 */
-  height: 44px;
+  /* 修正④: 上下の余白を詰める（56px→48px）。文字サイズは可読性のため維持。 */
+  height: 48px;
   background-color: #3a3a3a;
   display: flex;
   align-items: center;
@@ -347,6 +347,23 @@ html, body {
 .board-piece--selected {
   background-color: rgba(255, 100, 100, 0.3);
   border-radius: 4px;
+}
+
+/* 修正②（新規要望）: 直前に指した駒の背景を軽く点滅させ、今どちら側の手番かを
+   視覚的にわかるようにする（将棋ウォーズ準拠）。選択中ハイライトと同時に
+   付与されることもあるため、色は選択色（赤系）と衝突しない黄系にして区別する。 */
+.board-piece--last-move {
+  animation: last-move-blink 1.4s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes last-move-blink {
+  0%, 100% {
+    background-color: rgba(255, 210, 0, 0.05);
+  }
+  50% {
+    background-color: rgba(255, 210, 0, 0.35);
+  }
 }
 
 .board-piece img {

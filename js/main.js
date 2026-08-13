@@ -100,9 +100,15 @@ function renderAll() {
 
   // 盤面
   // 修正①（新規要望）: 先手用・後手用の駒セットを別々に渡す
+  // 修正②（新規要望）: 直前に指した駒が視覚的にわかるよう、moveHistoryの最後の手を渡す。
+  // 手番の制約自体（8.6節）は撤廃されたままであり、これはあくまで表示上のヒント
+  // （「この駒を動かしたなら逆側の手番」）であって入力を制限するものではない。
+  const lastMove = state.moveHistory.length > 0
+    ? state.moveHistory[state.moveHistory.length - 1]
+    : null;
   renderBoard(state.boardState, state.selectedBoardId,
     { sente: state.selectedPieceIdSente, gote: state.selectedPieceIdGote },
-    state.selectedSource);
+    state.selectedSource, lastMove);
 
   // 棋譜符号バー
   const kifuBarContent = getKifuBarContent(isKifuMode, kifuProgress, state.kifuData, state.moveHistory);

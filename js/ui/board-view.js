@@ -41,8 +41,11 @@ export function initBoardView(containerEl, layouts, assetManifest, onImageLoad) 
  *   先手用・後手用それぞれの駒セットID。盤上の各駒は piece.side（今その駒を
  *   保有している陣営）に応じてどちらの画像セットを使うかを決める。
  * @param {SelectedSource|null} selectedSource
+ * @param {Move|null} [lastMove] - 修正②（新規要望）: 直前に指された手。
+ *   移動先（lastMove.to）に位置する駒へ「直前に動いた駒」の点滅表示を付与し、
+ *   将棋ウォーズ準拠で今どちらの手番かを視覚的にわかるようにする。
  */
-export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selectedSource) {
+export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selectedSource, lastMove) {
   if (!boardEl) return;
 
   const boardAsset = findBoardAsset(manifest, selectedBoardId);
@@ -77,7 +80,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   // 依存する計算のため、ロード完了を待たずに呼ぶと座標が0基準のまま描画されてしまう。
   // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
   const renderDependents = () => {
-    placePieces(boardState, pieceAssetBySide, selectedSource);
+    placePieces(boardState, pieceAssetBySide, selectedSource, lastMove);
     renderCoordinates(boardState.isFlipped);
     if (imageLoadCallback) imageLoadCallback();
   };
@@ -98,8 +101,9 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
  *   引くため、成り駒や相手から取った駒であっても「今それを持っている側」の
  *   見た目になる（要望の「取った瞬間に持ってる側の駒に変換される」と一致）。
  * @param {SelectedSource|null} selectedSource
+ * @param {Move|null} [lastMove] - 修正②（新規要望）: 直前に指された手。移動先マスの駒に点滅表示を付与する。
  */
-function placePieces(boardState, pieceAssetBySide, selectedSource) {
+function placePieces(boardState, pieceAssetBySide, selectedSource, lastMove) {
   // 既存の駒要素をクリア（pieces-layer は boardWrapEl 側に付け替えたため、そちらから探す）
   const existing = boardWrapEl.querySelector('.pieces-layer');
   if (existing) existing.remove();
@@ -161,6 +165,14 @@ function placePieces(boardState, pieceAssetBySide, selectedSource) {
           && selectedSource.square && selectedSource.square.file === file
           && selectedSource.square.rank === rank) {
         pieceEl.classList.add('board-piece--selected');
+      }
+
+      // 修正②（新規要望）: 直前に指した駒の背景を軽く点滅させ、どちら側の手番かを示す
+      // （将棋ウォーズ準拠）。lastMove.to（移動先マス）に今いる駒に対して付与する。
+      // 駒を取ってそのマスに別の駒が来るケースも「今そのマスにいる駒＝直前に動いた駒」
+      // で常に一致するため、pieceType等での照合は不要でマス一致のみで判定できる。
+      if (lastMove && lastMove.to && lastMove.to.file === file && lastMove.to.rank === rank) {
+        pieceEl.classList.add('board-piece--last-move');
       }
 
       // 駒画像をスプライトから切り出し

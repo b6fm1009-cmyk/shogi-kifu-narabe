@@ -20,10 +20,25 @@ export function handleTap(origin, square, pieceType, side, boardState, currentSe
   if (origin === 'BOARD') {
     return handleBoardTap(square, boardState, currentSelected);
   } else if (origin === 'HAND') {
-    // 持ち駒タップ
-    const source = { origin: 'HAND', square: null, pieceType, side };
-    selectSource(source);
+    return handleHandTap(pieceType, side, currentSelected);
   }
+}
+
+/**
+ * 持ち駒欄のタップを処理する。
+ */
+function handleHandTap(pieceType, side, currentSelected) {
+  // 修正①: 選択中の持ち駒自身を再タップ → 選択解除（盤上の駒と同様の挙動）
+  if (currentSelected
+      && currentSelected.origin === 'HAND'
+      && currentSelected.pieceType === pieceType
+      && currentSelected.side === side) {
+    clearSelection();
+    return;
+  }
+
+  const source = { origin: 'HAND', square: null, pieceType, side };
+  selectSource(source);
 }
 
 /**

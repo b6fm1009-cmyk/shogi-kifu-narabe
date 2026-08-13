@@ -119,15 +119,40 @@ export function getBranchCandidates(prefix) {
 
 /**
  * 現在の局面から「次」を押した際に進める先の候補一覧を返す（長押しメニュー用）。
- * 棋譜モード中は棋譜本来の次の手を候補の一つとして含める必要はない
- * （棋譜モードでは通常のadvanceToKifuProgress()の対象なので、この関数は
- * 分岐モード中の利用を想定する）。分岐モード中に棋譜側の次の手を検討して
- * 「前」で戻ってきた場合も、その手はrecordBranchMove()で記録済みのため
- * 自動的に候補へ含まれる。
+ *
+ * 修正（分岐モード判定バグ対応）：分岐キャッシュは実際に指した（＝commitMove()や
+ * advanceBranch()を経由した）手しか記録しない。ところがインポート直後の棋譜本譜の
+ * 手は、ユーザーが一度もその手を「指す」操作をしていなくても存在する（最後ボタン・
+ * 手数選択ジャンプ・単なる棋譜読了時点のadvanceToKifuProgress()はcommitMove()を
+ * 経由しないため、本譜の手はキャッシュに記録されない）。そのため、
+ * 「3手目まで棋譜通り→4手目で分岐→3手目まで戻る」という手順では、キャッシュ上は
+ * 3手目局面からの候補が「分岐した手」1件のみとなり、本譜側の4手目が候補に
+ * 含まれず、分岐モードのマーク（候補2件以上）が出ない不具合があった。
+ *
+ * 対応方針：分岐キャッシュの候補一覧に加えて、現在の局面が棋譜本譜の途中
+ * （＝moveHistoryがkifuDataの手順と先頭から一致している区間内）であり、かつ
+ * 棋譜側にまだ次の手が残っている場合は、その本譜の次の手も候補の一つとして
+ * 合成する。キャッシュに既に同じ手が記録されていれば重複させず、キャッシュ側の
+ * エントリ（lastUsedAtを持つ、検討順が反映された方）を優先する。本譜手が
+ * キャッシュに無い場合のみ末尾に追加する（＝キャッシュ済みの変化の方を
+ * 「最後に検討した順」の並びとして優先させ、本譜手はその他大勢の1候補として
+ * 扱う。単押しの「次」は引き続きキャッシュ側の最新候補を優先するのが自然なため）。
  * @returns {{ move: Move, lastUsedAt: number }[]}
  */
 export function getNextBranchCandidates() {
-  return getBranchCandidates(state.moveHistory);
+  const cached = getBranchCandidates(state.moveHistory);
+
+  const { isKifuMode, kifuProgress } = getKifuModeInfo();
+  if (!isKifuMode || state.kifuData === null) return cached;
+
+  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
+  const kifuNextMove = kifuMoves[kifuProgress];
+  if (!kifuNextMove) return cached;
+
+  const alreadyCached = cached.some(entry => movesEqual(entry.move, kifuNextMove));
+  if (alreadyCached) return cached;
+
+  return [...cached, { move: kifuNextMove, lastUsedAt: 0 }];
 }
 
 // 再描画コールバック（main.js が登録する）
