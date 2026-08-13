@@ -47,8 +47,8 @@ export function suppressDoubleTapZoom(containerEl) {
     // 2本指以上（ピンチズーム等の意図的な操作）は対象外
     if (e.touches.length > 0) return;
 
-    // 修正⑨: 盤面（#board）・持ち駒欄（.player-info-box）配下のタップは連打操作として
-    // 許可する。「駒を選択→移動先／打つ場所をタップ」という将棋アプリの正規操作は、
+    // 修正⑩: 盤面（#board）・持ち駒欄（.hand-pieces-container）配下のタップは連打操作
+    // として許可する。「駒を選択→移動先／打つ場所をタップ」という将棋アプリの正規操作は、
     // 300ms以内の連続タップになることが普通にある（速い人ほど短くなる）。ここを
     // ダブルタップズーム抑制の対象に含めると、2回目のtouchendがpreventDefault()され、
     // そこから合成されるはずのclickが握りつぶされて「移動先をタップしても駒が動かない」
@@ -56,7 +56,14 @@ export function suppressDoubleTapZoom(containerEl) {
     // 盤面・持ち駒欄は本来ズームされても実害が小さい領域ではなく、むしろ通常操作の
     // 頻度が極めて高い領域のため、ここだけは個別に対象外とする
     // （js/ui/selection.js の handleTap の origin='BOARD'|'HAND' に対応する領域）。
-    if (e.target.closest('#board, .player-info-box')) return;
+    //
+    // 修正⑨→⑩の訂正: 除外セレクタを .player-info-box から .hand-pieces-container に
+    // 変更した。index.html の構造上、.player-info-box は持ち駒欄そのものではなく、
+    // その中に .player-name（対局者名）を子要素として含む見出し的なボックスであり、
+    // closest('.player-info-box') はプレイヤー名タップも巻き込んで除外してしまっていた
+    // （プレイヤー名欄のダブルタップズームがガードされない回帰）。持ち駒の連打操作に
+    // 必要なのは実際に駒が描画される .hand-pieces-container だけなので、そこに絞る。
+    if (e.target.closest('#board, .hand-pieces-container')) return;
 
     // 修正⑦: 有効なbutton要素上のタップは連打操作として許可する。
     // ここでpreventDefault()すると、そのtouchendから合成されるはずのclickイベントも
@@ -65,7 +72,22 @@ export function suppressDoubleTapZoom(containerEl) {
     // （無効化された「最後」ボタン等を連打してもアプリの動作は何も起きない）ため、
     // 除外対象から外し、ダブルタップズームの抑制対象に含める。これにより
     // disabledボタンの連打によるズーム誤爆（今回の主症状）を防ぐ。
-    const targetButton = e.target.closest('button');
+    //
+    // 修正⑪: e.target.closest('button') による判定は、disabledなbuttonでは機能しない
+    // ことが判明した。本ファイル冒頭のコメントの通り、iOS Safariはdisabled要素に
+    // タッチイベント自体を配送しないことがあり、その場合 e.target は button ではなく
+    // 下に重なっている親要素（例: .bottom-controls-group）になる。結果、
+    // 「有効なbuttonの連打」のつもりの除外判定が外れ、disabledボタン連打時に
+    // 親要素がガード対象として扱われる一方、肝心のdisabledボタン自体を狙い撃ちした
+    // つもりの分岐（修正⑧）にも到達しない、という状態になっていた。
+    // タッチが配送されない以上 e.target からは判定できないため、タッチ座標に実際に
+    // 存在する要素を document.elementFromPoint で取得し直し、それがbuttonかどうかで
+    // 判定する（disabled要素も含め、座標上に描画されている要素を正しく拾える）。
+    const touch = e.changedTouches[0];
+    const elementAtPoint = touch
+      ? document.elementFromPoint(touch.clientX, touch.clientY)
+      : e.target;
+    const targetButton = elementAtPoint && elementAtPoint.closest('button');
     if (targetButton && !targetButton.disabled) return;
 
     const now = Date.now();
