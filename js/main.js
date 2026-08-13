@@ -56,11 +56,18 @@ async function init() {
     initHeaderButtons();
     initBottomControls();
 
-    // 修正②: ボタン連打によるダブルタップズームを抑制する（「次」「最後」の連打が主因）。
-    // disabled状態のbuttonにはtouch-action指定が効かない場合があるため、常に有効な
-    // 親コンテナ（.header, .bottom-controls）側で監視する。
-    suppressDoubleTapZoom(document.querySelector('.header'));
-    suppressDoubleTapZoom(document.querySelector('.bottom-controls'));
+    // 修正⑧: ダブルタップズームの抑制対象を document.body 全体に拡張する。
+    // 従来は .header と .bottom-controls のみを個別に監視していたが、
+    // #kifu-bar（棋譜符号欄）や .player-info（対局者名欄）など、後から追加された
+    // 要素がガードの対象外のまま素通りし、そこをダブルタップされるとブラウザ標準の
+    // ズームが発生してしまっていた（viewport の user-scalable=no がユーザーの
+    // アクセシビリティ設定により無視されるケースがあるため、この保険が必要）。
+    // 個別要素を都度指定する方式は「新しい要素を追加するたびにガード登録も足す」
+    // 運用を要求し、抜け漏れの温床になる。body単位で一括監視すれば、今後DOM構造が
+    // 増えても追加対応が不要になる。
+    // disabled状態のbuttonにはtouch-action指定が効かない場合があるため、
+    // 常に有効な親（body）側で監視する点は従来と同じ。
+    suppressDoubleTapZoom(document.body);
 
     // 修正②: 盤・駒画像は配布素材のため、長押しでの画像保存を防止する。
     // 盤・駒レイヤー、成りポップアップ、アセットドロワーのサムネイルはすべて動的に

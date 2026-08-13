@@ -47,10 +47,15 @@ export function suppressDoubleTapZoom(containerEl) {
     // 2本指以上（ピンチズーム等の意図的な操作）は対象外
     if (e.touches.length > 0) return;
 
-    // 修正⑦: button要素（disabled状態を含む）上のタップは連打操作として許可する。
+    // 修正⑦: 有効なbutton要素上のタップは連打操作として許可する。
     // ここでpreventDefault()すると、そのtouchendから合成されるはずのclickイベントも
     // 一緒に握りつぶされてしまい、ボタン連打が効かなくなるため。
-    if (e.target.closest('button')) return;
+    // 修正⑧: ただしdisabledなbuttonはclickが合成されず「連打操作」として機能しない
+    // （無効化された「最後」ボタン等を連打してもアプリの動作は何も起きない）ため、
+    // 除外対象から外し、ダブルタップズームの抑制対象に含める。これにより
+    // disabledボタンの連打によるズーム誤爆（今回の主症状）を防ぐ。
+    const targetButton = e.target.closest('button');
+    if (targetButton && !targetButton.disabled) return;
 
     const now = Date.now();
     if (now - lastTouchEndTime <= DOUBLE_TAP_THRESHOLD_MS) {
