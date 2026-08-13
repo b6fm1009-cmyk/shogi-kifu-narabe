@@ -65,8 +65,10 @@ async function init() {
     // 個別要素を都度指定する方式は「新しい要素を追加するたびにガード登録も足す」
     // 運用を要求し、抜け漏れの温床になる。body単位で一括監視すれば、今後DOM構造が
     // 増えても追加対応が不要になる。
-    // disabled状態のbuttonにはtouch-action指定が効かない場合があるため、
-    // 常に有効な親（body）側で監視する点は従来と同じ。
+    // 修正⑫: ボタンの無効化はネイティブdisabled属性ではなく.is-disabledクラス＋
+    // aria-disabledで行う方式に変更した（js/ui/button-state.js, js/ui/touch-guard.js
+    // 参照）。これによりtouch-guard.js側は「button要素かどうか」だけを見れば良く、
+    // 無効化中のボタンでもタッチは確実にボタン自身へ配送される。
     suppressDoubleTapZoom(document.body);
 
     // 修正②: 盤・駒画像は配布素材のため、長押しでの画像保存を防止する。

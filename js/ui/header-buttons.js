@@ -5,6 +5,7 @@ import { importFromClipboard } from '../kifu-io/clipboard-import.js';
 import { importFromFile } from '../kifu-io/file-import.js';
 import { getState, toggleKifuBarVisibility, jumpToKifuProgress, getKifuModeInfo, isAnyControlDisabled } from '../state/app-state.js';
 import { openAssetDrawer, closeAssetDrawer } from './asset-drawer.js';
+import { setButtonDisabled, isButtonDisabled } from './button-state.js';
 
 let fileInput = null;
 
@@ -24,14 +25,16 @@ export function initHeaderButtons() {
   });
 
   // 棋譜貼付
-  document.getElementById('btn-paste').addEventListener('click', () => {
-    if (isAnyControlDisabled()) return;
+  const pasteBtn = document.getElementById('btn-paste');
+  pasteBtn.addEventListener('click', () => {
+    if (isAnyControlDisabled() || isButtonDisabled(pasteBtn)) return;
     importFromClipboard();
   });
 
   // 棋譜読込
-  document.getElementById('btn-load').addEventListener('click', () => {
-    if (isAnyControlDisabled()) return;
+  const loadBtn = document.getElementById('btn-load');
+  loadBtn.addEventListener('click', () => {
+    if (isAnyControlDisabled() || isButtonDisabled(loadBtn)) return;
     if (!fileInput) {
       fileInput = document.createElement('input');
       fileInput.type = 'file';
@@ -46,15 +49,17 @@ export function initHeaderButtons() {
   });
 
   // 分岐に戻る
-  document.getElementById('btn-back-to-kifu').addEventListener('click', () => {
-    if (isAnyControlDisabled()) return;
+  const backBtn = document.getElementById('btn-back-to-kifu');
+  backBtn.addEventListener('click', () => {
+    if (isAnyControlDisabled() || isButtonDisabled(backBtn)) return;
     const { kifuProgress } = getKifuModeInfo();
     jumpToKifuProgress(kifuProgress);
   });
 
   // 指手を非表示
-  document.getElementById('btn-toggle-bar').addEventListener('click', () => {
-    if (isAnyControlDisabled()) return;
+  const toggleBarBtn = document.getElementById('btn-toggle-bar');
+  toggleBarBtn.addEventListener('click', () => {
+    if (isAnyControlDisabled() || isButtonDisabled(toggleBarBtn)) return;
     toggleKifuBarVisibility();
   });
 }
@@ -70,17 +75,17 @@ export function updateHeaderButtons() {
 
   // 分岐に戻るボタン
   const backBtn = document.getElementById('btn-back-to-kifu');
-  backBtn.disabled = disabled || isKifuMode;
+  setButtonDisabled(backBtn, disabled || isKifuMode);
 
   // 指手を非表示ボタンのラベル
   const toggleBtn = document.getElementById('btn-toggle-bar');
   toggleBtn.textContent = isKifuBarVisible ? '指手を非表示' : '指手を表示';
-  toggleBtn.disabled = disabled;
+  setButtonDisabled(toggleBtn, disabled);
 
   // 棋譜貼付・読込
-  document.getElementById('btn-paste').disabled = disabled;
-  document.getElementById('btn-load').disabled = disabled;
+  setButtonDisabled(document.getElementById('btn-paste'), disabled);
+  setButtonDisabled(document.getElementById('btn-load'), disabled);
 
   // ハンバーガーメニューは常に活性
-  document.getElementById('btn-hamburger').disabled = false;
+  setButtonDisabled(document.getElementById('btn-hamburger'), false);
 }

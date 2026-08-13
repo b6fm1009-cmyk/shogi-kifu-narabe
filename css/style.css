@@ -128,7 +128,11 @@ html, body {
   white-space: nowrap;
 }
 
-.header-btn:disabled {
+/* 修正⑫: ネイティブdisabled属性はiOS Safariでタッチ配送が不安定になる
+   （disabled要素がヒットテスト対象から外れ、祖先要素にタッチが配送されることがある）
+   ため使用せず、常に有効なbuttonのまま .is-disabled クラスで見た目だけを無効化する。
+   機能面の無効化は各clickハンドラ内の isButtonDisabled()（aria-disabled参照）で行う。 */
+.header-btn.is-disabled {
   opacity: 0.4;
 }
 
@@ -462,7 +466,9 @@ html, body {
   flex: 1 1 auto;
 }
 
-.bottom-btn:disabled {
+/* 修正⑫: 理由は .header-btn.is-disabled のコメントを参照（ネイティブdisabledを
+   使わず、is-disabledクラス＋aria-disabledで見た目と機能を分離する方針）。 */
+.bottom-btn.is-disabled {
   opacity: 0.4;
 }
 
