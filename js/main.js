@@ -89,12 +89,6 @@ async function init() {
     // リサイズ対応（スケーリング）
     const applyScale = setupScaling();
 
-    // 再発防止③: 万一表示がズレて操作不能になった場合の脱出手段として、
-    // scale-rootの外側（transformの影響を受けない固定位置）に常設のリセットボタンを
-    // 用意する。表示上は普段ほぼ気づかない隅の小さいボタンとし、押すとスクロール位置を
-    // 先頭に戻したうえでapplyScale()を強制再実行する。
-    setupLayoutResetButton(applyScale);
-
     // 盤面ビューの初期化。盤画像のロード完了時にapp-frameの実高さが変わりうるため、
     // そのタイミングでscaleを再計算する（height:autoのapp-frameに対応するため）。
     initBoardView(boardEl, layouts, manifest, applyScale);
@@ -350,27 +344,6 @@ function setupScaling() {
   applyScale();
 
   return applyScale;
-}
-
-/**
- * 再発防止③: 表示崩れからの脱出用リセットボタンを設置する。
- * #scale-root の外（＝transform: scale()の影響を受けない）に固定配置するため、
- * 盤面側がどれだけズレていても常に同じ画面位置に表示され、確実にタップできる。
- * @param {() => void} applyScale
- */
-function setupLayoutResetButton(applyScale) {
-  const btn = document.createElement('button');
-  btn.id = 'layout-reset-btn';
-  btn.type = 'button';
-  btn.setAttribute('aria-label', '表示リセット');
-  btn.textContent = '⟲';
-  btn.addEventListener('click', () => {
-    const scaleRoot = document.getElementById('scale-root');
-    if (scaleRoot) scaleRoot.scrollTop = 0;
-    window.scrollTo(0, 0);
-    applyScale();
-  });
-  document.body.appendChild(btn);
 }
 
 // 起動
