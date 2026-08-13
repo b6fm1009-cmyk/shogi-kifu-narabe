@@ -205,6 +205,13 @@ html, body {
   background: linear-gradient(180deg, #fbfaf6 0%, #efece2 100%);
   border: 1px solid #c9c2ac;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  /* 対局者名を長押しすると、iOS標準の「コピー」テキスト選択メニューが立ち上がって
+     しまう。コピーできても意味のあるデータではなく、UIの見た目を崩すだけの誤操作
+     要因なので、盤・駒画像と同じ組み合わせ（user-select系＋-webkit-touch-callout:none）
+     で確実に止める。 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .player-label {
@@ -234,6 +241,12 @@ html, body {
 .hand-pieces-container {
   flex: 1;
   display: flex;
+  /* 持ち駒欄も player-info-box と同様、長押しでコピーメニューが立ち上がる誤操作を防ぐ。
+     駒画像自体は既に個別にこの指定を持つが、余白部分（駒の無い枠内）を長押しした
+     場合にも同じ挙動になるよう、コンテナ側にも指定しておく。 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .hand-pieces {
