@@ -47,6 +47,17 @@ export function suppressDoubleTapZoom(containerEl) {
     // 2本指以上（ピンチズーム等の意図的な操作）は対象外
     if (e.touches.length > 0) return;
 
+    // 修正⑨: 盤面（#board）・持ち駒欄（.player-info-box）配下のタップは連打操作として
+    // 許可する。「駒を選択→移動先／打つ場所をタップ」という将棋アプリの正規操作は、
+    // 300ms以内の連続タップになることが普通にある（速い人ほど短くなる）。ここを
+    // ダブルタップズーム抑制の対象に含めると、2回目のtouchendがpreventDefault()され、
+    // そこから合成されるはずのclickが握りつぶされて「移動先をタップしても駒が動かない」
+    // という致命的な不具合になる（修正⑧でbody全体に監視範囲を広げた際に発生した回帰）。
+    // 盤面・持ち駒欄は本来ズームされても実害が小さい領域ではなく、むしろ通常操作の
+    // 頻度が極めて高い領域のため、ここだけは個別に対象外とする
+    // （js/ui/selection.js の handleTap の origin='BOARD'|'HAND' に対応する領域）。
+    if (e.target.closest('#board, .player-info-box')) return;
+
     // 修正⑦: 有効なbutton要素上のタップは連打操作として許可する。
     // ここでpreventDefault()すると、そのtouchendから合成されるはずのclickイベントも
     // 一緒に握りつぶされてしまい、ボタン連打が効かなくなるため。
