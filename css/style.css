@@ -85,6 +85,26 @@ html, body {
   position: relative;
 }
 
+/* ---------- 再発防止③: 表示リセットボタン ----------
+   #scale-root（transform: scale()の対象）の外＝body直下に配置するため、
+   盤面側のレイアウトがどれだけ崩れていても常に画面右下の同じ位置に固定表示され、
+   タップしてapplyScale()を強制再実行できる。普段は半透明・小さめにして目立たせない。 */
+#layout-reset-btn {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-color: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 16px;
+  line-height: 1;
+  z-index: 9999;
+  touch-action: manipulation;
+}
+
 /* ---------- ①ヘッダー ---------- */
 .header {
   height: 44px;
