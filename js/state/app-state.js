@@ -479,21 +479,17 @@ export function selectPieceAsset(pieceId, side) {
 
 /**
  * 修正③（新規要望）: 先手/後手の駒セットの一括変更モードON/OFFを切り替える。
- * OFF→ONへ切り替えた瞬間は、既存の先手/後手の選択がズレている可能性があるため、
- * 先手側の選択を後手側にも揃える（先手優先。ユーザーが直前まで操作していたのは
- * 通常「自分の駒」＝先手表示欄であることが多いため）。
+ *
+ * 修正（バグ修正）: 従来はOFF→ONへ切り替えた瞬間に先手側の選択を後手側へ強制的に
+ * 揃えていたが、これは「まだどちらの駒にするか選んでいないのに、トグルを押しただけで
+ * 片方の駒が上書きされる」という意図しない挙動だった。一括変更モードは
+ * 「次に駒を選んだときに両方へ同時反映する」モードであり、トグルを押した時点では
+ * 先手・後手いずれの選択も変更しない。両者の見た目を揃えたい場合は、ユーザーが
+ * 改めて駒セットを1つ選び直す（selectPieceAsset()側で両方に反映される）。
  * @param {boolean} isLinked
  */
 export function setPieceAssetLinked(isLinked) {
-  if (isLinked) {
-    state = {
-      ...state,
-      isPieceAssetLinked: true,
-      selectedPieceIdGote: state.selectedPieceIdSente
-    };
-  } else {
-    state = { ...state, isPieceAssetLinked: false };
-  }
+  state = { ...state, isPieceAssetLinked: isLinked };
   notifyRender();
 }
 

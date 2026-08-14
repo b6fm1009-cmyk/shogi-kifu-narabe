@@ -104,7 +104,9 @@ function renderBody() {
  * （2つを別々のsticky要素にすると、片方の高さをもう片方のtop値に決め打ちする必要が
  * 出てしまい、CSS変更のたびにJS側の高さと同期が必要になってしまうため）。
  *
- * ON（デフォルト）: 先手用・後手用の駒セットが常に同じIDになる（一括変更）。
+ * ON（デフォルト）: 駒セットを1つ選ぶと、先手用・後手用の両方に同じIDが反映される
+ *   （一括変更。selectPieceAsset()参照）。トグルをONにした瞬間はまだ何も選び直して
+ *   いないため、先手/後手の駒セットはそれぞれ直前の状態のまま変化しない。
  *   セグメントは表示しない（個別選択の意味がなくなるため。分けて見せるとOFF時の
  *   機能と誤解されるので一覧は1つだけ見せる）。
  * OFF: 従来通り「先手用」「後手用」セグメントで個別に選べる（修正①の挙動）。
@@ -125,7 +127,11 @@ function renderPieceControlBar(body) {
   checkbox.checked = getState().isPieceAssetLinked;
   checkbox.addEventListener('change', () => {
     setPieceAssetLinked(checkbox.checked);
-    activeSide = 'SENTE'; // 一括ONに切り替えた際、表示中の一覧を先手基準（＝後手にも反映される側）に揃える
+    // 一括ONに切り替えた時点では先手/後手いずれの駒セットも変更されない
+    // （setPieceAssetLinked()参照）。ここでのactiveSide初期化は、OFF時に別れていた
+    // 「先手用」「後手用」セグメントをONでは1つの一覧に戻す際、表示だけを
+    // 先手基準に揃えるためのもの。
+    activeSide = 'SENTE';
     renderBody();
     if (renderCallback) renderCallback();
   });
