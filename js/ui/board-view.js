@@ -41,11 +41,11 @@ export function initBoardView(containerEl, layouts, assetManifest, onImageLoad) 
  *   先手用・後手用それぞれの駒セットID。盤上の各駒は piece.side（今その駒を
  *   保有している陣営）に応じてどちらの画像セットを使うかを決める。
  * @param {SelectedSource|null} selectedSource
- * @param {Move|null} [lastMove] - 直前に指された手。
- *   移動先（lastMove.to）に位置する駒へ「直前に動いた駒」の点滅表示（黄系）を付与し、
- *   将棋ウォーズ準拠で今どちらの手番かを視覚的にわかるようにする（修正②）。
- *   加えて修正③として、移動元（lastMove.from）と移動先の両マスに背景ハイライト
- *   （淡い白／やや濃い淡い白）を敷く（placeSquareHighlights()参照）。
+ * @param {Move|null} [lastMove] - 直前に指された手。移動元（lastMove.from）と
+ *   移動先（lastMove.to）の両マスに背景ハイライト（淡い白／やや濃い淡い白）を敷き、
+ *   将棋ウォーズ準拠で今どちらの手番かを視覚的にわかるようにする
+ *   （placeSquareHighlights()参照。旧・黄色点滅の.board-piece--last-moveは廃止し、
+ *   移動先の表現はこの静的背景ハイライトに一本化した）。
  */
 export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selectedSource, lastMove) {
   if (!boardEl) return;
@@ -83,7 +83,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
   const renderDependents = () => {
     placeSquareHighlights(boardState, lastMove);
-    placePieces(boardState, pieceAssetBySide, selectedSource, lastMove);
+    placePieces(boardState, pieceAssetBySide, selectedSource);
     renderCoordinates(boardState.isFlipped);
     if (imageLoadCallback) imageLoadCallback();
   };
@@ -157,9 +157,8 @@ function placeSquareHighlights(boardState, lastMove) {
  *   引くため、成り駒や相手から取った駒であっても「今それを持っている側」の
  *   見た目になる（要望の「取った瞬間に持ってる側の駒に変換される」と一致）。
  * @param {SelectedSource|null} selectedSource
- * @param {Move|null} [lastMove] - 修正②（新規要望）: 直前に指された手。移動先マスの駒に点滅表示を付与する。
  */
-function placePieces(boardState, pieceAssetBySide, selectedSource, lastMove) {
+function placePieces(boardState, pieceAssetBySide, selectedSource) {
   // 既存の駒要素をクリア（pieces-layer は boardWrapEl 側に付け替えたため、そちらから探す）
   const existing = boardWrapEl.querySelector('.pieces-layer');
   if (existing) existing.remove();
@@ -222,13 +221,10 @@ function placePieces(boardState, pieceAssetBySide, selectedSource, lastMove) {
         pieceEl.classList.add('board-piece--selected');
       }
 
-      // 修正②（新規要望）: 直前に指した駒の背景を軽く点滅させ、どちら側の手番かを示す
-      // （将棋ウォーズ準拠）。lastMove.to（移動先マス）に今いる駒に対して付与する。
-      // 駒を取ってそのマスに別の駒が来るケースも「今そのマスにいる駒＝直前に動いた駒」
-      // で常に一致するため、pieceType等での照合は不要でマス一致のみで判定できる。
-      if (lastMove && lastMove.to && lastMove.to.file === file && lastMove.to.rank === rank) {
-        pieceEl.classList.add('board-piece--last-move');
-      }
+      // 修正③（新規要望）: 「直前に動いた駒」の点滅表示（旧 .board-piece--last-move、黄色）は廃止。
+      // 移動先マスの表現は placeSquareHighlights() が描く静的な背景ハイライト
+      // （濃い淡い白）に一本化した。lastMove引数は placeSquareHighlights() 側で
+      // 引き続き使用するため、renderBoard/placePieces のシグネチャからは削除していない。
 
       // 駒画像をスプライトから切り出し
       // 修正①（新規要望）: piece.side（今この駒を保有している陣営。表示上の反転とは無関係の

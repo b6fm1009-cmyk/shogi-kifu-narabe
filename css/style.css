@@ -362,28 +362,24 @@ html, body {
 }
 
 /* 修正③（新規要望）: 選択中マスは「直前に動いた駒の移動元」と同系色（淡い白）とし、
-   下記 last-move-blink アニメーションをそのまま流用して点滅させる。
-   以前は赤系の固定背景だったが、他アプリとの比較検討の結果、移動元ハイライトと
-   統一する方針に変更した。 */
+   下記 selected-blink アニメーションで点滅させる。
+   以前は赤系の固定背景、その後さらに黄系点滅（.board-piece--last-move）と誤って
+   同じキーフレームを共有していた時期があったが、白系に統一する方針を明確にし、
+   専用のキーフレーム（selected-blink）に分離した。
+   なお .board-piece--last-move（直前に動いた駒の黄色点滅）自体は廃止済み。
+   移動先マスの表現は placeSquareHighlights() が描く静的な背景ハイライト
+   （.board-square-highlight--to、濃い淡い白）に一本化している。 */
 .board-piece--selected {
-  animation: last-move-blink 1.4s ease-in-out infinite;
+  animation: selected-blink 1.4s ease-in-out infinite;
   border-radius: 4px;
 }
 
-/* 修正②（新規要望）: 直前に指した駒の背景を軽く点滅させ、今どちら側の手番かを
-   視覚的にわかるようにする（将棋ウォーズ準拠）。選択中ハイライトと同時に
-   付与されることもあるため、色は選択色（赤系）と衝突しない黄系にして区別する。 */
-.board-piece--last-move {
-  animation: last-move-blink 1.4s ease-in-out infinite;
-  border-radius: 4px;
-}
-
-@keyframes last-move-blink {
+@keyframes selected-blink {
   0%, 100% {
-    background-color: rgba(255, 210, 0, 0.05);
+    background-color: rgba(255, 255, 255, 0.08);
   }
   50% {
-    background-color: rgba(255, 210, 0, 0.35);
+    background-color: rgba(255, 255, 255, 0.45);
   }
 }
 
