@@ -41,9 +41,11 @@ export function initBoardView(containerEl, layouts, assetManifest, onImageLoad) 
  *   先手用・後手用それぞれの駒セットID。盤上の各駒は piece.side（今その駒を
  *   保有している陣営）に応じてどちらの画像セットを使うかを決める。
  * @param {SelectedSource|null} selectedSource
- * @param {Move|null} [lastMove] - 修正②（新規要望）: 直前に指された手。
- *   移動先（lastMove.to）に位置する駒へ「直前に動いた駒」の点滅表示を付与し、
- *   将棋ウォーズ準拠で今どちらの手番かを視覚的にわかるようにする。
+ * @param {Move|null} [lastMove] - 直前に指された手。
+ *   移動先（lastMove.to）に位置する駒へ「直前に動いた駒」の点滅表示（黄系）を付与し、
+ *   将棋ウォーズ準拠で今どちらの手番かを視覚的にわかるようにする（修正②）。
+ *   加えて修正③として、移動元（lastMove.from）と移動先の両マスに背景ハイライト
+ *   （淡い白／やや濃い淡い白）を敷く（placeSquareHighlights()参照）。
  */
 export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selectedSource, lastMove) {
   if (!boardEl) return;
@@ -80,6 +82,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   // 依存する計算のため、ロード完了を待たずに呼ぶと座標が0基準のまま描画されてしまう。
   // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
   const renderDependents = () => {
+    placeSquareHighlights(boardState, lastMove);
     placePieces(boardState, pieceAssetBySide, selectedSource, lastMove);
     renderCoordinates(boardState.isFlipped);
     if (imageLoadCallback) imageLoadCallback();
@@ -90,6 +93,59 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   } else {
     boardImageEl.addEventListener('load', renderDependents);
   }
+}
+
+/**
+ * 盤面座標(file, rank)を、反転状態を加味した表示上の座標(displayFile, displayRank)に変換する。
+ * placePieces() 内の座標計算と同一の規則（1筋=画面右端が非反転時の標準表記）に必ず合わせること。
+ * @param {number} file
+ * @param {number} rank
+ * @param {boolean} isFlipped
+ * @returns {{displayFile: number, displayRank: number}}
+ */
+function toDisplayCoord(file, rank, isFlipped) {
+  const displayFile = isFlipped ? file : 10 - file;
+  const displayRank = isFlipped ? 10 - rank : rank;
+  return { displayFile, displayRank };
+}
+
+/**
+ * 修正③（新規要望）: 直前に指した手の「移動元マス」「移動先マス（現在位置）」に
+ * 背景ハイライトを描く。placePieces() は駒が存在するマスしかループしないため、
+ * 移動元（多くの場合、駒が去った空マス）はここで別途描画する必要がある。
+ * pieces-layer と同じ座標系（boardWrapEl基準）に重ねる別レイヤーとして追加し、
+ * この関数は必ず placePieces() より先に呼ぶ（駒の下に敷く＝視覚的に駒が前面に来る）。
+ * @param {BoardState} boardState
+ * @param {Move|null} lastMove
+ */
+function placeSquareHighlights(boardState, lastMove) {
+  const existing = boardWrapEl.querySelector('.square-highlights-layer');
+  if (existing) existing.remove();
+
+  if (!lastMove) return;
+
+  const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
+  const squareSize = getSquareSizePx(boardSize, boardLayout);
+  const boardOrigin = getBoardOriginPx(boardSize, boardLayout);
+
+  const layer = document.createElement('div');
+  layer.className = 'square-highlights-layer';
+  boardWrapEl.appendChild(layer);
+
+  const addHighlight = (square, modifierClass) => {
+    if (!square) return; // 駒打ち（DROP）は from が null のため対象外
+    const { displayFile, displayRank } = toDisplayCoord(square.file, square.rank, boardState.isFlipped);
+    const el = document.createElement('div');
+    el.className = `board-square-highlight ${modifierClass}`;
+    el.style.left = `${boardOrigin.x + (displayFile - 1) * squareSize.width}px`;
+    el.style.top = `${boardOrigin.y + (displayRank - 1) * squareSize.height}px`;
+    el.style.width = `${squareSize.width}px`;
+    el.style.height = `${squareSize.height}px`;
+    layer.appendChild(el);
+  };
+
+  addHighlight(lastMove.from, 'board-square-highlight--from');
+  addHighlight(lastMove.to, 'board-square-highlight--to');
 }
 
 /**
@@ -128,8 +184,7 @@ function placePieces(boardState, pieceAssetBySide, selectedSource, lastMove) {
       // 筋（file）は「非反転時：1筋が画面右端、9筋が画面左端」が将棋の標準表記。
       // renderCoordinates() の座標ラベルはこの規則で描画しているため、駒側のX座標も
       // 同じ規則（displayFile=1のとき右端＝9マス目）に合わせる必要がある。
-      const displayFile = boardState.isFlipped ? file : 10 - file;
-      const displayRank = boardState.isFlipped ? 10 - rank : rank;
+      const { displayFile, displayRank } = toDisplayCoord(file, rank, boardState.isFlipped);
 
       const kingLabel = piece.side === 'SENTE' ? kingLabels.senteKingLabel : kingLabels.goteKingLabel;
       // 駒の向き（正立/倒立）は盤の実所属（piece.side）だけでなく、盤面反転(isFlipped)も
@@ -160,7 +215,7 @@ function placePieces(boardState, pieceAssetBySide, selectedSource, lastMove) {
       pieceEl.dataset.file = String(file);
       pieceEl.dataset.rank = String(rank);
 
-      // 選択中ハイライト
+      // 選択中ハイライト（修正③: 移動元と同系色の淡い白＋点滅。CSS側 .board-piece--selected 参照）
       if (selectedSource && selectedSource.origin === 'BOARD'
           && selectedSource.square && selectedSource.square.file === file
           && selectedSource.square.rank === rank) {

@@ -61,6 +61,8 @@ const CACHE_URLS = [
   './js/ui/asset-drawer.js',
   './js/ui/header-buttons.js',
   './js/ui/bottom-controls.js',
+  './js/ui/branch-popup.js',
+  './js/ui/button-state.js',
   './js/pwa/register-sw.js',
   './assets/layout/assets-manifest.json',
   './assets/layout/board-layout.json',

@@ -1,7 +1,7 @@
 /**
  * ハンバーガーメニュー：盤・駒選択ドロワー（設計書 第4部10章）
  */
-import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, getState } from '../state/app-state.js';
+import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, setPieceAssetLinked, getState } from '../state/app-state.js';
 import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
 import { PROMOTION_MAP } from '../models/board.js';
 
@@ -90,7 +90,7 @@ function renderBody() {
   const body = drawerEl.querySelector('.asset-drawer-body');
   body.innerHTML = '';
   if (activeTab === 'PIECE') {
-    renderPieceSideSwitch(body);
+    renderPieceControlBar(body);
     renderPieceTab(body);
   } else {
     renderBoardTab(body);
@@ -98,30 +98,62 @@ function renderBody() {
 }
 
 /**
- * 修正①（新規要望）: 駒タブ上部に「先手用」「後手用」の切り替えセグメントを描画する。
- * 盤タブには成りの概念がなく先手/後手で見た目を分ける要望も出ていないため、この
- * 切り替えは駒タブ限定とする。
+ * 修正③（新規要望）: 駒タブ上部の固定コントロール領域を描画する。
+ * 「先後一括変更」トグルと「先手用/後手用」セグメントを1つのsticky要素にまとめて
+ * 描画することで、トグルの高さが変わってもセグメントのtop位置がズレる心配がない
+ * （2つを別々のsticky要素にすると、片方の高さをもう片方のtop値に決め打ちする必要が
+ * 出てしまい、CSS変更のたびにJS側の高さと同期が必要になってしまうため）。
+ *
+ * ON（デフォルト）: 先手用・後手用の駒セットが常に同じIDになる（一括変更）。
+ *   セグメントは表示しない（個別選択の意味がなくなるため。分けて見せるとOFF時の
+ *   機能と誤解されるので一覧は1つだけ見せる）。
+ * OFF: 従来通り「先手用」「後手用」セグメントで個別に選べる（修正①の挙動）。
  */
-function renderPieceSideSwitch(body) {
-  const switchEl = document.createElement('div');
-  switchEl.className = 'asset-piece-side-switch';
+function renderPieceControlBar(body) {
+  const bar = document.createElement('div');
+  bar.className = 'asset-piece-control-bar';
 
-  const sides = [
-    { side: 'SENTE', label: '先手用' },
-    { side: 'GOTE', label: '後手用' }
-  ];
-  for (const s of sides) {
-    const btn = document.createElement('button');
-    btn.className = 'asset-piece-side-switch-btn';
-    btn.textContent = s.label;
-    btn.classList.toggle('asset-piece-side-switch-btn--active', activeSide === s.side);
-    btn.addEventListener('click', () => {
-      activeSide = s.side;
-      renderBody();
-    });
-    switchEl.appendChild(btn);
+  // 一括変更トグル
+  const toggleWrap = document.createElement('label');
+  toggleWrap.className = 'asset-piece-link-toggle';
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.checked = getState().isPieceAssetLinked;
+  checkbox.addEventListener('change', () => {
+    setPieceAssetLinked(checkbox.checked);
+    activeSide = 'SENTE'; // 一括ONに切り替えた際、表示中の一覧を先手基準（＝後手にも反映される側）に揃える
+    renderBody();
+    if (renderCallback) renderCallback();
+  });
+  toggleWrap.appendChild(checkbox);
+  const toggleText = document.createElement('span');
+  toggleText.textContent = '先後の駒を一括変更する';
+  toggleWrap.appendChild(toggleText);
+  bar.appendChild(toggleWrap);
+
+  // 先手用/後手用セグメント（一括OFF時のみ）
+  if (!getState().isPieceAssetLinked) {
+    const switchEl = document.createElement('div');
+    switchEl.className = 'asset-piece-side-switch';
+    const sides = [
+      { side: 'SENTE', label: '先手用' },
+      { side: 'GOTE', label: '後手用' }
+    ];
+    for (const s of sides) {
+      const btn = document.createElement('button');
+      btn.className = 'asset-piece-side-switch-btn';
+      btn.textContent = s.label;
+      btn.classList.toggle('asset-piece-side-switch-btn--active', activeSide === s.side);
+      btn.addEventListener('click', () => {
+        activeSide = s.side;
+        renderBody();
+      });
+      switchEl.appendChild(btn);
+    }
+    bar.appendChild(switchEl);
   }
-  body.appendChild(switchEl);
+
+  body.appendChild(bar);
 }
 
 /**

@@ -28,6 +28,8 @@ import { movesEqual } from '../models/move.js';
  * @property {string} selectedBoardId
  * @property {string} selectedPieceIdSente - 先手側（自分の駒・自分の持ち駒欄）に使う駒セットID
  * @property {string} selectedPieceIdGote - 後手側（相手の駒・相手の持ち駒欄）に使う駒セットID
+ * @property {boolean} isPieceAssetLinked - 修正③（新規要望）: true のとき先手/後手の駒セットを
+ *   一括変更する（片方を選ぶと両方に同じIDが反映される）。false のときは従来通り個別に選択できる。
  */
 
 // モジュール内プライベート状態
@@ -35,6 +37,9 @@ import { movesEqual } from '../models/move.js';
 // selectedPieceIdSente / selectedPieceIdGote の2つに分割した。両方の初期値は同じデフォルト駒
 // （assets-manifest.jsonのdefaults.pieces）にしておくことで、従来通り「先手も後手も同じ駒」の
 // 見た目から始まる（ユーザーが片方だけ変更しない限り旧来の挙動と同じに見える）。
+// 修正③（新規要望）: isPieceAssetLinked を追加。既存アプリとの比較検討の結果、
+// 「先後の駒は基本は一括変更、必要な場合のみ個別変更」の運用が主眼のため、
+// 初期値は true（一括）とする。false にすると①の個別選択に戻る。
 let state = {
   boardState: createInitialBoardState(null),
   moveHistory: [],
@@ -47,7 +52,8 @@ let state = {
   isBranchPopupOpen: false,
   selectedBoardId: 'wood',
   selectedPieceIdSente: 'maki_ryoko_1_letter',
-  selectedPieceIdGote: 'maki_ryoko_1_letter'
+  selectedPieceIdGote: 'maki_ryoko_1_letter',
+  isPieceAssetLinked: true
 };
 
 /**
@@ -454,14 +460,39 @@ export function setBranchPopupOpen(isOpen) {
  * 修正①（新規要望）: 先手用・後手用を別々に選べるようにしたため、どちら側の変更かを
  * side引数で明示する。呼び出し側（asset-drawer.js）はドロワー内の先手/後手切り替えに
  * 応じてこの引数を渡し分ける。
+ * 修正③（新規要望）: isPieceAssetLinked が true（一括変更モード）の場合、
+ * side引数に関わらず selectedPieceIdSente / selectedPieceIdGote の両方を同じ
+ * pieceId に更新する。false（個別変更モード）の場合は従来通り side側のみ更新する。
  * @param {string} pieceId
  * @param {'SENTE'|'GOTE'} side
  */
 export function selectPieceAsset(pieceId, side) {
-  if (side === 'SENTE') {
+  if (state.isPieceAssetLinked) {
+    state = { ...state, selectedPieceIdSente: pieceId, selectedPieceIdGote: pieceId };
+  } else if (side === 'SENTE') {
     state = { ...state, selectedPieceIdSente: pieceId };
   } else {
     state = { ...state, selectedPieceIdGote: pieceId };
+  }
+  notifyRender();
+}
+
+/**
+ * 修正③（新規要望）: 先手/後手の駒セットの一括変更モードON/OFFを切り替える。
+ * OFF→ONへ切り替えた瞬間は、既存の先手/後手の選択がズレている可能性があるため、
+ * 先手側の選択を後手側にも揃える（先手優先。ユーザーが直前まで操作していたのは
+ * 通常「自分の駒」＝先手表示欄であることが多いため）。
+ * @param {boolean} isLinked
+ */
+export function setPieceAssetLinked(isLinked) {
+  if (isLinked) {
+    state = {
+      ...state,
+      isPieceAssetLinked: true,
+      selectedPieceIdGote: state.selectedPieceIdSente
+    };
+  } else {
+    state = { ...state, isPieceAssetLinked: false };
   }
   notifyRender();
 }
