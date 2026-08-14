@@ -1,5 +1,5 @@
 /**
- * ⑥下部操作列・手数選択モーダル（追加②：n手目ジャンプ）
+ * ⑥下部操作列・局面選択モーダル（追加②：n手目ジャンプ）
  *
  * 将棋ウォーズの「棋譜一覧」画面を参考に、棋譜データの全手順を1行1手のリストで表示し、
  * タップした手数の局面へ直接移動できるようにする。
@@ -13,7 +13,7 @@ import { formatMoveText, formatSpecialText } from './kifu-bar.js';
 let overlayEl = null;
 
 /**
- * 手数選択モーダルを開く。
+ * 局面選択モーダルを開く。
  */
 export function openMoveListPopup() {
   const { kifuData, moveHistory } = getState();
@@ -33,7 +33,7 @@ export function openMoveListPopup() {
   header.className = 'move-list-header';
   const title = document.createElement('span');
   title.className = 'move-list-title';
-  title.textContent = '手数を選択';
+  title.textContent = '局面を選択';
   const closeBtn = document.createElement('button');
   closeBtn.className = 'move-list-close';
   closeBtn.setAttribute('aria-label', '閉じる');
@@ -66,7 +66,7 @@ export function openMoveListPopup() {
 }
 
 /**
- * 手数選択モーダルを閉じる。
+ * 局面選択モーダルを閉じる。
  */
 export function closeMoveListPopup() {
   if (overlayEl) {

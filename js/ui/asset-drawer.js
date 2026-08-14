@@ -113,9 +113,13 @@ function renderPieceControlBar(body) {
   const bar = document.createElement('div');
   bar.className = 'asset-piece-control-bar';
 
-  // 一括変更トグル
+  // 一括変更トグル（意匠変更：チェックボックス+テキストラベルから、
+  // 「一括変更／個別変更」の2面をフリップ表示するトグルボタンに変更。
+  // input[type=checkbox]自体は状態保持・アクセシビリティのため維持し、
+  // 見た目はlabel内の.tgl-btnをCSSで3Dフリップさせる。）
   const toggleWrap = document.createElement('label');
   toggleWrap.className = 'asset-piece-link-toggle';
+  toggleWrap.setAttribute('aria-label', '先後の駒を一括変更する');
   const checkbox = document.createElement('input');
   checkbox.type = 'checkbox';
   checkbox.checked = getState().isPieceAssetLinked;
@@ -126,9 +130,10 @@ function renderPieceControlBar(body) {
     if (renderCallback) renderCallback();
   });
   toggleWrap.appendChild(checkbox);
-  const toggleText = document.createElement('span');
-  toggleText.textContent = '先後の駒を一括変更する';
-  toggleWrap.appendChild(toggleText);
+  const tglBtn = document.createElement('span');
+  tglBtn.className = 'tgl-btn';
+  tglBtn.setAttribute('aria-hidden', 'true');
+  toggleWrap.appendChild(tglBtn);
   bar.appendChild(toggleWrap);
 
   // 先手用/後手用セグメント（一括OFF時のみ）

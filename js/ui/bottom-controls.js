@@ -80,7 +80,7 @@ export function initBottomControls() {
     advanceToKifuProgress(kifuMoves.length);
   });
 
-  // 手数選択（追加②：n手目ジャンプ）
+  // 局面選択（追加②：n手目ジャンプ）
   const moveListBtn = document.getElementById('btn-move-list');
   moveListBtn.addEventListener('click', () => {
     if (isAnyControlDisabled() || isButtonDisabled(moveListBtn)) return;
@@ -121,7 +121,7 @@ export function updateBottomControls() {
   const candidates = getNextBranchCandidates();
   nextBtn.classList.toggle('bottom-btn--branchable', candidates.length >= 2);
 
-  // 手数選択：棋譜データが読み込まれていれば、棋譜モード／分岐モードを問わず活性
+  // 局面選択：棋譜データが読み込まれていれば、棋譜モード／分岐モードを問わず活性
   // （分岐中でも棋譜側の手数へ戻れる仕様のため。次・最後ボタンとは活性条件が異なる）
   setButtonDisabled(document.getElementById('btn-move-list'), disabled || !kifuData);
 }

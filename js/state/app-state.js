@@ -129,7 +129,7 @@ export function getBranchCandidates(prefix) {
  * 修正（分岐モード判定バグ対応）：分岐キャッシュは実際に指した（＝commitMove()や
  * advanceBranch()を経由した）手しか記録しない。ところがインポート直後の棋譜本譜の
  * 手は、ユーザーが一度もその手を「指す」操作をしていなくても存在する（最後ボタン・
- * 手数選択ジャンプ・単なる棋譜読了時点のadvanceToKifuProgress()はcommitMove()を
+ * 局面選択ジャンプ・単なる棋譜読了時点のadvanceToKifuProgress()はcommitMove()を
  * 経由しないため、本譜の手はキャッシュに記録されない）。そのため、
  * 「3手目まで棋譜通り→4手目で分岐→3手目まで戻る」という手順では、キャッシュ上は
  * 3手目局面からの候補が「分岐した手」1件のみとなり、本譜側の4手目が候補に
@@ -246,7 +246,7 @@ export function getDefaultForwardMove() {
 
 /**
  * 新規要望：「次」を押して1手進める（分岐キャッシュ対応版）。
- * advanceToKifuProgress()（手数選択・最後ボタン等、複数手をまとめて進める用途）とは別に、
+ * advanceToKifuProgress()（局面選択・最後ボタン等、複数手をまとめて進める用途）とは別に、
  * 「次」ボタン専用の1手進める入口として用意する。
  * 対象の手が指定されなければ、getDefaultForwardMove()の優先順位に従う。
  * @param {Move} [move] - 長押しメニューで選んだ特定の変化。省略時は既定の優先手。
@@ -403,7 +403,7 @@ export function advanceToKifuProgress(targetProgress) {
 }
 
 /**
- * 棋譜上の指定手数の局面へ直接移動する（手数選択リストからのジャンプ専用）。
+ * 棋譜上の指定手数の局面へ直接移動する（局面選択リストからのジャンプ専用）。
  * targetMoveNumberは「棋譜データ上の何手目まで進めた状態にするか」（0=開始局面）。
  * 分岐モード中に棋譜側の手数（kifuProgressより前）へ戻る場合と、棋譜モード中に
  * 先の手数へ進める場合の両方を1つの入口でまとめて扱う。
@@ -443,7 +443,7 @@ export function setAssetDrawerOpen(isOpen) {
   notifyRender();
 }
 
-/** 手数選択リスト（追加②）の開閉状態を設定する */
+/** 局面選択リスト（追加②）の開閉状態を設定する */
 export function setMoveListOpen(isOpen) {
   state = { ...state, isMoveListOpen: isOpen };
   notifyRender();

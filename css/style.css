@@ -709,22 +709,43 @@ html, body {
 
 .asset-drawer-tabs {
   display: flex;
-  gap: 4px;
+  gap: 10px;
 }
 
+/* 修正（既存要望・意匠変更）: 「駒」「盤」タブのフォントを4px拡大し、
+   選択色を水色（#4a90d9）から和風の統一感のある色（拭き漆のような焦茶〜朱色系）に変更。
+   あわせて選択時にふわっと持ち上がる・影が濃くなる演出を追加し、単なる背景色の
+   切り替えより装飾性を持たせる（参考実装の円形タブの「浮き上がり＋影」の意匠を、
+   このヘッダー内の限られた高さに収まる角丸ピル型に翻案したもの）。 */
 .asset-drawer-tab {
-  padding: 6px 16px;
+  padding: 8px 20px;
   border: 1px solid #998;
-  border-radius: 4px;
+  border-radius: 999px;
   background-color: #f5f0e8;
+  color: #5a4a3a;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.25s ease,
+              color 0.25s ease,
+              border-color 0.25s ease;
+}
+
+.asset-drawer-tab:not(.asset-drawer-tab--active):hover {
+  border-color: #8b3a2f;
+  color: #8b3a2f;
+  transform: translateY(-1px);
 }
 
 .asset-drawer-tab--active {
-  background-color: #4a90d9;
+  background-color: #8b3a2f;
   color: #fff;
-  border-color: #4a90d9;
+  border-color: #8b3a2f;
+  box-shadow: 0 4px 12px rgba(139, 58, 47, 0.35);
+  transform: translateY(-1px);
 }
 
 .asset-drawer-close {
@@ -765,15 +786,77 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 10px;
-  font-size: 13px;
-  font-weight: bold;
   cursor: pointer;
 }
 
+/* 修正（既存要望・意匠変更）: 「先後の駒を一括変更する」チェックボックスを、
+   「一括変更／個別変更」の2択を表すフリップ式トグルボタンに置き換える。
+   ON/OFFという肯定・否定の二値ではなく「どちらのモードで動くか」という
+   等価な2状態の切り替えのため、色は緑=肯定／赤=否定のような評価色を避け、
+   彩度を落とした和風の2色（一括＝藍、個別＝土）で表現する。
+   構造はチェックボックス（input[type=checkbox]）+ ラベル(.tgl-btn)のまま維持し、
+   見た目だけをCSSで3D的にフリップさせる（アクセシビリティ・状態管理は
+   既存のcheckbox要素に委ねる）。 */
 .asset-piece-link-toggle input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.asset-piece-link-toggle .tgl-btn {
+  position: relative;
+  display: inline-block;
+  width: 132px;
+  height: 30px;
+  border-radius: 6px;
+  perspective: 100px;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.asset-piece-link-toggle .tgl-btn::before,
+.asset-piece-link-toggle .tgl-btn::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  backface-visibility: hidden;
+  transition: transform 0.4s ease;
+}
+
+/* 個別変更＝OFF状態の面（土色・素朴な焦茶系） */
+.asset-piece-link-toggle .tgl-btn::before {
+  content: "個別変更";
+  background-color: #8a6d4b;
+}
+
+/* 一括変更＝ON状態の面（藍色・和の伝統色） */
+.asset-piece-link-toggle .tgl-btn::after {
+  content: "一括変更";
+  background-color: #2f4f6f;
+  transform: rotateY(180deg);
+}
+
+.asset-piece-link-toggle input[type="checkbox"]:checked + .tgl-btn::before {
+  transform: rotateY(-180deg);
+}
+
+.asset-piece-link-toggle input[type="checkbox"]:checked + .tgl-btn::after {
+  transform: rotateY(0deg);
+}
+
+.asset-piece-link-toggle input[type="checkbox"]:focus-visible + .tgl-btn {
+  outline: 2px solid #333;
+  outline-offset: 2px;
 }
 
 .asset-piece-side-switch {
