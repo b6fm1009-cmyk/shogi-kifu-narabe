@@ -1,0 +1,47 @@
+{
+  "$comment": "同梱サンプル棋譜の一覧。assets-manifest.json（盤・駒）とは別に、棋譜読込の「棋譜」タブ（サンプル棋譜）から読込可能な棋譜ファイルと表示情報を管理する。fileはアプリからの fetch パス。エンコーディングは Shift_JIS（js/kifu-io/sample-import.js が decodeKifText で判定してデコードする）。著作権上の理由から、提供元は保護期間満了・作者不詳の江戸時代（1868年以前）の対局に限定している。",
+  "samples": [
+    {
+      "id": "ohashi_sokei_sansa_1607",
+      "file": "./assets/samples/ohashi_sokei_sansa_1607.kif",
+      "date": "1607/06/01",
+      "sente": "大橋宗桂（初代）",
+      "gote": "本因坊算砂",
+      "note": "慶長12年"
+    },
+    {
+      "id": "ito_sokan_ohashi_soyo_1635",
+      "file": "./assets/samples/ito_sokan_ohashi_soyo_1635.kif",
+      "date": "1635/09/01",
+      "sente": "伊藤宗看（初代）",
+      "gote": "大橋宗与（初代）",
+      "note": "寛永12年"
+    },
+    {
+      "id": "ohashi_soyo_ito_sokan_1753",
+      "file": "./assets/samples/ohashi_soyo_ito_sokan_1753.kif",
+      "date": "1753/11/17",
+      "sente": "大橋宗与（四代）",
+      "gote": "伊藤宗看（三代）",
+      "note": "宝暦3年"
+    },
+    {
+      "id": "ito_soin_amano_soho_1856_0411",
+      "file": "./assets/samples/ito_soin_amano_soho_1856_0411.kif",
+      "date": "1856/04/11",
+      "sente": "伊藤宗印（八代）",
+      "gote": "天野宗歩",
+      "note": "安政3年・土井大隅守宅",
+      "place": "土井大隅守宅"
+    },
+    {
+      "id": "amano_soho_ito_soin_1856_1117",
+      "file": "./assets/samples/amano_soho_ito_soin_1856_1117.kif",
+      "date": "1856/11/17",
+      "sente": "天野宗歩",
+      "gote": "伊藤宗印（八代）",
+      "note": "安政3年・江戸城御前",
+      "place": "江戸城御前"
+    }
+  ]
+}

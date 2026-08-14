@@ -4,7 +4,7 @@
  * CACHE_NAME はビルド時に scripts/build-sw-version.js が注入する
  */
 
-const CACHE_NAME = 'shogi-app-12e6c2ef03b1';
+const CACHE_NAME = 'shogi-app-4a582aede31f';
 
 // 盤・駒・背景画像はアプリの見た目に必須だが、一覧を手で書き下すと
 // 「ファイルを追加したのにキャッシュに入れ忘れる」事故が起きやすい。
@@ -52,6 +52,7 @@ const CACHE_URLS = [
   './js/kifu-io/kif-parser.js',
   './js/kifu-io/clipboard-import.js',
   './js/kifu-io/file-import.js',
+  './js/kifu-io/sample-import.js',
   './js/ui/toast.js',
   './js/ui/board-view.js',
   './js/ui/player-info.js',
@@ -73,6 +74,17 @@ const CACHE_URLS = [
   // （main.js → ui/touch-guard.js、ui/bottom-controls.js → ui/move-list-popup.js の参照関係）。
   './js/ui/touch-guard.js',
   './js/ui/move-list-popup.js',
+  // 同梱サンプル棋譜（assets/samples/*.kif）とその一覧（sample-manifest.json）は
+  // scripts/build-sw-version.js が実ファイルから自動列挙して下のマーカー行の間に注入する
+  // （「サンプルを追加したのにキャッシュに入れ忘れる」事故を防ぐため）。
+  // __SAMPLE_CACHE_URLS_START__
+  './assets/layout/sample-manifest.json',
+  './assets/samples/amano_soho_ito_soin_1856_1117.kif',
+  './assets/samples/ito_soin_amano_soho_1856_0411.kif',
+  './assets/samples/ito_sokan_ohashi_soyo_1635.kif',
+  './assets/samples/ohashi_sokei_sansa_1607.kif',
+  './assets/samples/ohashi_soyo_ito_sokan_1753.kif',
+// __SAMPLE_CACHE_URLS_END__
   ...ASSET_URLS
 ];
 

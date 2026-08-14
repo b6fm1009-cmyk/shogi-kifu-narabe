@@ -4,6 +4,7 @@
 import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, setPieceAssetLinked, getState } from '../state/app-state.js';
 import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
 import { PROMOTION_MAP } from '../models/board.js';
+import { loadSampleManifest, importSampleKifu } from '../kifu-io/sample-import.js';
 
 let drawerEl = null;
 let overlayEl = null;
@@ -40,6 +41,7 @@ export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
       <div class="asset-drawer-tabs">
         <button class="asset-drawer-tab asset-drawer-tab--piece" data-tab="PIECE">駒</button>
         <button class="asset-drawer-tab asset-drawer-tab--board" data-tab="BOARD">盤</button>
+        <button class="asset-drawer-tab asset-drawer-tab--kifu" data-tab="KIFU">棋譜</button>
       </div>
       <button class="asset-drawer-close">×</button>
     </div>
@@ -92,8 +94,10 @@ function renderBody() {
   if (activeTab === 'PIECE') {
     renderPieceControlBar(body);
     renderPieceTab(body);
-  } else {
+  } else if (activeTab === 'BOARD') {
     renderBoardTab(body);
+  } else {
+    renderKifuTab(body);
   }
 }
 
@@ -268,6 +272,70 @@ function renderPieceThumb(thumbEl, pieceAsset, tc) {
   } catch (e) {
     console.error(`駒サムネイルの描画に失敗しました (piece=${pieceAsset.id}, type=${tc.type}, promoted=${tc.promoted}):`, e);
   }
+}
+
+/**
+ * 棋譜タブを描画する（同梱サンプル棋譜の一覧）。
+ * sample-manifest.json を非同期で読み込むため、まず「読み込み中」を出し、
+ * 取得後に一覧を組み立てる。タップで importSampleKifu() を実行して盤面へ反映し、
+ * ドロワーを閉じる。
+ * スクロール領域は .asset-drawer-body なので、行は縦並びのまま流せる
+ * （touch-action: pan-y は style.css の .asset-drawer-body で既に許可済み）。
+ */
+function renderKifuTab(body) {
+  body.textContent = '読み込み中…';
+
+  loadSampleManifest()
+    .then((samples) => {
+      // 読み込み中に別タブへ切り替わっていたら描画しない
+      if (activeTab !== 'KIFU') return;
+      body.textContent = '';
+
+      if (!samples.length) {
+        const empty = document.createElement('div');
+        empty.className = 'asset-row asset-row--sample-empty';
+        empty.textContent = 'サンプル棋譜がありません。';
+        body.appendChild(empty);
+        return;
+      }
+
+      for (const sample of samples) {
+        const row = document.createElement('div');
+        row.className = 'asset-row asset-row--sample';
+        row.dataset.id = sample.id;
+
+        const info = document.createElement('div');
+        info.className = 'asset-sample-info';
+
+        const title = document.createElement('div');
+        title.className = 'asset-sample-title';
+        title.textContent = `${sample.sente} 対 ${sample.gote}`;
+
+        const meta = document.createElement('div');
+        meta.className = 'asset-sample-meta';
+        meta.textContent = sample.date + (sample.note ? `・${sample.note}` : '');
+
+        info.appendChild(title);
+        info.appendChild(meta);
+        row.appendChild(info);
+
+        row.addEventListener('click', async () => {
+          row.classList.add('asset-row--loading');
+          await importSampleKifu(sample);
+          closeAssetDrawer();
+        });
+
+        body.appendChild(row);
+      }
+    })
+    .catch(() => {
+      if (activeTab !== 'KIFU') return;
+      body.textContent = '';
+      const err = document.createElement('div');
+      err.className = 'asset-row asset-row--sample-empty';
+      err.textContent = 'サンプル一覧を読み込めませんでした。';
+      body.appendChild(err);
+    });
 }
 
 /**
