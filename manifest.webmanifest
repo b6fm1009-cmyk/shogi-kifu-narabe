@@ -6,8 +6,8 @@
   "lang": "ja",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f5f0",
-  "theme_color": "#3a3a3a",
+  "background_color": "#efe7d2",
+  "theme_color": "#231f18",
   "icons": [
     {
       "src": "./assets/icons/icon-192.png",
