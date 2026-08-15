@@ -182,7 +182,7 @@ html, body {
 /* 名前＋持ち駒を一枚の駒台として扱う。
    高さは盤との距離を詰めるため46pxに統一し、名前欄は内側44px。 */
 .player-info {
-  height: 42px;
+  height: 52px;
   margin: 0 10px;
   display: flex;
   align-items: center;
@@ -215,7 +215,7 @@ html, body {
 .player-info-box {
   flex-shrink: 0;
   width: 86px;
-  height: 40px;
+  height: 44px;
   min-height: 0;
   display: flex;
   flex-direction: column;
