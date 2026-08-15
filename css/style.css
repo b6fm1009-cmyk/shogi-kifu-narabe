@@ -183,8 +183,7 @@ html, body {
    高さは盤との距離を詰めるため46pxに統一し、名前欄は内側44px。 */
 .player-info {
   height: 46px;
-  padding: 5px 0;
-  margin: 0 10px;
+  margin: 4px 10px;
   display: flex;
   align-items: center;
   padding: 0;
