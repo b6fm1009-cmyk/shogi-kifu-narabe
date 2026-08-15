@@ -3,6 +3,19 @@
    設計書 第1部2.6節：390×844基準 + scale()拡大
    ======================================== */
 
+/* ---------- デザインシステム（design-direction-spec.md） ---------- */
+:root {
+  --paper:        #efe7d2;
+  --paper-deep:   #ddd0ac;
+  --surface:      #f8f4e9;
+  --surface-2:    #f0e9d6;
+  --sumi:         #231f18;
+  --sumi-soft:    #6b6252;
+  --sumi-line:    rgba(35,31,24,0.14);
+  --bengara:      #9c4a30;
+  --bengara-deep: #723420;
+}
+
 /* ---------- リセット ---------- */
 * {
   margin: 0;
@@ -16,7 +29,7 @@ html, body {
   height: 100%;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-  background-color: #2c2c2c;
+  background-color: var(--paper);
   /* 畳の背景（設計書 第1部2.6節） */
   background-image: url("../assets/background/tatami.png");
   background-size: cover;
@@ -78,7 +91,7 @@ html, body {
   width: 390px;
   height: auto;
   min-height: 0;
-  background-color: #f5f5f0;
+  background-color: var(--surface);
   display: flex;
   flex-direction: column;
   transform-origin: center center;
@@ -92,8 +105,8 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 8px;
-  background-color: #e8e4d8;
-  border-bottom: 1px solid #ccc;
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--sumi-line);
   flex-shrink: 0;
 }
 
@@ -101,9 +114,9 @@ html, body {
   /* 修正④: ヘッダーボタンの文字をわずかに拡大（12px→14px）。視認性向上のための調整。 */
   font-size: 14px;
   padding: 4px 8px;
-  border: 1px solid #998;
+  border: 1px solid var(--paper-deep);
   border-radius: 4px;
-  background-color: #f5f0e8;
+  background-color: var(--surface);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -132,7 +145,7 @@ html, body {
 .kifu-bar {
   /* 修正④: 上下の余白を詰める（56px→46px）。文字サイズは可読性のため維持。 */
   height: 46px;
-  background-color: #3a3a3a;
+  background-color: var(--sumi);
   display: flex;
   align-items: center;
   padding: 0 7px;
@@ -152,16 +165,16 @@ html, body {
 }
 
 .kifu-move--next {
-  color: #ffffff;
+  color: var(--surface);
   font-weight: bold;
 }
 
 .kifu-move--upcoming {
-  color: #999999;
+  color: var(--sumi-soft);
 }
 
 .kifu-move--branch {
-  color: #ffcc66;
+  color: #e0a888;
   font-weight: bold;
 }
 
@@ -201,9 +214,9 @@ html, body {
   justify-content: center;
   gap: 1px;
   padding: 3px 4px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #fbfaf6 0%, #efece2 100%);
-  border: 1px solid #c9c2ac;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border: 1px solid var(--paper-deep);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   /* 対局者名を長押しすると、iOS標準の「コピー」テキスト選択メニューが立ち上がって
      しまう。コピーできても意味のあるデータではなく、UIの見た目を崩すだけの誤操作
@@ -217,7 +230,7 @@ html, body {
 .player-label {
   font-size: 10px;
   line-height: 1.2;
-  color: #8a6a2f;
+  color: var(--bengara);
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -230,7 +243,7 @@ html, body {
 .player-name {
   font-size: 14px;
   line-height: 1.25;
-  color: #2b2b2b;
+  color: var(--sumi);
   font-weight: 600;
   white-space: nowrap;
   max-width: 100%;
@@ -265,7 +278,7 @@ html, body {
   position: relative;
   /* 持ち駒のグレー背景を撤去し、駒画像の透過を活かす（選択時のピンク背景は残す） */
   background-color: transparent;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: pointer;
   flex-shrink: 0;
   /* 修正①: 持ち駒タップ時もダブルタップズーム等のジェスチャーを抑制する */
@@ -273,8 +286,8 @@ html, body {
 }
 
 .hand-piece--selected {
-  background-color: #ffd0d0;
-  box-shadow: 0 0 0 2px #ff8090;
+  background-color: rgba(156,74,48,0.14);
+  box-shadow: 0 0 0 2px var(--bengara);
 }
 
 .hand-piece-count {
@@ -282,10 +295,10 @@ html, body {
   bottom: 1px;
   right: 2px;
   font-size: 11px;
-  color: #fff;
+  color: var(--surface);
   background-color: rgba(0, 0, 0, 0.7);
   padding: 0 3px;
-  border-radius: 2px;
+  border-radius: 4px;
   pointer-events: none;
 }
 
@@ -410,7 +423,7 @@ html, body {
 .coordinate-label {
   position: absolute;
   font-size: 10px;
-  color: #333;
+  color: var(--sumi);
   transform: translate(-50%, -50%);
   pointer-events: none;
   /* 修正⑨（新規要望）: 盤の周囲の筋・段の数字もコピー可能な状態だったため抑止する。
@@ -447,8 +460,8 @@ html, body {
      修正④: gapも約90%に圧縮（14px→12px）。 */
   gap: 12px;
   padding: 0 8px;
-  background-color: #e8e4d8;
-  border-top: 1px solid #ccc;
+  background-color: var(--surface-2);
+  border-top: 1px solid var(--sumi-line);
   flex-shrink: 0;
 }
 
@@ -460,9 +473,9 @@ html, body {
   font-size: 16px;
   padding: 6px 8px;
   min-height: 44px;
-  border: 1px solid #998;
-  border-radius: 6px;
-  background-color: #f5f0e8;
+  border: 1px solid var(--paper-deep);
+  border-radius: 4px;
+  background-color: var(--surface);
   cursor: pointer;
   white-space: nowrap;
   touch-action: manipulation;
@@ -504,16 +517,16 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background-color: #e8c477;
-  border: 1px solid #c9a35a;
-  color: #2a2010;
+  border-radius: 4px;
+  background-color: var(--bengara);
+  border: 1px solid var(--bengara-deep);
+  color: var(--sumi);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
 
 .bottom-btn--flip {
-  background-color: #b0d0f0;
-  border-color: #6a9ace;
+  background-color: var(--surface-2);
+  border-color: var(--bengara);
   flex: 0 0 auto;
 }
 
@@ -550,7 +563,7 @@ html, body {
 .bottom-btn--movelist {
   flex: 0 0 auto;
   border-width: 2px;
-  border-color: #6a9ace;
+  border-color: var(--bengara);
   padding: 10px 10px;
 }
 
@@ -569,9 +582,9 @@ html, body {
 
 .toast {
   background-color: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  color: var(--surface);
   padding: 10px 16px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 13px;
   opacity: 0;
   transition: opacity 0.3s;
@@ -591,7 +604,7 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  color: var(--surface);
   font-size: 13px;
   cursor: pointer;
 }
@@ -600,10 +613,10 @@ html, body {
 }
 
 /* ---------- 成りポップアップ ---------- */
-/* 修正⑦: 旧配色（背景ピンク#ffe8e8／水色#e8f0ff）はユーザーからの見た目の指摘を受けて
+/* 修正⑦: 旧配色（背景ピンクrgba(156,74,48,0.12)／水色rgba(156,74,48,0.08)）はユーザーからの見た目の指摘を受けて
    ニュートラルなグレー基調に変更した。左＝成る／右＝成らないという配置（要件定義書7章）
    自体は維持しつつ、視認上の左右区別は「背景色の彩度」ではなく「駒文字の色（成り駒は
-   伝統的な朱色#c00033のまま・不成りは黒#222のまま）」と「枠線の濃淡」で行う設計に変更。
+   伝統的な朱色var(--bengara)のまま・不成りは黒var(--sumi)のまま）」と「枠線の濃淡」で行う設計に変更。
    overlayにbackdrop-filterのぼかしを足し、ポップアップ本体の影も硬い黒影から
    柔らかいものに変えて、全体としてモダンな印象にした。 */
 .nari-popup-overlay {
@@ -624,18 +637,18 @@ html, body {
 .nari-popup {
   display: flex;
   gap: 16px;
-  background-color: #ffffff;
+  background-color: var(--surface);
   padding: 20px;
-  border-radius: 16px;
+  border-radius: 4px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .nari-popup-btn {
   width: 100px;
   height: 140px;
-  border: 1px solid #e2e0da;
-  border-radius: 10px;
-  background-color: #fafaf8;
+  border: 1px solid var(--paper-deep);
+  border-radius: 4px;
+  background-color: var(--surface);
   cursor: pointer;
   position: relative;
   display: flex;
@@ -649,17 +662,17 @@ html, body {
 }
 
 .nari-popup-btn:active {
-  background-color: #efefec;
-  border-color: #c9c6bd;
+  background-color: var(--surface-2);
+  border-color: var(--paper-deep);
 }
 
 .nari-popup-btn--promote {
-  background-color: #f7f6f3;
-  border-color: #ddd9cf;
+  background-color: var(--surface);
+  border-color: var(--paper-deep);
 }
 
 .nari-popup-btn--not-promote {
-  background-color: #fafaf8;
+  background-color: var(--surface);
 }
 
 /* ---------- アセットドロワー ---------- */
@@ -669,7 +682,7 @@ html, body {
   left: 0;
   width: 300px;
   height: 100%;
-  background-color: #f5f0e8;
+  background-color: var(--surface);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
   transform: translateX(-100%);
   transition: transform 0.3s ease;
@@ -703,8 +716,8 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 10px;
-  background-color: #e0dcd0;
-  border-bottom: 1px solid #ccc;
+  background-color: var(--surface-2);
+  border-bottom: 1px solid var(--sumi-line);
 }
 
 .asset-drawer-tabs {
@@ -713,16 +726,16 @@ html, body {
 }
 
 /* 修正（既存要望・意匠変更）: 「駒」「盤」タブのフォントを4px拡大し、
-   選択色を水色（#4a90d9）から和風の統一感のある色（拭き漆のような焦茶〜朱色系）に変更。
+   選択色を水色（var(--bengara)）から和風の統一感のある色（拭き漆のような焦茶〜朱色系）に変更。
    あわせて選択時にふわっと持ち上がる・影が濃くなる演出を追加し、単なる背景色の
    切り替えより装飾性を持たせる（参考実装の円形タブの「浮き上がり＋影」の意匠を、
    このヘッダー内の限られた高さに収まる角丸ピル型に翻案したもの）。 */
 .asset-drawer-tab {
   padding: 8px 20px;
-  border: 1px solid #998;
-  border-radius: 999px;
-  background-color: #f5f0e8;
-  color: #5a4a3a;
+  border: 1px solid var(--paper-deep);
+  border-radius: 4px;
+  background-color: var(--surface);
+  color: var(--sumi-soft);
   cursor: pointer;
   font-size: 18px;
   font-weight: 600;
@@ -735,15 +748,15 @@ html, body {
 }
 
 .asset-drawer-tab:not(.asset-drawer-tab--active):hover {
-  border-color: #8b3a2f;
-  color: #8b3a2f;
+  border-color: var(--bengara);
+  color: var(--bengara);
   transform: translateY(-1px);
 }
 
 .asset-drawer-tab--active {
-  background-color: #8b3a2f;
-  color: #fff;
-  border-color: #8b3a2f;
+  background-color: var(--bengara);
+  color: var(--surface);
+  border-color: var(--bengara);
   box-shadow: 0 4px 12px rgba(139, 58, 47, 0.35);
   transform: translateY(-1px);
 }
@@ -753,7 +766,7 @@ html, body {
   border: none;
   background: none;
   cursor: pointer;
-  color: #333;
+  color: var(--sumi);
 }
 
 .asset-drawer-body {
@@ -777,8 +790,8 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: #f5f0e8;
-  border-bottom: 1px solid #ddd;
+  background-color: var(--surface);
+  border-bottom: 1px solid var(--sumi-line);
 }
 
 .asset-piece-link-toggle {
@@ -809,7 +822,7 @@ html, body {
   display: inline-block;
   width: 196px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: 4px;
   perspective: 100px;
   cursor: pointer;
   flex-shrink: 0;
@@ -825,10 +838,10 @@ html, body {
   justify-content: center;
   width: 100%;
   height: 100%;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: bold;
-  color: #fff;
+  color: var(--surface);
   white-space: nowrap;
   backface-visibility: hidden;
   transition: transform 0.4s ease;
@@ -837,13 +850,13 @@ html, body {
 /* 個別変更＝OFF状態の面（土色・素朴な焦茶系） */
 .asset-piece-link-toggle .tgl-btn::before {
   content: "先後の駒を個別変更";
-  background-color: #8a6d4b;
+  background-color: var(--bengara-deep);
 }
 
 /* 一括変更＝ON状態の面（藍色・和の伝統色） */
 .asset-piece-link-toggle .tgl-btn::after {
   content: "先後の駒を一括変更";
-  background-color: #2f4f6f;
+  background-color: var(--bengara);
   transform: rotateY(180deg);
 }
 
@@ -856,7 +869,7 @@ html, body {
 }
 
 .asset-piece-link-toggle input[type="checkbox"]:focus-visible + .tgl-btn {
-  outline: 2px solid #333;
+  outline: 2px solid var(--sumi);
   outline-offset: 2px;
 }
 
@@ -869,18 +882,31 @@ html, body {
 .asset-piece-side-switch-btn {
   flex: 1;
   padding: 8px 0;
-  border: 1px solid #998;
+  border: 1px solid var(--paper-deep);
   border-radius: 4px;
-  background-color: #fff;
+  background-color: var(--surface);
   cursor: pointer;
   font-size: 13px;
   font-weight: bold;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.25s ease,
+              color 0.25s ease,
+              border-color 0.25s ease;
+}
+
+.asset-piece-side-switch-btn:not(.asset-piece-side-switch-btn--active):hover {
+  border-color: var(--bengara);
+  color: var(--bengara);
+  transform: translateY(-1px);
 }
 
 .asset-piece-side-switch-btn--active {
-  background-color: #333;
-  color: #fff;
-  border-color: #333;
+  background-color: var(--bengara);
+  color: var(--surface);
+  border-color: var(--bengara);
+  box-shadow: 0 4px 12px rgba(139, 58, 47, 0.35);
+  transform: translateY(-1px);
 }
 
 .asset-row {
@@ -888,12 +914,12 @@ html, body {
   align-items: center;
   gap: 8px;
   padding: 12px 10px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--sumi-line);
   cursor: pointer;
 }
 
 .asset-row--selected {
-  background-color: #d0e4f7;
+  background-color: rgba(156,74,48,0.10);
 }
 
 .asset-row-thumbs {
@@ -904,7 +930,7 @@ html, body {
 .asset-thumb {
   width: 40px;
   height: 48px;
-  background-color: #e8e4d8;
+  background-color: var(--surface-2);
   border-radius: 4px;
 }
 
@@ -929,16 +955,16 @@ html, body {
 .asset-sample-title {
   font-size: 14px;
   font-weight: 600;
-  color: #3a3530;
+  color: var(--sumi);
 }
 
 .asset-sample-meta {
   font-size: 12px;
-  color: #8a7a68;
+  color: var(--sumi-soft);
 }
 
 .asset-row--sample-empty {
-  color: #8a7a68;
+  color: var(--sumi-soft);
   font-size: 13px;
 }
 
@@ -950,7 +976,7 @@ html, body {
 .asset-board-thumb {
   width: 60px;
   height: 60px;
-  background-color: #8b7355;
+  background-color: var(--paper-deep);
   border-radius: 4px;
   display: flex;
   align-items: center;
@@ -979,8 +1005,8 @@ html, body {
   width: 100%;
   max-width: 320px;
   max-height: 100%;
-  background-color: #f5f0e8;
-  border-radius: 14px;
+  background-color: var(--surface);
+  border-radius: 4px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
   display: flex;
   flex-direction: column;
@@ -992,15 +1018,15 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background-color: #e8c477;
-  border-bottom: 1px solid #c9a35a;
+  background-color: var(--bengara);
+  border-bottom: 1px solid var(--bengara-deep);
   flex-shrink: 0;
 }
 
 .move-list-title {
   font-size: 15px;
   font-weight: bold;
-  color: #2a2010;
+  color: var(--sumi);
 }
 
 .move-list-close {
@@ -1008,7 +1034,7 @@ html, body {
   line-height: 1;
   border: none;
   background: none;
-  color: #2a2010;
+  color: var(--sumi);
   cursor: pointer;
   padding: 2px 6px;
 }
@@ -1025,24 +1051,24 @@ html, body {
 .move-list-row {
   font-size: 16px;
   padding: 11px 12px;
-  border-radius: 8px;
-  color: #333;
+  border-radius: 4px;
+  color: var(--sumi);
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .move-list-row:not(.move-list-row--disabled):active {
-  background-color: #e0dcd0;
+  background-color: var(--surface-2);
 }
 
 .move-list-row--current {
-  background-color: #e8c477;
-  color: #2a2010;
+  background-color: var(--bengara);
+  color: var(--sumi);
   font-weight: bold;
 }
 
 .move-list-row--special {
-  color: #999;
+  color: var(--sumi-soft);
   font-size: 13px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -1060,3 +1086,205 @@ html, body {
   height: 100%;
   object-fit: cover;
 }
+
+/* ========================================
+   デザイン方向性実装（design-direction-spec.md）
+   ======================================== */
+
+/* 畳はアプリ本体とは独立した背面レイヤーに限定してfilterを適用する。 */
+.tatami-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url("../assets/background/tatami.png") center / cover no-repeat;
+  filter: saturate(0.4) brightness(0.97) sepia(0.15) contrast(0.92);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.tatami-fade {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 55% 42% at 50% 36%, var(--paper) 0%, var(--paper) 20%, transparent 70%);
+}
+
+#scale-root {
+  z-index: 2;
+}
+
+html, body {
+  background: var(--paper);
+}
+
+#app-frame {
+  background: var(--surface);
+}
+
+/* 名前＋持ち駒を実物の駒台のような一枚の受け皿にまとめる。 */
+.player-info {
+  margin: 0 10px;
+  padding: 0;
+  border: 1px solid var(--sumi-line);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 2px rgba(60,45,20,0.06);
+  gap: 0;
+  overflow: hidden;
+}
+
+.player-info-box {
+  width: 86px;
+  min-height: 40px;
+  height: 48px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+.player-name,
+.asset-sample-title,
+.asset-row-label {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  letter-spacing: 0.06em;
+}
+
+.header,
+.bottom-controls,
+.asset-drawer-header {
+  background: var(--surface-2);
+  border-color: var(--sumi-line);
+}
+
+.header-btn,
+.bottom-btn,
+.asset-drawer-tab,
+.asset-piece-side-switch-btn,
+.move-list-row {
+  border-radius: 4px;
+}
+
+.header-btn,
+.bottom-btn,
+.asset-drawer-tab,
+.asset-piece-side-switch-btn {
+  background: var(--surface);
+  border-color: var(--paper-deep);
+  color: var(--sumi);
+}
+
+.kifu-bar {
+  background: var(--sumi);
+}
+
+.kifu-move--next { color: var(--surface); }
+.kifu-move--upcoming { color: var(--sumi-soft); }
+.kifu-move--branch { color: #e0a888; }
+
+.bottom-btn {
+  transition: transform 50ms ease-out;
+}
+
+.bottom-btn:active {
+  transform: scale(0.97);
+}
+
+.bottom-btn--flip,
+.bottom-btn--movelist {
+  background: var(--surface);
+  border-color: var(--paper-deep);
+}
+
+.bottom-btn--branchable::after {
+  border-radius: 4px;
+  background: var(--bengara);
+  border-color: var(--bengara-deep);
+  color: var(--surface);
+  box-shadow: 0 1px 3px rgba(60,45,20,0.18);
+}
+
+.hand-piece,
+.asset-thumb,
+.asset-board-thumb {
+  border-radius: 4px;
+}
+
+.asset-drawer {
+  background: var(--surface);
+  box-shadow: 0 1px 3px rgba(60,45,20,0.18);
+}
+
+.asset-drawer-tabs { gap: 6px; }
+.asset-drawer-tab {
+  border-radius: 4px;
+  color: var(--sumi);
+  box-shadow: 0 1px 3px rgba(60,45,20,0.18);
+  transition: background-color 50ms ease-out, color 50ms ease-out, border-color 50ms ease-out, transform 50ms ease-out;
+}
+.asset-drawer-tab:not(.asset-drawer-tab--active):hover {
+  border-color: var(--bengara);
+  color: var(--bengara);
+  transform: none;
+}
+.asset-drawer-tab--active {
+  background: var(--bengara);
+  color: var(--surface);
+  border-color: var(--bengara);
+  box-shadow: 0 1px 3px rgba(60,45,20,0.18);
+  transform: none;
+}
+
+.asset-piece-control-bar {
+  background: var(--surface);
+  border-color: var(--sumi-line);
+}
+
+.asset-piece-link-toggle .tgl-btn { border-radius: 4px; }
+.asset-piece-link-toggle .tgl-btn::before,
+.asset-piece-link-toggle .tgl-btn::after {
+  border-radius: 4px;
+  transition: transform 0.4s ease;
+}
+.asset-piece-link-toggle .tgl-btn::before { background: var(--surface-2); color: var(--sumi); }
+.asset-piece-link-toggle .tgl-btn::after { background: var(--bengara); color: var(--surface); }
+.asset-piece-link-toggle input[type="checkbox"]:focus-visible + .tgl-btn { outline-color: var(--bengara); }
+
+.asset-piece-side-switch-btn--active {
+  background: var(--bengara);
+  color: var(--surface);
+  border-color: var(--bengara);
+}
+
+.asset-row { border-color: var(--sumi-line); }
+.asset-row--selected { background: rgba(156,74,48,0.10); }
+
+.asset-board-thumb { background: var(--paper-deep); }
+
+.move-list-popup,
+.nari-popup {
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: 0 16px 48px rgba(40,30,15,0.3);
+}
+
+.move-list-header {
+  background: var(--surface-2);
+  border-color: var(--sumi-line);
+}
+
+.move-list-row { color: var(--sumi); }
+.move-list-row:not(.move-list-row--disabled):active { background: var(--surface-2); }
+.move-list-row--current { background: rgba(156,74,48,0.12); color: var(--bengara-deep); }
+
+.nari-popup-btn { border-radius: 4px; }
+
+.toast {
+  background: rgba(35,31,24,0.92);
+  color: var(--surface);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(60,45,20,0.18);
+}
+
+/* 連打対象以外の既存アニメーションは変更しない。 */
