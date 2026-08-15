@@ -179,13 +179,21 @@ html, body {
 }
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
+/* 名前＋持ち駒を一枚の駒台として扱う。
+   高さは盤との距離を詰めるため46pxに統一し、名前欄は内側44px。 */
 .player-info {
-  height: 50px;
+  height: 46px;
+  margin: 0 10px;
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 0;
+  border: 1px solid var(--sumi-line);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: inset 0 1px 2px rgba(60,45,20,0.06);
+  overflow: hidden;
 }
 
 .player-info--opponent {
@@ -207,7 +215,8 @@ html, body {
 .player-info-box {
   flex-shrink: 0;
   width: 86px;
-  min-height: 40px;
+  height: 44px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1122,28 +1131,7 @@ html, body {
   background: var(--surface);
 }
 
-/* 名前＋持ち駒を実物の駒台のような一枚の受け皿にまとめる。 */
-.player-info {
-  margin: 0 10px;
-  padding: 0;
-  border: 1px solid var(--sumi-line);
-  border-radius: 4px;
-  background: var(--surface);
-  box-shadow: inset 0 1px 2px rgba(60,45,20,0.06);
-  gap: 0;
-  overflow: hidden;
-}
-
-.player-info-box {
-  width: 86px;
-  min-height: 40px;
-  height: 48px;
-  border: 0;
-  border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: none;
-}
-
+/* player-info / player-info-box の寸法・駒台装飾は上部の定義に統合済み。 */
 .player-name,
 .asset-sample-title,
 .asset-row-label {
