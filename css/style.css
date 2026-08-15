@@ -100,7 +100,7 @@ html, body {
 
 /* ---------- ①ヘッダー ---------- */
 .header {
-  height: 38px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -457,7 +457,7 @@ html, body {
 .bottom-controls {
   /* iPhoneでの誤タップ防止のためボタン群を大きくする。
      タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。*/
-  height: 54px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
