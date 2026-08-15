@@ -100,7 +100,7 @@ html, body {
 
 /* ---------- ①ヘッダー ---------- */
 .header {
-  height: 44px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -143,8 +143,8 @@ html, body {
 
 /* ---------- ②棋譜符号バー ---------- */
 .kifu-bar {
-  /* 修正④: 上下の余白を詰める（56px→46px）。文字サイズは可読性のため維持。 */
-  height: 46px;
+  /* 修正④: 上下の余白を詰める（56px→44px）。文字サイズは可読性のため維持。 */
+  height: 44px;
   background-color: var(--sumi);
   display: flex;
   align-items: center;
