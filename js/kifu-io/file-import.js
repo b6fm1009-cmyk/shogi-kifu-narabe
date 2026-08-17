@@ -4,6 +4,7 @@
 import { parseKifText } from './kif-parser.js';
 import { loadKifu } from '../state/app-state.js';
 import { showToast } from '../ui/toast.js';
+import { hideInfoButton } from '../ui/info-popup.js';
 
 /**
  * ファイルからKIFテキストを読み込む。
@@ -19,6 +20,7 @@ export async function importFromFile(file) {
     const result = parseKifText(text);
     if (result.success) {
       loadKifu(result.data);
+      hideInfoButton();
     } else {
       showToast(result.error);
     }

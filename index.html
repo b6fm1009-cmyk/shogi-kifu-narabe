@@ -22,13 +22,15 @@
        apple-touch-icon は iOS Safari の「ホーム画面に追加」用。iOS は manifest の
        アイコンを参照しないことが多く、この link が無いと画面上のスクリーンショット
        を代用アイコンにされてしまうため、正方形の専用アイコンを明示する。 -->
-  <meta name="theme-color" content="#3a3a3a">
+  <meta name="theme-color" content="#231f18">
   <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
   <title>将棋 棋譜並べ</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
+  <div class="tatami-layer" aria-hidden="true"></div>
+  <div class="tatami-fade" aria-hidden="true"></div>
   <div id="scale-root">
     <div id="app-frame">
 
@@ -44,7 +46,10 @@
       </header>
 
       <!-- ②棋譜符号バー -->
-      <div id="kifu-bar" class="kifu-bar"></div>
+      <div class="kifu-bar-row">
+        <div id="kifu-bar" class="kifu-bar"></div>
+        <button id="btn-info" class="info-btn" aria-label="使い方を見る">i</button>
+      </div>
 
       <!-- ③対戦相手情報＋持ち駒 -->
       <div class="player-info player-info--opponent">
@@ -85,6 +90,14 @@
   <!-- ⑦ハンバーガーメニュー：ドロワー -->
   <div id="asset-drawer" class="asset-drawer"></div>
   <div id="asset-drawer-overlay" class="asset-drawer-overlay"></div>
+
+  <!-- 使い方ポップアップ -->
+  <div id="info-popup-overlay" class="info-popup-overlay">
+    <div class="info-popup" role="dialog" aria-label="使い方">
+      <button id="btn-info-close" class="info-popup-close" aria-label="閉じる">×</button>
+      <div id="info-popup-body" class="info-popup-body"></div>
+    </div>
+  </div>
 
   <!-- json-kifu-format ライブラリ -->
   <script src="./lib/json-kifu-format.min.js"></script>

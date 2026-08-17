@@ -8,6 +8,7 @@ import { initBottomControls, updateBottomControls } from './ui/bottom-controls.j
 import { renderKifuBar, getKifuBarContent } from './ui/kifu-bar.js';
 import { renderHandPieces, renderPlayerInfoBox } from './ui/player-info.js';
 import { initAssetDrawer, openAssetDrawer, closeAssetDrawer } from './ui/asset-drawer.js';
+import { initInfoPopup } from './ui/info-popup.js';
 import { handleTap } from './ui/selection.js';
 import { getState, setRenderCallback, getKifuModeInfo } from './state/app-state.js';
 import { getSquareSizePx, getBoardOriginPx } from './assets/asset-fit.js';
@@ -55,6 +56,9 @@ async function init() {
     // ヘッダー・下部操作列のイベント登録
     initHeaderButtons();
     initBottomControls();
+
+    // 使い方インフォボタンの初期化
+    initInfoPopup();
 
     // 修正⑧: ダブルタップズームの抑制対象を document.body 全体に拡張する。
     // 従来は .header と .bottom-controls のみを個別に監視していたが、

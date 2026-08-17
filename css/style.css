@@ -142,16 +142,29 @@ html, body {
 }
 
 /* ---------- ②棋譜符号バー ---------- */
+/* kifu-barとインフォボタンを横並びにする行コンテナ。
+   kifu-bar自体はJS側でinnerHTMLを毎回クリアして再描画するため、
+   ボタンをkifu-barの内部に置くと再描画のたびに消えてしまう。
+   そのため兄弟要素として並べ、行の背景（--sumi）はこちらに持たせる。 */
+.kifu-bar-row {
+  height: 44px;
+  background-color: var(--sumi);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
 .kifu-bar {
   /* 修正④: 上下の余白を詰める（56px→44px）。文字サイズは可読性のため維持。 */
   height: 44px;
-  background-color: var(--sumi);
+  background-color: transparent;
   display: flex;
   align-items: center;
   padding: 0 7px;
   gap: 9px;
   overflow: hidden;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   transition: opacity 0.2s;
 }
 
@@ -1171,6 +1184,153 @@ html, body {
 .kifu-move--upcoming { color: var(--sumi-soft); }
 .kifu-move--branch { color: #e0a888; }
 
+/* 依頼②: 使い方インフォボタン（棋譜符号バー右端）。
+   色は既存アクセント（--bengara）に統一し、位置は#kifu-bar-rowの背景（--sumi）に
+   馴染むよう控えめな縁取りのみとする。アニメーションはサンプルHTMLの二重リング
+   （pulse+ripple）を、より落ち着いた単発・低頻度のパルスに簡略化する。 */
+.info-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin: 0 7px 0 0;
+  border: 1.5px solid var(--bengara);
+  border-radius: 50%;
+  background: transparent;
+  color: #e0a888;
+  font-family: Georgia, "Hiragino Mincho ProN", serif;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  animation: info-btn-pulse 3.6s ease-in-out infinite;
+}
+
+.info-btn:active {
+  background: var(--bengara);
+  color: var(--surface);
+}
+
+.info-btn--hidden {
+  display: none;
+}
+
+@keyframes info-btn-pulse {
+  0%, 60%, 100% {
+    box-shadow: 0 0 0 0 rgba(156, 74, 48, 0);
+  }
+  75% {
+    box-shadow: 0 0 0 5px rgba(156, 74, 48, 0.22);
+  }
+  90% {
+    box-shadow: 0 0 0 8px rgba(156, 74, 48, 0);
+  }
+}
+
+/* ---------- 使い方ポップアップ ---------- */
+/* asset-drawer-overlay と同様、#app-frame のスケーリング(transform: scale())の
+   影響を受けない独立レイヤーとしてbody直下に置くため、position: fixedにする
+   （#app-frame内はscale()で拡縮されるため、その内部にpositon: absoluteで置くと
+   実機での見た目のフォントサイズ・余白がスケール倍率でズレてしまう）。 */
+.info-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(20, 20, 20, 0.45);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 700;
+  padding: 20px;
+}
+
+.info-popup-overlay--visible {
+  display: flex;
+}
+
+.info-popup {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  max-height: 80%;
+  overflow-y: auto;
+  background-color: var(--surface);
+  border-radius: 8px;
+  padding: 22px 18px 18px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
+  -webkit-overflow-scrolling: touch;
+}
+
+.info-popup-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--sumi-soft);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-popup-body {
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--sumi);
+}
+
+.info-popup-body h3 {
+  font-size: 15px;
+  color: var(--bengara);
+  margin: 18px 0 6px;
+  border-left: 3px solid var(--bengara);
+  padding-left: 8px;
+}
+
+.info-popup-body h3:first-child {
+  margin-top: 0;
+}
+
+.info-popup-body p {
+  margin: 0 0 4px;
+}
+
+.info-popup-body .info-popup-lead {
+  font-size: 13.5px;
+  color: var(--sumi-soft);
+  margin-bottom: 4px;
+}
+
+.info-popup-body ol,
+.info-popup-body ul {
+  margin: 4px 0 4px 1.2em;
+  padding: 0;
+}
+
+.info-popup-body li {
+  margin: 2px 0;
+}
+
+.info-popup-body .info-popup-example {
+  color: var(--sumi-soft);
+  font-size: 12.5px;
+}
+
 .bottom-btn {
   transition: transform 50ms ease-out;
 }
@@ -1179,10 +1339,29 @@ html, body {
   transform: scale(0.97);
 }
 
+/* 依頼①: 反転・局面選択・ハンバーガーは他の操作ボタンと性質が異なる
+   独立操作のため、既存の朱色系アクセント（--bengara）で塗りつぶして
+   視覚的に区別する。文字色は濃い塗り面の上でも読める --surface（明色）にする。 */
 .bottom-btn--flip,
 .bottom-btn--movelist {
-  background: var(--surface);
-  border-color: var(--paper-deep);
+  background: var(--bengara);
+  border-color: var(--bengara-deep);
+  color: var(--surface);
+}
+
+.bottom-btn--flip:active,
+.bottom-btn--movelist:active {
+  background: var(--bengara-deep);
+}
+
+.header-btn--hamburger {
+  background: var(--bengara);
+  border-color: var(--bengara-deep);
+  color: var(--surface);
+}
+
+.header-btn--hamburger:active {
+  background: var(--bengara-deep);
 }
 
 .bottom-btn--branchable::after {
