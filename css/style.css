@@ -30,10 +30,6 @@ html, body {
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
   background-color: var(--paper);
-  /* 畳の背景（設計書 第1部2.6節） */
-  background-image: url("../assets/background/tatami.png");
-  background-size: cover;
-  background-position: center;
   /* 修正①: iPhone Safariで盤操作中に画面が上下に動いてしまう対策のベース。
      html/body自体はページ全体のバウンス・ズームスクロールを止める役割のみとし、
      個別にスクロールが必要な要素（.asset-drawer-body等）ではtouch-action: pan-y等で
@@ -1113,13 +1109,46 @@ html, body {
    デザイン方向性実装（design-direction-spec.md）
    ======================================== */
 
-/* 畳はアプリ本体とは独立した背面レイヤーに限定してfilterを適用する。 */
+/* 畳はCSSグラデーションで再現（画像アセット不使用・脱tatami.png）。 */
 .tatami-layer {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: url("../assets/background/tatami.png") center / cover no-repeat;
-  filter: saturate(0.4) brightness(0.97) sepia(0.15) contrast(0.92);
+  background:
+    /* 縦の陰影 */
+    linear-gradient(
+      0deg,
+      rgba(139, 126, 74, 0.8),
+      rgba(168, 157, 95, 0.6) 10%,
+      rgba(168, 157, 95, 0.2) 90%,
+      rgba(139, 126, 74, 0.8)
+    ),
+    /* 色ムラ：境界をぼかしてノイズ化 */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.05) 0px,
+      rgba(0,0,0,0.03) 3px,
+      rgba(255,255,255,0.02) 7px,
+      rgba(0,0,0,0.05) 11px,
+      rgba(255,255,255,0.04) 15px,
+      rgba(0,0,0,0.02) 19px,
+      rgba(255,255,255,0.06) 23px,
+      rgba(0,0,0,0.04) 27px,
+      rgba(255,255,255,0.05) 32px
+    ),
+    /* ベース畳目 */
+    linear-gradient(
+      90deg,
+      #f9daa4,
+      #f9daa4 25%,
+      #cea660 25%,
+      #cea660 50%,
+      #ddba78 50%,
+      #ddba78 75%,
+      #c69f5a 75%,
+      #c69f5a
+    );
+  background-size: 32px 20px, 32px 20px, 4px 20px;
   opacity: 0.5;
   pointer-events: none;
 }
@@ -1221,14 +1250,23 @@ html, body {
 }
 
 @keyframes info-btn-pulse {
-  0%, 60%, 100% {
+  0%, 55%, 100% {
     box-shadow: 0 0 0 0 rgba(156, 74, 48, 0);
+    transform: scale(1);
+  }
+  62% {
+    transform: scale(1.12);
+  }
+  68% {
+    transform: scale(1);
   }
   75% {
     box-shadow: 0 0 0 5px rgba(156, 74, 48, 0.22);
+    transform: scale(1.08);
   }
   90% {
     box-shadow: 0 0 0 8px rgba(156, 74, 48, 0);
+    transform: scale(1);
   }
 }
 
@@ -1296,10 +1334,12 @@ html, body {
 
 .info-popup-body h3 {
   font-size: 15px;
+  font-weight: 700;
   color: var(--bengara);
-  margin: 18px 0 6px;
+  margin: 22px 0 8px;
   border-left: 3px solid var(--bengara);
   padding-left: 8px;
+  letter-spacing: 0.02em;
 }
 
 .info-popup-body h3:first-child {
@@ -1310,10 +1350,53 @@ html, body {
   margin: 0 0 4px;
 }
 
+.info-popup-body .info-popup-em {
+  color: var(--bengara-deep);
+  font-weight: 700;
+}
+
 .info-popup-body .info-popup-lead {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--sumi-soft);
-  margin-bottom: 4px;
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+/* 手順①②：丸番号＋本文のステップカード */
+.info-popup-body .info-popup-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.info-popup-body .info-popup-step-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bengara);
+  color: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+.info-popup-body .info-popup-step-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.info-popup-body .info-popup-step-title {
+  font-weight: 700;
+  color: var(--sumi);
+  margin-bottom: 1px;
 }
 
 .info-popup-body ol,
@@ -1324,6 +1407,21 @@ html, body {
 
 .info-popup-body li {
   margin: 2px 0;
+}
+
+.info-popup-body .info-popup-steps-list > li {
+  margin-bottom: 8px;
+}
+
+.info-popup-body .info-popup-step-label {
+  font-weight: 700;
+}
+
+.info-popup-body .info-popup-note {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--sumi-soft);
+  margin-top: 1px;
 }
 
 .info-popup-body .info-popup-example {

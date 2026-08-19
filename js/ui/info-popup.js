@@ -12,20 +12,34 @@
  */
 
 const INFO_HTML = `
-  <p class="info-popup-lead">棋譜並べを、効率よく繰り返すための場所です。</p>
-  <p>まず自動再生で1周、流れをつかむ。<br>2周目からは自分の指で一手ずつ動かして、体に入れる。</p>
+  <h3>このサイトは何？</h3>
+  <p>将棋の対局記録（棋譜）を、実際に自分の指で並べて覚えるための場所です。</p>
+  <p>見るだけの棋譜再生アプリとは違い、<span class="info-popup-em">「自分の手を動かす」</span>ことで頭より先に体に入ります。</p>
 
-  <h3>① 自動再生</h3>
-  <p>再生ボタンを押すだけ。駒は自動で動きます。<br>→ 最初の1周、全体の流れを見るのに。</p>
+  <h3>使い方</h3>
+  <p class="info-popup-lead">まず自動再生で1周、流れをつかむ。<br>2周目からは自分の指で一手ずつ動かして、体に入れる。</p>
 
-  <h3>② 手動並べ</h3>
-  <p>盤上の駒を指でタップして動かします。正しく指せると、画面上部の符号が進みます。<br>→ 2周目以降、繰り返し並べて覚えるのに。</p>
+  <div class="info-popup-step">
+    <div class="info-popup-step-num">①</div>
+    <div class="info-popup-step-body">
+      <p class="info-popup-step-title">自動再生</p>
+      <p>次ボタンを押すだけ。駒は自動で動きます。</p>
+    </div>
+  </div>
+
+  <div class="info-popup-step">
+    <div class="info-popup-step-num">②</div>
+    <div class="info-popup-step-body">
+      <p class="info-popup-step-title">手動並べ</p>
+      <p>盤上の駒を指でタップして動かします。正しく指せると、画面上部の符号が進みます。<br>指手を非表示にすると符号が消えるので、暗記の確認もできます。</p>
+    </div>
+  </div>
 
   <h3>はじめかた</h3>
-  <ol>
-    <li>棋譜を用意する（.kif形式のみ対応。ki2・CSA・SFENなどは非対応です）</li>
-    <li>ここのトップ画面に戻る</li>
-    <li>「棋譜貼付」を押す</li>
+  <ol class="info-popup-steps-list">
+    <li><span class="info-popup-step-label">棋譜を用意する</span><br><span class="info-popup-note">対応形式は.kifのみです。ki2・CSA・SFENなどには対応していません。</span></li>
+    <li><span class="info-popup-step-label">このトップ画面に戻る</span></li>
+    <li><span class="info-popup-step-label">「棋譜貼付」を押す</span></li>
   </ol>
 
   <h3>棋譜（.kif）はどこで手に入る？</h3>
