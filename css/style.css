@@ -92,12 +92,14 @@ html, body {
 
 /* ---------- ①ヘッダー ---------- */
 .header {
-  height: 2.625rem;
-  min-height: 2.625rem;
+  /* 修正（レイアウト調整）: 盤の表示面積を優先するため、タップ領域を
+     44px以上に保ったまま縦の余白を切り詰める（2.625rem→2.375rem）。 */
+  height: 2.375rem;
+  min-height: 2.375rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0.5rem;
+  padding: 0 0.375rem;
   background-color: var(--surface-2);
   border-bottom: 1px solid var(--sumi-line);
   flex-shrink: 0;
@@ -105,9 +107,11 @@ html, body {
 }
 
 .header-btn {
-  font-size: 0.875rem;
-  padding: 0.25rem 0.5rem;
-  min-height: 2.375rem;
+  /* 修正（レイアウト調整）: 4つのボタン（棋譜貼付・棋譜読込・分岐に戻る・
+     指手を非表示）が1行に収まるよう、文字サイズと横paddingを詰める。 */
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.3125rem;
+  min-height: 2.125rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
@@ -124,25 +128,38 @@ html, body {
 }
 
 .header-btn--hamburger {
-  font-size: 1.25rem;
-  padding: 0 0.625rem;
+  font-size: 1.125rem;
+  padding: 0 0.5rem;
 }
 
 .header-buttons {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.1875rem;
   flex: 1;
   justify-content: flex-end;
+  min-width: 0;
+  /* 修正（安全策）: 極端に幅が狭い端末でボタンが収まりきらない場合でも、
+     文字が見切れて操作不能になるのではなく、横スクロールで全ボタンに
+     到達できるようにする（隠れて押せなくなる事故を避ける）。 */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.header-buttons::-webkit-scrollbar {
+  display: none;
 }
 
 /* ---------- ②棋譜符号バー ---------- */
 /* kifu-barとインフォボタンを横並びにする行コンテナ。
    kifu-bar自体はJS側でinnerHTMLを毎回クリアして再描画するため、
    ボタンをkifu-barの内部に置くと再描画のたびに消えてしまう。
-   そのため兄弟要素として並べ、行の背景（--sumi）はこちらに持たせる。 */
+   そのため兄弟要素として並べ、行の背景（--sumi）はこちらに持たせる。
+   修正（レイアウト調整）: 盤の表示面積を優先し、2.75rem→2.5remに詰める。 */
 .kifu-bar-row {
-  height: 2.75rem;
-  min-height: 2.75rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
   background-color: var(--sumi);
   display: flex;
   align-items: center;
@@ -150,12 +167,12 @@ html, body {
 }
 
 .kifu-bar {
-  height: 2.75rem;
+  height: 2.5rem;
   background-color: transparent;
   display: flex;
   align-items: center;
-  padding: 0 0.4375rem;
-  gap: 0.5625rem;
+  padding: 0 0.375rem;
+  gap: 0.5rem;
   overflow: hidden;
   flex: 1 1 auto;
   min-width: 0;
@@ -186,11 +203,15 @@ html, body {
 }
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
-/* 名前＋持ち駒を一枚の駒台として扱う。高さ2.875rem、名前欄は内側2.75rem。 */
+/* 名前＋持ち駒を一枚の駒台として扱う。
+   修正（レイアウト調整）: 盤の表示面積を優先し、上下marginと高さを
+   切り詰める（2.875rem→2.5rem、margin 0.25rem→0.125rem）。
+   駒画像自体のサイズはsquareSizePx（盤マス基準、player-info.js側で算出）
+   で決まるため、この枠を詰めても駒が縮むわけではない。 */
 .player-info {
-  height: 2.875rem;
-  min-height: 2.875rem;
-  margin: 0.25rem 0.625rem;
+  height: 2.5rem;
+  min-height: 2.5rem;
+  margin: 0.125rem 0.5rem;
   display: flex;
   align-items: center;
   padding: 0;
@@ -222,14 +243,14 @@ html, body {
 .player-info-box {
   flex-shrink: 0;
   width: clamp(5.375rem, 22vw, 7.5rem);
-  height: 2.75rem;
+  height: 2.375rem;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.0625rem;
-  padding: 0.1875rem 0.25rem;
+  padding: 0.125rem 0.25rem;
   border-radius: 4px;
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--paper-deep);
@@ -330,8 +351,9 @@ html, body {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
-  /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。 */
-  padding: 0.75rem 1rem 0.25rem 0.375rem;
+  /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
+     修正（レイアウト調整）: 盤の表示面積を優先し、必要最小限まで詰める。 */
+  padding: 0.625rem 0.875rem 0.1875rem 0.25rem;
   touch-action: manipulation;
 }
 
@@ -341,13 +363,21 @@ html, body {
      contain時はコンテナ内に収まる最大サイズに縮小する（アスペクト維持）。
      asset-fit.jsのclientWidth基準計算はこの実表示サイズをそのまま使う。
      盤画像は全種878x960想定だが、将来比率違いが来ても破綻しないよう
-     aspect-ratioは目安・object-fit:containで吸収する。 */
+     aspect-ratioは目安・object-fit:containで吸収する。
+
+     修正（横幅優先）: 以前は幅を「画面の高さから逆算した値」と100%の
+     min()で決めていたため、縦の見積りが少しでも狂うと横幅が本来使える
+     量より小さく計算され、盤が必要以上に小さく表示されていた。
+     横幅を主役にする方針に変更し、幅は常に親要素（.board-container）の
+     100%を基本とする。aspect-ratioにより、縦方向に収まりきらない場合は
+     max-heightとの兼ね合いでブラウザが自動的に幅を縮めるため、
+     縦不足時の安全性は変わらない。 */
   position: relative;
   display: block;
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 878 / 960;
-  width: min(100%, calc((100dvh - 18rem) * 0.9146));
+  width: 100%;
   margin: auto;
 }
 
@@ -466,22 +496,23 @@ html, body {
 /* ---------- ⑥下部操作列 ---------- */
 .bottom-controls {
   /* タップ領域として一般的に推奨される44px以上をボタンの実高さで確保する。
-     ルート14px時の2.75rem=38.5px割れを防ぐためmin-height:px併記。 */
-  height: 3.125rem;
-  min-height: 50px;
+     修正（レイアウト調整）: 外枠の余白のみ詰め、ボタンの最小タップ領域
+     （min-height: 44px、下記.bottom-btn参照）はそのまま維持する。 */
+  height: 2.875rem;
+  min-height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  padding: 0 0.5rem;
+  gap: 0.5rem;
+  padding: 0 0.375rem;
   background-color: var(--surface-2);
   border-top: 1px solid var(--sumi-line);
   flex-shrink: 0;
 }
 
 .bottom-btn {
-  font-size: 1rem;
-  padding: 0.375rem 0.5rem;
+  font-size: 0.9375rem;
+  padding: 0.25rem 0.375rem;
   min-height: 2.75rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
@@ -540,6 +571,7 @@ html, body {
   background-color: var(--surface-2);
   border-color: var(--bengara);
   flex: 0 0 auto;
+  padding: 0.25rem 0.5rem;
 }
 
 /* 追加①: 「◀」「▶」（最初・最後へ一気に移動）はヒアリングの結果、
@@ -547,7 +579,7 @@ html, body {
    最小幅ボタンにする。flex-growを持たせず、内容量に応じた幅のみ確保する。 */
 .bottom-btn--compact {
   flex: 0 0 auto;
-  padding: 0.625rem 0.5rem;
+  padding: 0.25rem 0.4375rem;
 }
 
 /* 追加①: 「＜前」「次＞」（1手ずつの進退）は使用頻度が最も高いため、
@@ -559,7 +591,7 @@ html, body {
 
 .bottom-controls-group {
   display: flex;
-  gap: 0.3125rem;
+  gap: 0.25rem;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -572,7 +604,7 @@ html, body {
   flex: 0 0 auto;
   border-width: 2px;
   border-color: var(--bengara);
-  padding: 0.625rem 0.625rem;
+  padding: 0.25rem 0.5rem;
 }
 
 /* ---------- トースト ---------- */
