@@ -56,6 +56,33 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
     GOTE: findPieceAsset(manifest, selectedPieceIds.gote)
   };
 
+  // 修正（無限ループ対策）: 以前はrenderBoard()が呼ばれるたびに<img>要素を
+  // 作り直していた。新しく生成された<img>はブラウザキャッシュがあっても
+  // completeがfalseから始まり得るため、load完了時にimageLoadCallback()
+  // （main.jsのrenderAll）を呼ぶ設計と組み合わさると、
+  // 「renderAll → renderBoard → 新img生成 → load → renderAll → …」という
+  // 再帰ループになり、CPUを食い潰し続けてしまう（盤しか出ない・端末が
+  // 発熱する症状の原因）。
+  // 対策: 盤画像（boardAsset.image）が前回と同じ場合はboardWrapEl／
+  // boardImageElを使い回し、<img>の再生成・再ロードを起こさない。
+  // 盤の種類を切り替えた場合のみ新しい<img>を生成してロード完了を待つ。
+  const isSameBoardImage = boardWrapEl && boardImageEl
+    && boardEl.contains(boardWrapEl)
+    && boardImageEl.getAttribute('src') === boardAsset.image;
+
+  const renderDependents = () => {
+    placeSquareHighlights(boardState, lastMove);
+    placePieces(boardState, pieceAssetBySide, selectedSource);
+    renderCoordinates(boardState.isFlipped);
+  };
+
+  if (isSameBoardImage) {
+    // 盤画像は変わっていないので<img>はそのまま、駒・ハイライト・座標だけ描き直す。
+    // imageLoadCallbackはここでは呼ばない（画像を再ロードしていないため）。
+    renderDependents();
+    return;
+  }
+
   // 盤画像コンテナ
   boardEl.innerHTML = '';
   boardEl.className = 'board-container';
@@ -81,17 +108,17 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   // 3つとも boardImageEl.clientWidth/clientHeight（盤画像の実表示サイズ）に
   // 依存する計算のため、ロード完了を待たずに呼ぶと座標が0基準のまま描画されてしまう。
   // そのため必ずこの1関数にまとめてから呼び出す（個別に呼び出し口を増やさない）。
-  const renderDependents = () => {
-    placeSquareHighlights(boardState, lastMove);
-    placePieces(boardState, pieceAssetBySide, selectedSource);
-    renderCoordinates(boardState.isFlipped);
+  // imageLoadCallback（main.jsのrenderAll）は「盤の実寸が変わった直後、持ち駒の
+  // サイズ計算をやり直すため」の1回限りの通知として、新規ロード時のみ呼ぶ。
+  const renderDependentsAndNotify = () => {
+    renderDependents();
     if (imageLoadCallback) imageLoadCallback();
   };
 
   if (boardImageEl.complete) {
-    renderDependents();
+    renderDependentsAndNotify();
   } else {
-    boardImageEl.addEventListener('load', renderDependents);
+    boardImageEl.addEventListener('load', renderDependentsAndNotify);
   }
 }
 
