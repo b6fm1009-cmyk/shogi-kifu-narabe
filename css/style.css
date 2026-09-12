@@ -297,15 +297,6 @@ html, body {
 }
 
 .player-name {
-  /* 修正（バグ修正）: <span>のデフォルトdisplay:inlineのままだと、
-     player-info.jsのnameEl.scrollWidth/clientWidthによる「収まるか」判定が
-     正しく機能しない（inline要素のclientWidthは0を返す等、ブラウザの
-     レイアウトモデル上ブロックレベル専用のプロパティのため）。
-     これにより8文字以上の名前でフォント自動縮小が一度も発火せず、
-     常に基本サイズのまま見切れる不具合があった。
-     block化することでscrollWidth/clientWidthが実測値を返すようになり、
-     player-info.js側の縮小ロジックが機能するようになる。 */
-  display: block;
   font-size: 0.875rem;
   line-height: 1.25;
   color: var(--sumi);
@@ -750,12 +741,7 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  /* 修正（要望対応）: 以前は86vwを上限にしていたため、iPhone等の狭い画面では
-     ドロワーが画面幅の8割近くを占め、背後の盤・駒がほぼ見えなくなっていた。
-     60vwを上限にすることで、画面幅の60%までに抑える。
-     iPad miniなど元々300px(18.75rem)の方が60vwより小さい端末では、
-     この変更による影響はない（従来通り300px幅のまま）。 */
-  width: min(60vw, 18.75rem);
+  width: min(86vw, 18.75rem);
   height: 100%;
   height: 100dvh;
   background-color: var(--surface);
@@ -766,13 +752,6 @@ html, body {
   /* 修正①: ドロワー本体そのものはスクロールしない（スクロールは.asset-drawer-bodyのみ）。
      タブ切り替え等のタップ操作でのジェスチャー干渉を防ぐ。 */
   touch-action: manipulation;
-  /* 修正（要望対応）: ドロワー幅を60vw上限にした結果、iPhone等ではドロワー自体が
-     iPad miniより狭くなる。中の駒サムネイル・文字が固定サイズ(rem)のままだと
-     相対的に窮屈に見えるため、container-type: inline-size化し、
-     .asset-thumb等をドロワーの実測幅基準(cqw)で可変にする。
-     iPad mini（ドロワー幅300px=このコンテナの基準幅）ではmax-widthに
-     張り付いて従来と同じ見た目のまま変化しない。 */
-  container-type: inline-size;
 }
 
 .asset-drawer--open {
@@ -1011,27 +990,14 @@ html, body {
 }
 
 .asset-thumb {
-  /* 修正（要望対応）: ドロワー幅が60vw上限になったことで、iPhone等では
-     ドロワー自体がiPad miniより狭くなる。以前は固定値(2.5rem x 3rem)だった
-     ため、狭いドロワーでは相対的にサムネイルが大きく窮屈に見えていた。
-     ドロワー幅基準のcqwにし、iPad mini相当（ドロワー幅300px、このサイズが
-     従来値と一致する基準点）ではmax-widthに張り付いて変化なし、
-     それより狭いドロワーでは比例して縮小するようにする。 */
-  /* cqw非対応の古いブラウザ向けフォールバック（対応環境では下の行で上書き）。 */
   width: 2.5rem;
   height: 3rem;
-  width: min(2.5rem, 13.33cqw);
-  height: min(3rem, 16cqw);
   background-color: var(--surface-2);
   border-radius: 4px;
 }
 
 .asset-row-label {
-  /* 修正（要望対応）: ドロワー幅60vw化に伴い、狭いドロワーでは
-     サムネイルと合わせて文字もわずかに追従させる。ただし可読性を優先し、
-     縮小は緩やかに（下限12px）とどめる。iPad mini相当（幅300px）では
-     従来の14.66px相当のまま変化しない。 */
-  font-size: clamp(12px, 4.89cqw, 0.8125rem);
+  font-size: 0.8125rem;
   flex: 1;
 }
 
