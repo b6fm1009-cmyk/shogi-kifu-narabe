@@ -77,9 +77,11 @@ export function suppressDoubleTapZoom(containerEl) {
  * 長押しによる画像保存メニュー等を抑制する（修正②）。
  *
  * 背景：盤・駒の画像は配布素材であり、無断で保存できる状態は望ましくない。
- * CSSの user-select:none / -webkit-touch-callout:none で大半のケースは防げるが、
+ * CSS側はhtml/body一括で user-select:none / -webkit-touch-callout:none を指定済み。
  * それらが効かない環境向けの保険として、JS側でも contextmenu（長押しメニュー）と
  * dragstart（画像のドラッグ保存）を明示的に止める。
+ * 注意: user-select:noneはclick/pointerdownを止めないため駒操作には影響しない。
+ * button/.hand-piece/.board-pieceのtouch-actionはCSS側で維持する。
  *
  * @param {HTMLElement} containerEl - 対象領域の親要素（盤・駒・成りポップアップ・
  *   アセットドロワーのサムネイルなど、配布素材の画像を含むコンテナ）

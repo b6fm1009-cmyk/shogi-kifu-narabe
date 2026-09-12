@@ -97,11 +97,9 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
 }
 
 // 修正③: 名前が固定幅ボックスに収まらない場合に段階的に縮小するフォントサイズ候補。
-// 通常サイズ(14px)を基本としつつ、はみ出る場合のみ縮小する。将棋ウォーズのユーザー名は
-// 半角15文字が上限、プロ棋士名でも全角5〜6文字程度（例：「三枚堂 達也」）が実用上の
-// 上限帯であるため、通常はこの範囲で14px運用に収まる想定。極端に長い例外名への対処として
-// フォントサイズ縮小を用意する（省略記号での切り捨てだと対局者名が判読不能になるため避ける）。
-const PLAYER_NAME_FONT_SIZES = [14, 12, 10, 9];
+// rem基準(.player-name 0.875rem=14px相当)に合わせたem値で指定する。
+// ルート可変時も比率で追従し、等倍containのため実測(scrollWidth/clientWidth)と一致する。
+const PLAYER_NAME_FONT_SIZES = ['1em', '0.857em', '0.714em', '0.643em'];
 
 /**
  * ③⑤対局者名ボックス（先手/後手ラベル＋段級位＋名前）を描画する単一関数。
@@ -124,6 +122,6 @@ export function renderPlayerInfoBox(labelEl, nameEl, side, name, rank) {
   nameEl.style.fontSize = '';
   for (const size of PLAYER_NAME_FONT_SIZES) {
     if (nameEl.scrollWidth <= nameEl.clientWidth) break;
-    nameEl.style.fontSize = `${size}px`;
+    nameEl.style.fontSize = size;
   }
 }

@@ -14,6 +14,11 @@
   --sumi-line:    rgba(35,31,24,0.14);
   --bengara:      #9c4a30;
   --bengara-deep: #723420;
+  /* viewport-fit contain 用のアプリ全体アスペクト比（幅/高さ）。
+     実測: 幅390に対して高さ約650前後（ヘッダー2.625rem+バー2.75rem+
+     駒台2.875rem×2+下部3.125rem+盤）のため0.60前後。
+     横向きなど高さが厳しい時に幅を絞って縦横スクロールを出さないための目安。 */
+  --app-ratio: 0.62;
 }
 
 /* ---------- リセット ---------- */
@@ -24,92 +29,85 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  /* rem基準。文字だけは頭打ち(~19px)にして無限に大きくしない。
+     幅だけでなく高さ制約(横向きiPad等)も考慮しvmin基準で可変にする。
+     390x650想定で16px前後、iPad mini縦768x1024で19px上限に張り付き。 */
+  font-size: clamp(14px, 3.6vmin + 4px, 19px);
+}
+
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
   background-color: var(--paper);
-  /* 修正①: iPhone Safariで盤操作中に画面が上下に動いてしまう対策のベース。
-     html/body自体はページ全体のバウンス・ズームスクロールを止める役割のみとし、
-     個別にスクロールが必要な要素（.asset-drawer-body等）ではtouch-action: pan-y等で
-     明示的に許可し直す設計とする（後述）。overflow:hiddenと合わせて二重に止める。 */
+  /* スクロールなしcontain設計のためページ全体のスクロール・バウンスを止める。
+     個別スクロールが必要な要素(.asset-drawer-body/.move-list-body等)では
+     touch-action: pan-yで明示的に許可し直す（後述）。 */
   touch-action: none;
   overscroll-behavior: none;
+  /* 土台全体を長押し選択対象外にする。駒タップ(click/pointerdown)には影響しない。
+     コピーが必要な箇所は現状なしのため例外戻しは設けない。 */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-/* ---------- スケーリング ----------
-   390×844を基準サイズとして transform: scale() で拡大縮小する。
-   iPhoneのようなスマホ幅の画面では「幅を画面いっぱいにフィットさせる」ことを優先する
-   （scale = window.innerWidth / 390 のみで決定）。390×844という比率は実機のどの機種とも
-   完全には一致しない（例: iPhone SEは375×667、iPhone 15 Proは393×852、
-   Pro Maxは430×932）ため、高さも基準にして小さい方を採用すると、画面の縦横比によっては
-   幅方向に余白が生まれてしまい、盤が画面いっぱいに広がらない。
-   幅基準にすることでヘッダー・盤・フッターは常に画面幅ぴったりになり、
-   高さ方向の余剰・不足分だけ縦スクロールで吸収する（畳の背景はスクロールしないと
-   見えない領域にのみ現れるため、実質iPhoneでは見えなくなる）。
-   iPadやPC等の広い画面（js/main.js: setupScalingがJS側で判定）では、
-   従来通り幅・高さの小さい方に合わせて全体を画面内に収め、余白に畳を見せる。 */
+/* ---------- viewport-fit contain ----------
+   transform:scale()による拡縮は廃止し、等倍レイアウトでシャープに描画する。
+   #app-frame自体を100dvh以内にcontainさせ、縦横スクロールを発生させない。
+   余白には畳(tatami-layer/fade, z-index 0/1)を見せる。
+   旧PHONE_WIDTH_THRESHOLD(500px)分岐・scale-root--phone/overflowingは廃止。
+   高さ見積り: ルート16px時でヘッダー42+バー44+駒台46*2+下部50+余白約16=約244px。
+   18rem(288px)を固定部+paddingの安全側見積りとし、残りを盤高に充てる。 */
 #scale-root {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-/* スマホ幅時（js/main.jsが付与）。幅基準でscaleするため高さが画面と一致しない場合がある。
-   app-frame(拡縮後)の高さが画面より低ければ上下中央、高ければ上端寄せ＋縦スクロールにしたい。
-   flexのalign-items:centerのままoverflow-y:autoだと、コンテンツが親より大きい時に
-   上側へはみ出た分にスクロールできない（ブラウザ側で負方向のスクロールが発生しない）ため、
-   はみ出るかどうかをJS側で判定し(.scale-root--overflowing)、その場合だけ上寄せに切り替える。 */
-#scale-root.scale-root--phone {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  /* app-frameが画面より縦長になった際の意図的な縦スクロール領域のため、
-     html/bodyのtouch-action: noneを上書きしてpan-y（縦スクロール）のみ許可する。
-     横方向のパン・ピンチズーム等は許可しない。 */
-  touch-action: pan-y;
-}
-
-#scale-root.scale-root--phone.scale-root--overflowing {
-  align-items: flex-start;
-}
-
-#scale-root.scale-root--phone #app-frame {
-  transform-origin: top center;
+  overflow: hidden;
+  touch-action: none;
 }
 
 #app-frame {
-  width: 390px;
-  height: auto;
-  min-height: 0;
+  /* 高さ制約時は幅を絞って全体を収めるcontain。
+     縦長画面では100vwいっぱい、横向き等で高さ不足時は100dvh*--app-ratioに絞る。 */
+  width: min(100vw, calc(100dvh * var(--app-ratio)));
+  height: 100dvh;
+  max-height: 100dvh;
   background-color: var(--surface);
   display: flex;
   flex-direction: column;
-  transform-origin: center center;
+  transform: none;
   position: relative;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* ---------- ①ヘッダー ---------- */
 .header {
-  height: 42px;
+  height: 2.625rem;
+  min-height: 2.625rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 0.5rem;
   background-color: var(--surface-2);
   border-bottom: 1px solid var(--sumi-line);
   flex-shrink: 0;
+  touch-action: manipulation;
 }
 
 .header-btn {
-  /* 修正④: ヘッダーボタンの文字をわずかに拡大（12px→14px）。視認性向上のための調整。 */
-  font-size: 14px;
-  padding: 4px 8px;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  min-height: 2.375rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
@@ -117,22 +115,22 @@ html, body {
   white-space: nowrap;
 }
 
-/* 修正⑫: ネイティブdisabled属性はiOS Safariでタッチ配送が不安定になる
-   （disabled要素がヒットテスト対象から外れ、祖先要素にタッチが配送されることがある）
-   ため使用せず、常に有効なbuttonのまま .is-disabled クラスで見た目だけを無効化する。
+/* 無効状態のボタンはネイティブdisabled属性を使わない。
+   iOS Safariではdisabled要素がタッチ対象から外れ、祖先要素へタッチが配送される
+   場合があるため。常に有効なbuttonのまま .is-disabled で見た目だけ無効化し、
    機能面の無効化は各clickハンドラ内の isButtonDisabled()（aria-disabled参照）で行う。 */
 .header-btn.is-disabled {
   opacity: 0.4;
 }
 
 .header-btn--hamburger {
-  font-size: 20px;
-  padding: 0 10px;
+  font-size: 1.25rem;
+  padding: 0 0.625rem;
 }
 
 .header-buttons {
   display: flex;
-  gap: 4px;
+  gap: 0.25rem;
   flex: 1;
   justify-content: flex-end;
 }
@@ -143,7 +141,8 @@ html, body {
    ボタンをkifu-barの内部に置くと再描画のたびに消えてしまう。
    そのため兄弟要素として並べ、行の背景（--sumi）はこちらに持たせる。 */
 .kifu-bar-row {
-  height: 44px;
+  height: 2.75rem;
+  min-height: 2.75rem;
   background-color: var(--sumi);
   display: flex;
   align-items: center;
@@ -151,13 +150,12 @@ html, body {
 }
 
 .kifu-bar {
-  /* 修正④: 上下の余白を詰める（56px→44px）。文字サイズは可読性のため維持。 */
-  height: 44px;
+  height: 2.75rem;
   background-color: transparent;
   display: flex;
   align-items: center;
-  padding: 0 7px;
-  gap: 9px;
+  padding: 0 0.4375rem;
+  gap: 0.5625rem;
   overflow: hidden;
   flex: 1 1 auto;
   min-width: 0;
@@ -169,7 +167,7 @@ html, body {
 }
 
 .kifu-move {
-  font-size: 18px;
+  font-size: 1.125rem;
   white-space: nowrap;
 }
 
@@ -188,11 +186,11 @@ html, body {
 }
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
-/* 名前＋持ち駒を一枚の駒台として扱う。
-   高さは盤との距離を詰めるため46pxに統一し、名前欄は内側44px。 */
+/* 名前＋持ち駒を一枚の駒台として扱う。高さ2.875rem、名前欄は内側2.75rem。 */
 .player-info {
-  height: 46px;
-  margin: 4px 10px;
+  height: 2.875rem;
+  min-height: 2.875rem;
+  margin: 0.25rem 0.625rem;
   display: flex;
   align-items: center;
   padding: 0;
@@ -213,25 +211,25 @@ html, body {
   justify-content: flex-end;
 }
 
-/* 修正③: 名前欄を固定幅ボックス化する。
+/* 名前欄は固定幅ボックス化する。
    根拠：持ち駒を7種（歩香桂銀金角飛）すべて持った状態でもレイアウトが破綻しない
-   幅を確保する必要がある。盤マスの実測サイズ（390px画面で約39px角）×7種で
-   持ち駒欄は最大約275px必要なため、画面幅390px・左右padding20px・gap8pxを
-   差し引くと名前欄に使える幅は残り約87pxとなる。ここから安全マージンを見て
-   固定幅86pxとした（player-info.js側でこの幅に文字が収まるかを実測し、
+   幅を確保する必要がある。基準幅390px時の盤マス約39px角×7種で
+   持ち駒欄は最大約275px必要なため、残りを名前欄に割り当てる。
+   幅は clamp(5.375rem, 22vw, 7.5rem) の相対指定とし、狭幅でも持ち駒7種が潰れない。
+   player-info.js側でこの幅に文字が収まるかを実測し、
    収まらない場合のみフォントサイズを段階的に縮小する。省略記号での切り捨ては
    行わない）。 */
 .player-info-box {
   flex-shrink: 0;
-  width: 86px;
-  height: 44px;
+  width: clamp(5.375rem, 22vw, 7.5rem);
+  height: 2.75rem;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  padding: 3px 4px;
+  gap: 0.0625rem;
+  padding: 0.1875rem 0.25rem;
   border-radius: 4px;
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
   border: 1px solid var(--paper-deep);
@@ -246,7 +244,7 @@ html, body {
 }
 
 .player-label {
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1.2;
   color: var(--bengara);
   font-weight: 600;
@@ -259,7 +257,7 @@ html, body {
 }
 
 .player-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.25;
   color: var(--sumi);
   font-weight: 600;
@@ -294,12 +292,12 @@ html, body {
 
 .hand-piece {
   position: relative;
-  /* 持ち駒のグレー背景を撤去し、駒画像の透過を活かす（選択時のピンク背景は残す） */
+  /* 持ち駒の背景は透明にし、駒画像の透過を活かす（選択時の背景は残す） */
   background-color: transparent;
   border-radius: 4px;
   cursor: pointer;
   flex-shrink: 0;
-  /* 修正①: 持ち駒タップ時もダブルタップズーム等のジェスチャーを抑制する */
+  /* 持ち駒タップ時もダブルタップズーム等のジェスチャーを抑止する */
   touch-action: manipulation;
 }
 
@@ -310,12 +308,12 @@ html, body {
 
 .hand-piece-count {
   position: absolute;
-  bottom: 1px;
-  right: 2px;
-  font-size: 11px;
+  bottom: 0.0625rem;
+  right: 0.125rem;
+  font-size: 0.6875rem;
   color: var(--surface);
   background-color: rgba(0, 0, 0, 0.7);
-  padding: 0 3px;
+  padding: 0 0.1875rem;
   border-radius: 4px;
   pointer-events: none;
 }
@@ -326,37 +324,40 @@ html, body {
   justify-content: center;
   align-items: center;
   position: relative;
-  /* 盤は幅いっぱい(.board-image: width:100%)に対してアスペクト比通りの高さを持つため、
-     このコンテナ自体もその実高さぶんだけ確保すればよい（flex:1で余らせない）。
-     これにより盤の上下に余分な空白が生まれず、app-frame全体の高さも
-     画面に収まりやすくなる（要望：盤の上下の大きな余白を詰めたい）。 */
-  /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
-     盤自体は画面幅にほぼぴったりまで広げる（要望：盤の幅は画面ほぼぴったり）。 */
-  padding: 12px 16px 4px 6px;
-  /* 修正①: 盤操作（タップ）はドラッグを伴わないため、ダブルタップズーム等の
-     ブラウザジェスチャーだけ止めればよい。盤タップ中に画面全体がスクロールする
-     問題への対処として明示的に指定する。 */
+  /* contain設計の伸縮役。ヘッダー/バー/駒台/下部は固定高さのため、
+     縦不足時はここが縮んでスクロールを出さない。 */
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。 */
+  padding: 0.75rem 1rem 0.25rem 0.375rem;
   touch-action: manipulation;
 }
 
 .board-wrap {
   /* 盤画像と同じ矩形を持つラッパー。pieces-layer / coordinate-label はこの要素の
      top:0,left:0,width:100%,height:100% を基準にするため、常に盤画像の実位置と一致する。
-     .board-container はflexで中央寄せされる領域（画像より広い場合がある）なので、
-     中央寄せの対象をこのラッパー1つに絞ることで、内部の座標計算をシンプルに保つ。 */
+     contain時はコンテナ内に収まる最大サイズに縮小する（アスペクト維持）。
+     asset-fit.jsのclientWidth基準計算はこの実表示サイズをそのまま使う。
+     盤画像は全種878x960想定だが、将来比率違いが来ても破綻しないよう
+     aspect-ratioは目安・object-fit:containで吸収する。 */
   position: relative;
   display: block;
   max-width: 100%;
   max-height: 100%;
+  aspect-ratio: 878 / 960;
+  width: min(100%, calc((100dvh - 18rem) * 0.9146));
+  margin: auto;
 }
 
 .board-image {
   /* 元画像(878x960)のアスペクト比を保つ。board-layout.jsonの margin_ratio / cell_ratio は
      このアスペクト比のまま表示される前提で実測されているため、正方形に固定したり
-     object-fit: cover でクロップしたりすると、マス目の実測比率と実際の表示がズレる。
-     幅はコンテナ(画面幅)ほぼいっぱいまで広げ、左右の余白は最小限にする。 */
+     object-fit: cover でクロップしたりすると、マス目の実測比率と実際の表示がズレる。 */
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   display: block;
   max-height: 100%;
   user-select: none;
@@ -440,7 +441,7 @@ html, body {
 
 .coordinate-label {
   position: absolute;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--sumi);
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -464,39 +465,32 @@ html, body {
 
 /* ---------- ⑥下部操作列 ---------- */
 .bottom-controls {
-  /* iPhoneでの誤タップ防止のためボタン群を大きくする。
-     タップ領域として一般的に推奨される44px以上を、ボタンの実高さで確保する。*/
-  height: 50px;
+  /* タップ領域として一般的に推奨される44px以上をボタンの実高さで確保する。
+     ルート14px時の2.75rem=38.5px割れを防ぐためmin-height:px併記。 */
+  height: 3.125rem;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* 修正⑤: 「反転」（表示の向きを変えるだけの操作）と「最初/前/次/最後」
-     （棋議を進退する操作）は性質が異なるため、間隔を広めに取って視覚的に分ける。
-     グループ内部（bottom-controls-groupのgap）はこれより狭くし、
-     反転ボタンとの間だけが際立って離れて見えるようにする。
-     390px幅に5ボタンを収める必要があるため、gapは横paddingとのバランスを見て決める。
-     修正④: gapも約90%に圧縮（14px→12px）。 */
-  gap: 12px;
-  padding: 0 8px;
+  gap: 0.75rem;
+  padding: 0 0.5rem;
   background-color: var(--surface-2);
   border-top: 1px solid var(--sumi-line);
   flex-shrink: 0;
 }
 
 .bottom-btn {
-  /* 修正⑤: 高さ・フォントを拡大してタップしやすくする。横paddingは
-     390px幅に5ボタンを収める都合上、控えめにして高さ方向で領域を稼ぐ。
-     修正④: 上下paddingを約90%に圧縮（12px→10px）。min-heightは44px
-     （タップ領域推奨値の下限）を維持し、これ以上は詰めない。 */
-  font-size: 16px;
-  padding: 6px 8px;
-  min-height: 44px;
+  font-size: 1rem;
+  padding: 0.375rem 0.5rem;
+  min-height: 2.75rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
   cursor: pointer;
   white-space: nowrap;
   touch-action: manipulation;
+  /* 下限44px担保。ルート14px時の2.75rem=38.5px割れを防ぐ。 */
+  min-height: 44px;
   /* 修正⑨（新規要望）: iOS Safariで「前」「次」などを長押しすると、
      テキスト「前」「次」が選択されコピーされる問題を抑止する。
      「次」は長押しで分岐選択という本来の機能があるため、長押しのたびに
@@ -526,12 +520,12 @@ html, body {
 .bottom-btn--branchable::after {
   content: '⎇';
   position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 10px;
+  top: 0.125rem;
+  right: 0.125rem;
+  font-size: 0.625rem;
   line-height: 1;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,9 +547,7 @@ html, body {
    最小幅ボタンにする。flex-growを持たせず、内容量に応じた幅のみ確保する。 */
 .bottom-btn--compact {
   flex: 0 0 auto;
-  /* 修正⑧: 横paddingを14px→8pxへさらに圧縮。高さ（min-height:44px）は
-     タップ領域推奨値の下限のため維持し、横方向のみ絞ることで誤タップ確率を下げる。 */
-  padding: 10px 8px;
+  padding: 0.625rem 0.5rem;
 }
 
 /* 追加①: 「＜前」「次＞」（1手ずつの進退）は使用頻度が最も高いため、
@@ -567,9 +559,7 @@ html, body {
 
 .bottom-controls-group {
   display: flex;
-  /* 追加①②: ボタン数が4→6に増えるため、既存の6pxのままだと窮屈になる。
-     390px幅に収めるため気持ち詰める。 */
-  gap: 5px;
+  gap: 0.3125rem;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -582,31 +572,31 @@ html, body {
   flex: 0 0 auto;
   border-width: 2px;
   border-color: var(--bengara);
-  padding: 10px 10px;
+  padding: 0.625rem 0.625rem;
 }
 
 /* ---------- トースト ---------- */
 .toast-container {
   position: fixed;
-  top: 50px;
+  top: 3.125rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
 }
 
 .toast {
   background-color: rgba(0, 0, 0, 0.85);
   color: var(--surface);
-  padding: 10px 16px;
+  padding: 0.625rem 1rem;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   opacity: 0;
   transition: opacity 0.3s;
-  max-width: 340px;
+  max-width: 21.25rem;
 }
 
 .toast--visible {
@@ -617,13 +607,13 @@ html, body {
    本文と並ぶアクションボタンを用意する。黒背景上で視認できるよう、半透明の明るい
    塗りと白い枠線で独立させ、押した感覚が得られるよう active で濃くする。 */
 .toast-action {
-  margin-left: 10px;
-  padding: 4px 10px;
+  margin-left: 0.625rem;
+  padding: 0.25rem 0.625rem;
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.12);
   color: var(--surface);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 .toast-action:active {
@@ -637,12 +627,14 @@ html, body {
    伝統的な朱色var(--bengara)のまま・不成りは黒var(--sumi)のまま）」と「枠線の濃淡」で行う設計に変更。
    overlayにbackdrop-filterのぼかしを足し、ポップアップ本体の影も硬い黒影から
    柔らかいものに変えて、全体としてモダンな印象にした。 */
+/* nari/move-listはscale前提のapp-frame内absoluteからfixedへ統一する。
+   contain設計ではapp-frame自体が等倍のためfixedでもズレない。 */
 .nari-popup-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   background-color: rgba(20, 20, 20, 0.45);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
@@ -654,16 +646,16 @@ html, body {
 
 .nari-popup {
   display: flex;
-  gap: 16px;
+  gap: 1rem;
   background-color: var(--surface);
-  padding: 20px;
+  padding: 1.25rem;
   border-radius: 4px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .nari-popup-btn {
-  width: 100px;
-  height: 140px;
+  width: 6.25rem;
+  height: 8.75rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
@@ -698,8 +690,9 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  width: 300px;
+  width: min(86vw, 18.75rem);
   height: 100%;
+  height: 100dvh;
   background-color: var(--surface);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.3);
   transform: translateX(-100%);
@@ -733,14 +726,14 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px;
+  padding: 0.625rem;
   background-color: var(--surface-2);
   border-bottom: 1px solid var(--sumi-line);
 }
 
 .asset-drawer-tabs {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 /* 修正（既存要望・意匠変更）: 「駒」「盤」タブのフォントを4px拡大し、
@@ -749,13 +742,13 @@ html, body {
    切り替えより装飾性を持たせる（参考実装の円形タブの「浮き上がり＋影」の意匠を、
    このヘッダー内の限られた高さに収まる角丸ピル型に翻案したもの）。 */
 .asset-drawer-tab {
-  padding: 8px 20px;
+  padding: 0.5rem 1.25rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
   color: var(--sumi-soft);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -780,7 +773,7 @@ html, body {
 }
 
 .asset-drawer-close {
-  font-size: 20px;
+  font-size: 1.25rem;
   border: none;
   background: none;
   cursor: pointer;
@@ -789,7 +782,7 @@ html, body {
 
 .asset-drawer-body {
   overflow-y: auto;
-  max-height: calc(100% - 50px);
+  max-height: calc(100% - 3.125rem);
   -webkit-overflow-scrolling: touch;
   /* 修正①: html/bodyのtouch-action: noneに対して、この個別スクロール領域だけは
      縦スクロールを明示的に許可し直す。将来ここに棋譜リスト等の他のスクロール領域を
@@ -815,8 +808,8 @@ html, body {
 .asset-piece-link-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px;
+  gap: 0.5rem;
+  padding: 0.625rem;
   cursor: pointer;
 }
 
@@ -838,10 +831,10 @@ html, body {
 .asset-piece-link-toggle .tgl-btn {
   position: relative;
   display: inline-block;
-  width: 196px;
-  height: 30px;
+  width: 12.25rem;
+  height: 1.875rem;
   border-radius: 4px;
-  perspective: 100px;
+  perspective: 6.25rem;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -857,7 +850,7 @@ html, body {
   width: 100%;
   height: 100%;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
   color: var(--surface);
   white-space: nowrap;
@@ -893,18 +886,18 @@ html, body {
 
 .asset-piece-side-switch {
   display: flex;
-  gap: 8px;
-  padding: 0 10px 10px;
+  gap: 0.5rem;
+  padding: 0 0.625rem 0.625rem;
 }
 
 .asset-piece-side-switch-btn {
   flex: 1;
-  padding: 8px 0;
+  padding: 0.5rem 0;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
   cursor: pointer;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: bold;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
               box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -930,8 +923,8 @@ html, body {
 .asset-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 10px;
+  gap: 0.5rem;
+  padding: 0.75rem 0.625rem;
   border-bottom: 1px solid var(--sumi-line);
   cursor: pointer;
 }
@@ -942,18 +935,18 @@ html, body {
 
 .asset-row-thumbs {
   display: flex;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .asset-thumb {
-  width: 40px;
-  height: 48px;
+  width: 2.5rem;
+  height: 3rem;
   background-color: var(--surface-2);
   border-radius: 4px;
 }
 
 .asset-row-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   flex: 1;
 }
 
@@ -961,29 +954,29 @@ html, body {
 .asset-row--sample {
   flex-direction: column;
   align-items: stretch;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .asset-sample-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .asset-sample-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--sumi);
 }
 
 .asset-sample-meta {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--sumi-soft);
 }
 
 .asset-row--sample-empty {
   color: var(--sumi-soft);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .asset-row--loading {
@@ -992,8 +985,8 @@ html, body {
 }
 
 .asset-board-thumb {
-  width: 60px;
-  height: 60px;
+  width: 3.75rem;
+  height: 3.75rem;
   background-color: var(--paper-deep);
   border-radius: 4px;
   display: flex;
@@ -1006,23 +999,24 @@ html, body {
    両モーダルは見た目が同一のため、.move-list-* クラスを共有する
    （branch-popup.js も同じクラス名でDOMを組み立てる）。 */
 .move-list-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: fixed;
+  inset: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   background-color: rgba(20, 16, 8, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 700;
-  padding: 32px 16px;
+  padding: 2rem 1rem;
 }
 
 .move-list-popup {
   width: 100%;
-  max-width: 320px;
+  max-width: 20rem;
   max-height: 100%;
+  max-height: 80dvh;
   background-color: var(--surface);
   border-radius: 4px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
@@ -1035,26 +1029,26 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   background-color: var(--bengara);
   border-bottom: 1px solid var(--bengara-deep);
   flex-shrink: 0;
 }
 
 .move-list-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: bold;
   color: var(--sumi);
 }
 
 .move-list-close {
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
   border: none;
   background: none;
   color: var(--sumi);
   cursor: pointer;
-  padding: 2px 6px;
+  padding: 0.125rem 0.375rem;
 }
 
 .move-list-body {
@@ -1063,12 +1057,12 @@ html, body {
   /* 修正①（既存方針の踏襲）: html/bodyのtouch-action: noneに対し、
      このスクロール領域だけ縦スクロールを明示的に許可し直す。 */
   touch-action: pan-y;
-  padding: 6px;
+  padding: 0.375rem;
 }
 
 .move-list-row {
-  font-size: 16px;
-  padding: 11px 12px;
+  font-size: 1rem;
+  padding: 0.6875rem 0.75rem;
   border-radius: 4px;
   color: var(--sumi);
   cursor: pointer;
@@ -1087,9 +1081,9 @@ html, body {
 
 .move-list-row--special {
   color: var(--sumi-soft);
-  font-size: 13px;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  font-size: 0.8125rem;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
 }
 
 .move-list-row--disabled {
@@ -1220,15 +1214,15 @@ html, body {
 .info-btn {
   position: relative;
   flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  margin: 0 7px 0 0;
+  width: 1.875rem;
+  height: 1.875rem;
+  margin: 0 0.4375rem 0 0;
   border: 1.5px solid var(--bengara);
   border-radius: 50%;
   background: transparent;
   color: #e0a888;
   font-family: Georgia, "Hiragino Mincho ProN", serif;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-style: italic;
   font-weight: 700;
   line-height: 1;
@@ -1271,16 +1265,14 @@ html, body {
 }
 
 /* ---------- 使い方ポップアップ ---------- */
-/* asset-drawer-overlay と同様、#app-frame のスケーリング(transform: scale())の
-   影響を受けない独立レイヤーとしてbody直下に置くため、position: fixedにする
-   （#app-frame内はscale()で拡縮されるため、その内部にpositon: absoluteで置くと
-   実機での見た目のフォントサイズ・余白がスケール倍率でズレてしまう）。 */
+/* contain設計ではapp-frame自体が等倍のためbody直下fixedでズレない。 */
 .info-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  height: 100dvh;
   background-color: rgba(20, 20, 20, 0.45);
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
@@ -1288,7 +1280,7 @@ html, body {
   align-items: center;
   justify-content: center;
   z-index: 700;
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .info-popup-overlay--visible {
@@ -1298,27 +1290,28 @@ html, body {
 .info-popup {
   position: relative;
   width: 100%;
-  max-width: 340px;
+  max-width: 21.25rem;
   max-height: 80%;
+  max-height: 80dvh;
   overflow-y: auto;
   background-color: var(--surface);
   border-radius: 8px;
-  padding: 22px 18px 18px;
+  padding: 1.375rem 1.125rem 1.125rem;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
   -webkit-overflow-scrolling: touch;
 }
 
 .info-popup-close {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 30px;
-  height: 30px;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.875rem;
+  height: 1.875rem;
   border: none;
   border-radius: 50%;
   background: transparent;
   color: var(--sumi-soft);
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -1327,18 +1320,18 @@ html, body {
 }
 
 .info-popup-body {
-  font-size: 13.5px;
+  font-size: 0.84375rem;
   line-height: 1.85;
   color: var(--sumi);
 }
 
 .info-popup-body h3 {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--bengara);
-  margin: 22px 0 8px;
+  margin: 1.375rem 0 0.5rem;
   border-left: 3px solid var(--bengara);
-  padding-left: 8px;
+  padding-left: 0.5rem;
   letter-spacing: 0.02em;
 }
 
@@ -1347,7 +1340,7 @@ html, body {
 }
 
 .info-popup-body p {
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
 }
 
 .info-popup-body .info-popup-em {
@@ -1356,36 +1349,36 @@ html, body {
 }
 
 .info-popup-body .info-popup-lead {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--sumi-soft);
   background: var(--surface-2);
   border-radius: 6px;
-  padding: 8px 10px;
-  margin-bottom: 12px;
+  padding: 0.5rem 0.625rem;
+  margin-bottom: 0.75rem;
 }
 
 /* 手順①②：丸番号＋本文のステップカード */
 .info-popup-body .info-popup-step {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 0.625rem;
+  margin-bottom: 0.625rem;
 }
 
 .info-popup-body .info-popup-step-num {
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 50%;
   background: var(--bengara);
   color: var(--surface);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
-  margin-top: 1px;
+  margin-top: 0.0625rem;
 }
 
 .info-popup-body .info-popup-step-body {
@@ -1396,21 +1389,21 @@ html, body {
 .info-popup-body .info-popup-step-title {
   font-weight: 700;
   color: var(--sumi);
-  margin-bottom: 1px;
+  margin-bottom: 0.0625rem;
 }
 
 .info-popup-body ol,
 .info-popup-body ul {
-  margin: 4px 0 4px 1.2em;
+  margin: 0.25rem 0 0.25rem 1.2em;
   padding: 0;
 }
 
 .info-popup-body li {
-  margin: 2px 0;
+  margin: 0.125rem 0;
 }
 
 .info-popup-body .info-popup-steps-list > li {
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .info-popup-body .info-popup-step-label {
@@ -1419,14 +1412,14 @@ html, body {
 
 .info-popup-body .info-popup-note {
   display: inline-block;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--sumi-soft);
-  margin-top: 1px;
+  margin-top: 0.0625rem;
 }
 
 .info-popup-body .info-popup-example {
   color: var(--sumi-soft);
-  font-size: 12.5px;
+  font-size: 0.78125rem;
 }
 
 .bottom-btn {
@@ -1481,7 +1474,7 @@ html, body {
   box-shadow: 0 1px 3px rgba(60,45,20,0.18);
 }
 
-.asset-drawer-tabs { gap: 6px; }
+.asset-drawer-tabs { gap: 0.375rem; }
 .asset-drawer-tab {
   border-radius: 4px;
   color: var(--sumi);

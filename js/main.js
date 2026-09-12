@@ -39,8 +39,8 @@ async function init() {
     ]);
     layouts = { boardLayout, pieceLayout, pieceFit };
 
-    // 盤面ビューの初期化（盤画像ロード完了時のコールバックは、
-    // このあとsetupScaling()から得たapplyScaleを渡す。そのため呼び出し順を後ろに動かす）
+    // 盤面ビューの初期化。contain設計ではapp-frame自体が等倍のため
+    // scale再計算コールバックは不要。画像ロード完了時はrenderAllのみ行う。
     const boardEl = document.getElementById('board');
 
     // ハンバーガーメニュー（ドロワー）の初期化
@@ -90,12 +90,11 @@ async function init() {
     // 再描画コールバック登録
     setRenderCallback(renderAll);
 
-    // リサイズ対応（スケーリング）
-    const applyScale = setupScaling();
+    // リサイズ対応は不要（contain設計ではapp-frame自体が等倍フルードのため。
+    // 盤マス計算はboard-view.jsがclientWidth基準で都度取得する）。
 
-    // 盤面ビューの初期化。盤画像のロード完了時にapp-frameの実高さが変わりうるため、
-    // そのタイミングでscaleを再計算する（height:autoのapp-frameに対応するため）。
-    initBoardView(boardEl, layouts, manifest, applyScale);
+    // 盤面ビューの初期化。盤画像ロード完了時はrenderAllのみ行う。
+    initBoardView(boardEl, layouts, manifest, renderAll);
 
     // 初期描画
     renderAll();
@@ -128,11 +127,11 @@ function renderAll() {
   renderKifuBar(document.getElementById('kifu-bar'), kifuBarContent, state.isKifuBarVisible);
 
   // 持ち駒（反転時は入れ替え）
-  // 盤画像は要素の実測サイズを使う（.board-image は画面幅に応じて可変のため、
+  // 盤画像は要素の実測サイズを使う（.board-wrapはcontainで可変のため、
   // 固定値をフォールバックにすると実際の駒サイズとズレる）。画像がまだ無い初回のみ
-  // 390×844基準の目安値（board-container のpaddingを差し引いた概算）を使う。
+  // app-frame幅の目安値（正方形仮置き）を使う。描画完了後のrenderAllで実測に置き換わる。
   const boardImageEl = document.querySelector('.board-image');
-  const fallbackBoardSize = { width: 362, height: 362 };
+  const fallbackBoardSize = { width: 320, height: 350 };
   const actualBoardSize = boardImageEl
     ? { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight }
     : fallbackBoardSize;
@@ -225,9 +224,10 @@ function setupBoardTapHandler() {
     // boardEl基準だとその余白の分だけ盤画像の実位置とズレる。board-view.js の
     // boardWrapEl と同じ考え方）。
     const rect = boardImageEl.getBoundingClientRect();
-    const scale = getCurrentScale();
-    const rawX = (e.clientX - rect.left) / scale;
-    const rawY = (e.clientY - rect.top) / scale;
+    // contain設計ではapp-frame自体が等倍のためscale除算は不要。
+    // rect基準の差分のみでboardOriginPx/squareSizePx（clientWidth基準）と一致する。
+    const rawX = e.clientX - rect.left;
+    const rawY = e.clientY - rect.top;
 
     const boardWidth = boardImageEl.clientWidth;
     const boardHeight = boardImageEl.clientHeight;
@@ -274,80 +274,6 @@ function setupHandTapHandler() {
       handleTap('HAND', null, pieceType, side, getState().boardState, getState().selectedSource);
     });
   });
-}
-
-/**
- * 現在のスケールを取得する。
- */
-function getCurrentScale() {
-  const scaleRoot = document.getElementById('scale-root');
-  return scaleRoot.dataset.scale ? parseFloat(scaleRoot.dataset.scale) : 1;
-}
-
-/**
- * 画面スケーリングの設定（設計書 第1部2.6節）。
- *
- * app-frame は高さが中身（盤の実サイズ等）に応じて決まる可変高さ（height: auto）。
- * iPhone等のスマホ幅では、幅を画面いっぱいにフィットさせることを優先する
- * （= scale は window.innerWidth / 390 のみで決める）。詳細はstyle.cssのコメント参照。
- * 高さの余剰・不足分は #scale-root 側の縦スクロールで吸収する
- * （盤の上下の余白を削った現在の高さなら、多くの機種でスクロール自体が不要になる）。
- *
- * iPad等の広い画面では、app-frameの実測高さ（scale適用前のoffsetHeight）を使って
- * 画面内に収まるようMath.minでフィットさせ、余白に畳を見せる。
- *
- * @returns {() => void} applyScale関数。盤画像のロード完了などでapp-frameの実高さが
- *   変わったタイミングに、呼び出し側（init()）から再計算をトリガーするために公開する。
- */
-function setupScaling() {
-  const scaleRoot = document.getElementById('scale-root');
-  const appFrame = document.getElementById('app-frame');
-
-  // スマホ幅とみなす閾値。iPhone Pro Max等の最大幅より少し余裕を持たせる。
-  const PHONE_WIDTH_THRESHOLD = 500;
-
-  function applyScale() {
-    const isPhoneWidth = window.innerWidth <= PHONE_WIDTH_THRESHOLD;
-
-    // transform: scale() は要素自体のレイアウトサイズに影響しないため、
-    // offsetHeight は常に等倍(scale=1)時の実高さを返す。
-    const naturalHeight = appFrame.offsetHeight || 844;
-
-    const scale = isPhoneWidth
-      ? window.innerWidth / 390
-      : Math.min(window.innerWidth / 390, window.innerHeight / naturalHeight);
-
-    appFrame.style.transform = `scale(${scale})`;
-    scaleRoot.dataset.scale = String(scale);
-    scaleRoot.classList.toggle('scale-root--phone', isPhoneWidth);
-
-    // 拡縮後のapp-frameの高さが画面の高さを超える場合は上端寄せ＋スクロールに、
-    // 収まる場合は上下中央寄せにする（盤の上下の余白を必要以上に作らないため）。
-    const scaledHeight = naturalHeight * scale;
-    scaleRoot.classList.toggle('scale-root--overflowing', isPhoneWidth && scaledHeight > window.innerHeight);
-  }
-
-  window.addEventListener('resize', applyScale);
-
-  // 再発防止①: iOS Safariはスクロール中のアドレスバー伸縮等でwindow.innerHeightが
-  // 変化しても、window.resizeが確実には発火しないことがある。visualViewportの
-  // resize/scrollイベントはそれより確実にビューポート変化を拾えるため、こちらでも
-  // 再計算をトリガーする（詰み画面の再発防止）。
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', applyScale);
-    window.visualViewport.addEventListener('scroll', applyScale);
-  }
-
-  // 再発防止①: 画面回転でも念のため再計算する。
-  window.addEventListener('orientationchange', () => {
-    // orientationchange直後はinnerWidth/innerHeightがまだ更新されていない端末が
-    // あるため、少し遅らせてから再計算する。
-    setTimeout(applyScale, 100);
-  });
-
-  applyScale();
-
-  return applyScale;
 }
 
 // 起動
