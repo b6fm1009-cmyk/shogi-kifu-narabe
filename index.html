@@ -20,6 +20,18 @@
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
+  <!-- 検証用: 駒一覧レイアウト比較のための一時コード。
+       ?layout=stacked または ?layout=2x2 をURLに付けて開くと、
+       bodyにそのクラスが付き、対応するCSSレイアウトが適用される。
+       デフォルトはstacked（縦積み案）。本採用が決まったらこのscriptタグと
+       style.css内のbody.layout-stacked/.layout-2x2切り替えは削除してよい。 -->
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var layout = params.get('layout') === '2x2' ? '2x2' : 'stacked';
+      document.body.classList.add('layout-' + layout);
+    })();
+  </script>
   <div class="tatami-layer" aria-hidden="true"></div>
   <div class="tatami-fade" aria-hidden="true"></div>
   <div id="scale-root">
