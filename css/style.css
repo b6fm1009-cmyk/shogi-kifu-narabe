@@ -107,9 +107,20 @@ html, body {
 }
 
 .header-btn {
-  /* 修正（レイアウト調整）: 4つのボタン（棋譜貼付・棋譜読込・分岐に戻る・
-     指手を非表示）が1行に収まるよう、文字サイズと横paddingを詰める。 */
+  /* 修正（幅に応じた可変フォント）: 以前は固定値(0.6875rem)にしていたため、
+     iPhone14ではボタンが1行に収まるギリギリの値、iPad miniなど横幅に
+     余裕がある端末では逆に不自然に小さく、余白ばかり目立っていた。
+     .header-buttons を container-type: inline-size 化し（下記参照）、
+     その実測幅（cqw = コンテナ幅の1%）を基準にfont-sizeを可変にする。
+     clamp(10px, 3.2cqw, 15px):
+       - スマホ全般（コンテナ幅300〜370px程度）では約10〜12pxの範囲で
+         画面の広さに応じて滑らかに変化する（4ボタンが1行に収まる範囲）。
+       - 広い画面（iPad mini相当・コンテナ幅711px前後）では上限15pxで
+         頭打ちになり、不自然に巨大化しない。 */
+  /* clamp()/cqw非対応の古いブラウザ向けフォールバック。
+     対応ブラウザでは下の行のclamp()で上書きされる。 */
   font-size: 0.6875rem;
+  font-size: clamp(10px, 3.2cqw, 15px);
   padding: 0.25rem 0.3125rem;
   min-height: 2.125rem;
   border: 1px solid var(--paper-deep);
@@ -138,6 +149,11 @@ html, body {
   flex: 1;
   justify-content: flex-end;
   min-width: 0;
+  /* 修正（幅に応じた可変フォント）: .header-btn の font-size で使う cqw
+     （コンテナクエリ単位）は、container-type を明示した祖先要素の実測幅を
+     基準にする。このコンテナ自体がflexの伸縮対象（flex:1）なので、
+     inline-size（横方向のみ）をコンテナ化の対象にする。 */
+  container-type: inline-size;
   /* 修正（安全策）: 極端に幅が狭い端末でボタンが収まりきらない場合でも、
      文字が見切れて操作不能になるのではなく、横スクロールで全ボタンに
      到達できるようにする（隠れて押せなくなる事故を避ける）。 */
