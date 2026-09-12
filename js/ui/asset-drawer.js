@@ -197,7 +197,6 @@ function renderPieceTab(body) {
     for (const tc of thumbCells) {
       const thumb = document.createElement('span');
       thumb.className = 'asset-thumb';
-      renderPieceThumb(thumb, piece, tc);
       thumbs.appendChild(thumb);
     }
     row.appendChild(thumbs);
@@ -214,6 +213,13 @@ function renderPieceTab(body) {
     });
 
     body.appendChild(row);
+
+    // 修正: サムネイルの切り出し計算はDOM実測サイズ（CSS変数 --asset-thumb-w/h の
+    // 実際の反映結果）を使うため、body.appendChild(row) で実際にレイアウトツリーに
+    // 接続した「後」に描画する。appendChild前に呼ぶとclientWidth/Heightが0になり、
+    // 描画に失敗する（renderPieceThumb内でtry/catchはしているが、正しく描けない）。
+    const thumbEls = thumbs.querySelectorAll('.asset-thumb');
+    thumbCells.forEach((tc, i) => renderPieceThumb(thumbEls[i], piece, tc));
   }
 }
 
@@ -225,8 +231,15 @@ function renderPieceTab(body) {
 function renderPieceThumb(thumbEl, pieceAsset, tc) {
   try {
     const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
-    // .asset-thumb のCSSサイズ（40x48）を基準に、駒の表示矩形を算出する
-    const squareSizePx = { width: 40, height: 48 };
+    // 修正: 「.asset-thumbのCSSサイズ=40x48px」を前提にしたJS側の固定値は廃止。
+    // html { font-size: clamp(...) } により1remの実ピクセル値は画面サイズで変動する上、
+    // 将来ドロワー自体を縮小表示する際にも .asset-thumb のCSS変数
+    // (--asset-thumb-w/--asset-thumb-h) だけ変えればJS側は自動追従してほしいため、
+    // 実際にDOMへ接続された後のthumbElのサイズをそのまま基準値として使う。
+    // getBoundingClientRectは小数px（サブピクセル）まで取れるため、
+    // 端数丸めによる隙間や重なりを避けたい場合はここでMath.round等を検討してよい。
+    const rect = thumbEl.getBoundingClientRect();
+    const squareSizePx = { width: rect.width, height: rect.height };
 
     // 追加修正②: resolvePieceCell()（asset-fit.js）は「成り状態を含む駒種」を
     // pieceTypeとして受け取る仕様（board-view.js の piece.type と同じ扱い。

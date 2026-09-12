@@ -19,6 +19,15 @@
      駒台2.875rem×2+下部3.125rem+盤）のため0.60前後。
      横向きなど高さが厳しい時に幅を絞って縦横スクロールを出さないための目安。 */
   --app-ratio: 0.62;
+
+  /* ドロワー内・駒一覧サムネイルの表示サイズ。
+     js/ui/asset-drawer.js の renderPieceThumb() が、スプライト切り出し矩形の
+     計算基準としてこの実測値（getBoundingClientRect）を参照する。
+     CSS側の .asset-thumb もこの変数を使うことで、見た目のサイズとJSの
+     切り出し計算を単一の情報源（この変数）に一致させ続ける。
+     どちらか一方だけを変更してズレる、という事故を防ぐのが目的。 */
+  --asset-thumb-w: 2.5rem;
+  --asset-thumb-h: 3rem;
 }
 
 /* ---------- リセット ---------- */
@@ -741,7 +750,11 @@ html, body {
   position: fixed;
   top: 0;
   left: 0;
-  width: min(86vw, 18.75rem);
+  /* 修正（新規要望）: 86vw上限だとiPhoneなど画面の狭い端末で盤がほぼ隠れ、
+     「メニュー」というより別ページのような専有率になってしまうため、
+     上限を70vwに引き下げる。iPad mini等の広い画面では従来通り18.75rem
+     （min()の2項目め）で頭打ちになる挙動は変えていない。 */
+  width: min(70vw, 18.75rem);
   height: 100%;
   height: 100dvh;
   background-color: var(--surface);
@@ -750,7 +763,7 @@ html, body {
   transition: transform 0.3s ease;
   z-index: 600;
   /* 修正①: ドロワー本体そのものはスクロールしない（スクロールは.asset-drawer-bodyのみ）。
-     タブ切り替え等のタップ操作でのジェスチャー干渉を防ぐ。 */
+     タップ操作でのジェスチャー干渉を防ぐ。 */
   touch-action: manipulation;
 }
 
@@ -784,7 +797,12 @@ html, body {
 
 .asset-drawer-tabs {
   display: flex;
-  gap: 0.625rem;
+  /* 修正（新規要望・幅70vw化対応）: ドロワー幅を70vwに絞ったことで
+     タブ3つ+閉じるボタンが収まりきらない懸念があるため、間隔を詰める。
+     従来はこの値(0.625rem)が後方の重複ルール(旧1561行目付近)により
+     実際には0.375remへ上書きされ、無効化されたまま残っていた。
+     今回、二重管理を解消してここに0.375remとして一本化する。 */
+  gap: 0.375rem;
 }
 
 /* 修正（既存要望・意匠変更）: 「駒」「盤」タブのフォントを4px拡大し、
@@ -793,7 +811,11 @@ html, body {
    切り替えより装飾性を持たせる（参考実装の円形タブの「浮き上がり＋影」の意匠を、
    このヘッダー内の限られた高さに収まる角丸ピル型に翻案したもの）。 */
 .asset-drawer-tab {
-  padding: 0.5rem 1.25rem;
+  /* 修正（新規要望・幅70vw化対応）: 左右paddingを1.25rem→0.75remに縮小。
+     ドロワー幅70vw化に伴い「駒/盤/棋譜」タブ+閉じるボタンがヘッダー幅に
+     収まりきらなくなるため。フォントサイズ・文字は変えず、余白のみ削る方針
+     （文字を縮めるより読みやすさへの影響が小さいため）。 */
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
   background-color: var(--surface);
@@ -971,34 +993,66 @@ html, body {
   transform: translateY(-1px);
 }
 
+/* 修正（新規要望・ハンバーガーメニュー幅70vw化に伴う対応）:
+   ドロワー幅の上限を86vw→70vwに縮めたことで、従来の「サムネイル4個+ラベル」の
+   横並び1行レイアウトだと、ラベル欄の残り幅が最長ラベル（「ダーク・ゴシック体（一字）」
+   13文字）は元よりサムネイル4個分を残した状態では9文字程度のラベルすら
+   1行に収まらなくなる。
+   実物比較のため、下記2案をbody要素のクラス（.layout-stacked / .layout-2x2）で
+   切り替えられるようにしている（本採用時にはどちらか一方に一本化し、
+   このクラス切り替えの仕組み自体は削除する想定の検証用コード）。
+   案A: サムネイル4個の下にラベルを1行で表示する縦積み。
+   案B: サムネイルを2列×2行に折り返し、右側にラベルを縦積み配置。 */
 .asset-row {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
   padding: 0.75rem 0.625rem;
   border-bottom: 1px solid var(--sumi-line);
   cursor: pointer;
+}
+
+/* 案A: 縦積み（サムネイル横並び1行 → その下にラベル） */
+body.layout-stacked .asset-row {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+body.layout-stacked .asset-row-thumbs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* 案B: サムネイル2×2 + 右にラベル */
+body.layout-2x2 .asset-row {
+  flex-direction: row;
+  align-items: center;
+}
+
+body.layout-2x2 .asset-row-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  width: calc(var(--asset-thumb-w) * 2 + 0.25rem);
+  gap: 0.25rem;
 }
 
 .asset-row--selected {
   background-color: rgba(156,74,48,0.10);
 }
 
-.asset-row-thumbs {
-  display: flex;
-  gap: 0.25rem;
-}
-
 .asset-thumb {
-  width: 2.5rem;
-  height: 3rem;
+  width: var(--asset-thumb-w);
+  height: var(--asset-thumb-h);
   background-color: var(--surface-2);
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
+/* 修正: .asset-row を縦積み(column)化したことに伴い、以前は横並びFlexで
+   残り幅を埋めるための flex: 1 だったが、column方向では高さの伸縮指定に
+   意味が変わってしまうため削除。テキストが横幅いっぱいまで自然に流れれば
+   十分なため、幅方向の指定は不要（親.asset-rowがブロック幅いっぱいのため）。 */
 .asset-row-label {
   font-size: 0.8125rem;
-  flex: 1;
 }
 
 /* ---------- ドロワー「棋譜」タブ（同梱サンプル棋譜一覧） ---------- */
@@ -1525,7 +1579,6 @@ html, body {
   box-shadow: 0 1px 3px rgba(60,45,20,0.18);
 }
 
-.asset-drawer-tabs { gap: 0.375rem; }
 .asset-drawer-tab {
   border-radius: 4px;
   color: var(--sumi);
