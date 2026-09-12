@@ -107,20 +107,20 @@ html, body {
 }
 
 .header-btn {
-  /* 修正（幅に応じた可変フォント）: 以前は固定値(0.6875rem)にしていたため、
-     iPhone14ではボタンが1行に収まるギリギリの値、iPad miniなど横幅に
-     余裕がある端末では逆に不自然に小さく、余白ばかり目立っていた。
+  /* 修正（幅に応じた可変フォント・第2版）: 実機確認の結果、iPhone14でも
+     4ボタンが1行に収まる余裕が確認できたため下限を10px→12.5pxに引き上げ、
+     上限も一般的なUIの本文サイズ相当である18pxに引き上げた
+     （15pxはボタンラベルとしてやや控えめすぎるとの判断）。
      .header-buttons を container-type: inline-size 化し（下記参照）、
      その実測幅（cqw = コンテナ幅の1%）を基準にfont-sizeを可変にする。
-     clamp(10px, 3.2cqw, 15px):
-       - スマホ全般（コンテナ幅300〜370px程度）では約10〜12pxの範囲で
-         画面の広さに応じて滑らかに変化する（4ボタンが1行に収まる範囲）。
-       - 広い画面（iPad mini相当・コンテナ幅711px前後）では上限15pxで
-         頭打ちになり、不自然に巨大化しない。 */
+     clamp(12.5px, 3.8cqw, 18px):
+       - スマホ全般（コンテナ幅300〜370px程度）では約12.5〜14px程度で、
+         4ボタンが1行に収まる範囲で画面の広さに応じて滑らかに変化する。
+       - 広い画面（iPad mini相当）では上限18pxで頭打ちになる。 */
   /* clamp()/cqw非対応の古いブラウザ向けフォールバック。
      対応ブラウザでは下の行のclamp()で上書きされる。 */
-  font-size: 0.6875rem;
-  font-size: clamp(10px, 3.2cqw, 15px);
+  font-size: 0.8125rem;
+  font-size: clamp(12.5px, 3.8cqw, 18px);
   padding: 0.25rem 0.3125rem;
   min-height: 2.125rem;
   border: 1px solid var(--paper-deep);
@@ -139,8 +139,11 @@ html, body {
 }
 
 .header-btn--hamburger {
+  /* 修正（要望対応）: 縦長で違和感があるとのことで、横幅を約1.3倍に。
+     横paddingを0.5rem→0.8125remに変更（幅換算で約1.31倍、試算根拠は
+     アイコン文字幅+padding×2+borderの合計値ベース）。 */
   font-size: 1.125rem;
-  padding: 0 0.5rem;
+  padding: 0 0.8125rem;
 }
 
 .header-buttons {
