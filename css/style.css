@@ -108,10 +108,19 @@ html, body {
 }
 
 /* ---------- ①ヘッダー ---------- */
+/* 修正（iPad mini余白分配・Dライト）: 高さを2.375rem固定から
+   clamp(2.375rem, 18cqw - 1.6875rem, 2.75rem)の連続可変にする。
+   中間式は.player-infoと同一（枠幅基準・@mediaなし・arch2.6に沿う）。
+   iPhone幅(390px)では中間値が下限を下回り2.375remで旧寸法と一致。
+   iPad級では上限2.75rem(+0.375rem)が効き、盤の上下余りの一部を
+   ヘッダー側に割り当ててタップ領域・見た目のバランスを整える。
+   子ボタンは中央寄せのまま（親背景が伸びて呼吸幅が増えるだけ）。
+   盤・駒の縮小は発生しない（余白の付け替えのみ）。 */
 .header {
   /* 修正（レイアウト調整）: 盤の表示面積を優先するため、タップ領域を
      44px以上に保ったまま縦の余白を切り詰める（2.625rem→2.375rem）。 */
   height: 2.375rem;
+  height: clamp(2.375rem, 18cqw - 1.6875rem, 2.75rem);
   min-height: 2.375rem;
   display: flex;
   align-items: center;
@@ -241,20 +250,25 @@ html, body {
 /* ---------- ③⑤プレイヤー情報 ---------- */
 /* 名前＋持ち駒を一枚の駒台として扱う。
    修正（iPad mini持ち駒切れ対応・Dライト）: 高さを2.5rem固定から
-   clamp(2.5rem, 18cqw - 1.6875rem, 4rem)の連続可変にする。
+   clamp(2.5rem, 18cqw - 1.6875rem, 3.25rem)の連続可変にする。
    持ち駒サイズは盤マス連動（main.js renderAll→getSquareSizePx）で、
    枠幅が広いほど大きくなるのに対し、駒台が2.5rem固定ではiPad級で
    75px級の駒が47.5pxに入らずoverflow:hiddenで切れていた。
    盤幅の約11.8%がマス高のため、18cqw-27px(=約11.8cqw+6cqw余白)の傾きで
    駒に追従させる。iPhone幅(390px=約24.4rem)では下限2.5remが選ばれて
-   旧寸法と一致する。iPad mini縦(枠約635px=約33.4rem)では上限4remが
-   効いて切れを解消する。増えた分は盤の上下余白を食うだけのため、
-   駒・盤の縮小は発生しない。@media分岐は使わずarch2.6のclamp方針に沿う。
+   旧寸法と一致する。iPad mini縦(枠約635px=約33.4rem)では上限3.25remが
+   効く（4remでは広すぎるとの指摘を受け、前回2.5remと前案4remの中間
+   3.25remに引き下げ。切れは上方余白0.625rem→約0.1remに圧縮して解消、
+   盤の上下余りも約45px→約20pxに削減）。
+   増えた分は盤の上下余白を食うだけのため、駒・盤の縮小は発生しない。
+   @media分岐は使わずarch2.6のclamp方針に沿う。
    駒画像自体のサイズはsquareSizePx（盤マス基準、player-info.js側で算出）
-   で決まるため、この枠を詰めても駒が縮むわけではない。 */
+   で決まるため、この枠を詰めても駒が縮むわけではない。
+   子要素（.player-info-box / .hand-piece）は縦中央寄せのまま。
+   親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
 .player-info {
   height: 2.5rem;
-  height: clamp(2.5rem, 18cqw - 1.6875rem, 4rem);
+  height: clamp(2.5rem, 18cqw - 1.6875rem, 3.25rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
@@ -288,7 +302,13 @@ html, body {
 .player-info-box {
   flex-shrink: 0;
   width: clamp(5.375rem, 22vw, 7.5rem);
+  /* 修正（iPad mini余白分配・Dライト・①名前欄追従）: 親(.player-info)と
+     同じclamp式で連動させる。height:100%だけだと親padding/borderの影響で
+     実寸がズレるため、親と同じ式を明示して上下限を一致させる。
+     iPhone幅では下限2.375rem(旧値)で一致。iPad級では3.125rem上限が効く。
+     中身は縦中央寄せのまま。 */
   height: 2.375rem;
+  height: clamp(2.375rem, 18cqw - 1.6875rem, 3.125rem);
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -554,8 +574,16 @@ html, body {
 .bottom-controls {
   /* タップ領域として一般的に推奨される44px以上をボタンの実高さで確保する。
      修正（レイアウト調整）: 外枠の余白のみ詰め、ボタンの最小タップ領域
-     （min-height: 44px、下記.bottom-btn参照）はそのまま維持する。 */
+     （min-height: 44px、下記.bottom-btn参照）はそのまま維持する。
+     修正（iPad mini余白分配・Dライト・③フッター可変）: 高さを2.875rem固定から
+     clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem)の連続可変にする。
+     中間式は.header/.player-infoと同一（枠幅基準・@mediaなし）。
+     iPhone幅では下限2.875remで旧寸法と一致。iPad級では上限3.25rem(+0.375rem)が
+     効き、盤の上下余りの一部をフッター側に割り当てる。
+     子ボタン(.bottom-btn)は中央寄せのまま（親背景が伸びるだけ）。
+     ボタンのmin-height:44pxは維持し、タップ下限は保つ。 */
   height: 2.875rem;
+  height: clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem);
   min-height: 46px;
   display: flex;
   align-items: center;
