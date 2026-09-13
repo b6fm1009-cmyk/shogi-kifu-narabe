@@ -90,6 +90,14 @@ html, body {
   width: min(100vw, calc(100dvh * var(--app-ratio)));
   height: 100dvh;
   max-height: 100dvh;
+  /* container-type: inline-size は子孫の cqw 単位の基準にするための指定。
+     .player-info の高さ clamp() が、この枠幅を基準に連続可変する。
+     縦長時は 100vw と一致するため、iPhone では従来の vw 基準と同値になる。
+     横向き等で枠が絞られる場合は枠幅基準の方が正確。
+     inline-size のみのため縦方向の flex 伸縮には影響しない。
+     なお .header-btn の cqw は祖先ではなく直近コンテナ(.header-buttons)を
+     参照するため、この追加による変化はない（最も近い祖先が優先される）。 */
+  container-type: inline-size;
   background-color: var(--surface);
   display: flex;
   flex-direction: column;
@@ -232,12 +240,21 @@ html, body {
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
 /* 名前＋持ち駒を一枚の駒台として扱う。
-   修正（レイアウト調整）: 盤の表示面積を優先し、上下marginと高さを
-   切り詰める（2.875rem→2.5rem、margin 0.25rem→0.125rem）。
+   修正（iPad mini持ち駒切れ対応・Dライト）: 高さを2.5rem固定から
+   clamp(2.5rem, 18cqw - 1.6875rem, 4rem)の連続可変にする。
+   持ち駒サイズは盤マス連動（main.js renderAll→getSquareSizePx）で、
+   枠幅が広いほど大きくなるのに対し、駒台が2.5rem固定ではiPad級で
+   75px級の駒が47.5pxに入らずoverflow:hiddenで切れていた。
+   盤幅の約11.8%がマス高のため、18cqw-27px(=約11.8cqw+6cqw余白)の傾きで
+   駒に追従させる。iPhone幅(390px=約24.4rem)では下限2.5remが選ばれて
+   旧寸法と一致する。iPad mini縦(枠約635px=約33.4rem)では上限4remが
+   効いて切れを解消する。増えた分は盤の上下余白を食うだけのため、
+   駒・盤の縮小は発生しない。@media分岐は使わずarch2.6のclamp方針に沿う。
    駒画像自体のサイズはsquareSizePx（盤マス基準、player-info.js側で算出）
    で決まるため、この枠を詰めても駒が縮むわけではない。 */
 .player-info {
   height: 2.5rem;
+  height: clamp(2.5rem, 18cqw - 1.6875rem, 4rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
