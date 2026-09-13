@@ -996,13 +996,13 @@ html, body {
 /* 修正（新規要望・ハンバーガーメニュー幅70vw化に伴う対応）:
    ドロワー幅の上限を86vw→70vwに縮めたことで、従来の「サムネイル4個+ラベル」の
    横並び1行レイアウトだと、ラベル欄の残り幅が最長ラベル（「ダーク・ゴシック体（一字）」
-   13文字）は元よりサムネイル4個分を残した状態では9文字程度のラベルすら
-   1行に収まらなくなる。
-   実物比較のため、下記2案をbody要素のクラス（.layout-stacked / .layout-2x2）で
-   切り替えられるようにしている（本採用時にはどちらか一方に一本化し、
-   このクラス切り替えの仕組み自体は削除する想定の検証用コード）。
-   案A: サムネイル4個の下にラベルを1行で表示する縦積み。
-   案B: サムネイルを2列×2行に折り返し、右側にラベルを縦積み配置。 */
+   13文字）どころか9文字程度のラベルすら1行に収まらなくなる。
+   実機比較の結果、駒タブ（.asset-row--piece）はサムネイル4個の下にラベルを
+   1行で表示する縦積みに変更して確定した。
+   一方、盤タブ（.asset-row--board）はサムネイルが1個のみで幅を取らず
+   （3.75rem角）、最長ラベルも5文字程度のため、70vw幅でも横並び1行のままで
+   十分収まる。よって盤タブは元の横並びレイアウトを維持し、駒タブのみ
+   縦積みを適用する形に一本化する。 */
 .asset-row {
   display: flex;
   gap: 0.375rem;
@@ -1011,28 +1011,24 @@ html, body {
   cursor: pointer;
 }
 
-/* 案A: 縦積み（サムネイル横並び1行 → その下にラベル） */
-body.layout-stacked .asset-row {
+.asset-row-thumbs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* 駒タブのみ縦積み（サムネイル横並び1行 → その下にラベル）。
+   盤タブ（.asset-row--board）はこのルールの対象外のため、
+   .asset-row の基本形どおり横並び（flex-direction: row）のまま。 */
+.asset-row--piece {
   flex-direction: column;
   align-items: stretch;
 }
 
-body.layout-stacked .asset-row-thumbs {
-  display: flex;
-  gap: 0.25rem;
-}
-
-/* 案B: サムネイル2×2 + 右にラベル */
-body.layout-2x2 .asset-row {
-  flex-direction: row;
+/* 盤タブは横並びのまま（サムネイル1個+ラベル）。align-itemsは.asset-rowに
+   共通のデフォルト値が無い（初期値stretchだと画像とラベルの高さが揃って
+   間延びして見える）ため、縦中央揃えを明示する。 */
+.asset-row--board {
   align-items: center;
-}
-
-body.layout-2x2 .asset-row-thumbs {
-  display: flex;
-  flex-wrap: wrap;
-  width: calc(var(--asset-thumb-w) * 2 + 0.25rem);
-  gap: 0.25rem;
 }
 
 .asset-row--selected {

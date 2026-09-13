@@ -53,7 +53,13 @@ export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
     tab.addEventListener('click', () => {
       activeTab = tab.dataset.tab;
       updateTabs();
-      renderBody();
+      // 修正（新規要望・スクロール位置維持の副作用対策）: renderBody()は
+      // 「同じタブ内で駒/盤を選び直した際にスクロール位置を保つ」ために
+      // 直前のscrollTopを復元する仕様にしたが、タブ自体を切り替える場合に
+      // 前のタブのスクロール位置を引き継ぐと、切り替え直後に変な位置から
+      // 表示され始めてしまう。そのため、タブ切り替え時だけは
+      // resetScroll: true を渡して明示的に先頭へ戻す。
+      renderBody({ resetScroll: true });
     });
   });
 }
@@ -66,7 +72,8 @@ export function openAssetDrawer() {
   activeSide = 'SENTE'; // 修正①（新規要望）: 開くたびに先手用にリセット（駒タブと同じ考え方で毎回同じ状態から始める）
   setAssetDrawerOpen(true);
   updateTabs();
-  renderBody();
+  // 開くたびに駒タブへリセットする仕様のため、スクロール位置も先頭に戻す。
+  renderBody({ resetScroll: true });
 }
 
 /**
@@ -87,9 +94,20 @@ function updateTabs() {
 
 /**
  * ドロワー本体を描画する。
+ * 修正（新規要望）: 駒/盤を選択すると renderBody() でリスト全体を作り直す
+ * （body.innerHTML = ''）ため、DOM要素が総入れ替えとなりブラウザが
+ * スクロール位置を保持できず、常に一番上へ巻き戻ってしまう不具合があった。
+ * 特に駒タブを縦積みレイアウトにしたことでリストが縦に長くなり、
+ * 下の方の駒を選ぶたびに先頭へ戻される挙動が目立つようになった。
+ * 再構築前に現在のスクロール位置を保存し、再構築後に同じ位置へ
+ * 復元することで、同じタブ内での選択操作の前後でスクロール位置を維持する。
+ * @param {{resetScroll?: boolean}} [options] resetScroll: true の場合は
+ *   直前のスクロール位置を引き継がず先頭(0)に戻す。タブ自体を切り替えた
+ *   直後など、別内容の一覧を表示する場合に使う。
  */
-function renderBody() {
+function renderBody({ resetScroll = false } = {}) {
   const body = drawerEl.querySelector('.asset-drawer-body');
+  const previousScrollTop = resetScroll ? 0 : body.scrollTop;
   body.innerHTML = '';
   if (activeTab === 'PIECE') {
     renderPieceControlBar(body);
@@ -99,6 +117,10 @@ function renderBody() {
   } else {
     renderKifuTab(body);
   }
+  // 直前のスクロール位置を復元する。タブ切り替え直後など、再構築後の
+  // コンテンツがそもそも短くてscrollHeightが previousScrollTop より
+  // 小さい場合は、ブラウザ側で自動的に収まる範囲へ丸められる。
+  body.scrollTop = previousScrollTop;
 }
 
 /**
@@ -136,7 +158,10 @@ function renderPieceControlBar(body) {
     // 「先手用」「後手用」セグメントをONでは1つの一覧に戻す際、表示だけを
     // 先手基準に揃えるためのもの。
     activeSide = 'SENTE';
-    renderBody();
+    // 修正（新規要望・スクロール位置維持の副作用対策）: 一括ON/OFFの切替は
+    // 「先手用/後手用に分かれた一覧」⇔「一括の一覧」で表示内容そのものが
+    // 変わるため、直前のスクロール位置を引き継がず先頭に戻す。
+    renderBody({ resetScroll: true });
     if (renderCallback) renderCallback();
   });
   toggleWrap.appendChild(checkbox);
@@ -161,7 +186,9 @@ function renderPieceControlBar(body) {
       btn.classList.toggle('asset-piece-side-switch-btn--active', activeSide === s.side);
       btn.addEventListener('click', () => {
         activeSide = s.side;
-        renderBody();
+        // 修正（新規要望・スクロール位置維持の副作用対策）: 先手用/後手用の
+        // 切り替えも表示される駒一覧の中身が変わるため、先頭に戻す。
+        renderBody({ resetScroll: true });
       });
       switchEl.appendChild(btn);
     }
