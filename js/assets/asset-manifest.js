@@ -3,12 +3,19 @@
  */
 
 /**
+ * @typedef {Object} GridOverlayConfig
+ * @property {boolean} enabled - trueの場合、board-view.jsが格子線・星をSVGで重ね描画する
+ * @property {'white'|'black'} lineColor
+ * @property {boolean} showStars
+ *
  * @typedef {Object} BoardAssetEntry
  * @property {string} id
  * @property {string} label
  * @property {string} image
  * @property {number|null} width
  * @property {number|null} height
+ * @property {GridOverlayConfig} [gridOverlay] - 画像に線が焼き込まれていないテクスチャ盤のみ持つ。
+ *   未指定（wood/polyvinyl_chloride/darkなど既存の線入り盤）の場合はboard-view.js側で何も描画しない。
  *
  * @typedef {Object} PieceAssetEntry
  * @property {string} id

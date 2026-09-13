@@ -42,6 +42,67 @@ export function getBoardOriginPx(boardImageSize, boardLayout) {
 }
 
 /**
+ * テクスチャ盤（画像に線が焼き込まれていない盤）に重ねる格子線の座標を算出する。
+ *
+ * board-layout.json の margin_ratio / cell_ratio は「線の中心位置」を実測した値のため、
+ * ここで算出する線もgetSquareSizePx()/getBoardOriginPx()と全く同じ式を使い、駒・座標ラベルと
+ * 座標系を一致させる（線だけ別ロジックで求めると、駒はマス中央なのに線だけズレる、という
+ * 事態になりかねないため、必ずこの2関数の結果を再利用する）。
+ * @param {{width: number, height: number}} boardImageSize - 現在表示中の盤画像の実表示サイズ（px）
+ * @param {Object} boardLayout - board-layout.json をパースしたオブジェクト
+ * @returns {{vertical: number[], horizontal: number[], originX: number, originY: number, innerWidth: number, innerHeight: number}}
+ *   vertical/horizontalは各線のオフセット（原点からのpx距離、0〜cols/rows分）。
+ *   originX/originYは盤内枠の左上、innerWidth/innerHeightは内枠全体のサイズ。
+ */
+export function getGridLinesPx(boardImageSize, boardLayout) {
+  const squareSize = getSquareSizePx(boardImageSize, boardLayout);
+  const origin = getBoardOriginPx(boardImageSize, boardLayout);
+  const { cols, rows } = boardLayout.grid;
+
+  const vertical = [];
+  for (let i = 0; i <= cols; i++) {
+    vertical.push(i * squareSize.width);
+  }
+  const horizontal = [];
+  for (let i = 0; i <= rows; i++) {
+    horizontal.push(i * squareSize.height);
+  }
+
+  return {
+    vertical,
+    horizontal,
+    originX: origin.x,
+    originY: origin.y,
+    innerWidth: squareSize.width * cols,
+    innerHeight: squareSize.height * rows
+  };
+}
+
+/**
+ * 星（星目）4点の座標を算出する。
+ * wood.png（既存の線入り盤）を実測した結果、星は「線index 3と6の交点」4箇所
+ * （0始まりで線0〜9の10本のうち、左/上から4本目・7本目の交点）に打たれている。
+ * これは9路盤の慣習上の位置（マス3とマス4の境界、マス6とマス7の境界の交点）と一致する。
+ * @param {{width: number, height: number}} boardImageSize
+ * @param {Object} boardLayout
+ * @returns {{x: number, y: number}[]} 盤内枠左上を原点(0,0)とした4点のpx座標
+ */
+export function getStarPointsPx(boardImageSize, boardLayout) {
+  const squareSize = getSquareSizePx(boardImageSize, boardLayout);
+  const starLineIndexes = [3, 6]; // 実測（wood.png）に基づく線index（0始まり、線0〜9の10本中）
+  const points = [];
+  for (const yi of starLineIndexes) {
+    for (const xi of starLineIndexes) {
+      points.push({
+        x: xi * squareSize.width,
+        y: yi * squareSize.height
+      });
+    }
+  }
+  return points;
+}
+
+/**
  * 駒コマの描画矩形を算出する。
  * @param {{width: number, height: number}} squareSizePx - getSquareSizePx() の返り値
  * @param {{width: number, height: number}} pieceImageNaturalSize - 選択中の駒画像の実サイズ

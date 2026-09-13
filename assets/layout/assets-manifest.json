@@ -1,5 +1,5 @@
 {
-  "$comment": "選択可能な盤・駒のアセット一覧。比率レイアウト(board-layout.json / piece-layout.json)は全アセット共通のため、ここでは『画像パスと表示名の対応』のみを管理する。IDはスペースを含めず、アンダーバー区切りの英数字のみとする。labelは画面表示用の日本語名。",
+  "$comment": "選択可能な盤・駒のアセット一覧。比率レイアウト(board-layout.json / piece-layout.json)は全アセット共通のため、ここでは『画像パスと表示名の対応』のみを管理する。IDはスペースを含めず、アンダーバー区切りの英数字のみとする。labelは画面表示用の日本語名。boardsの各エントリが持つgridOverlayは、盤画像そのものに線が焼き込まれていない『テクスチャ盤』向けの追加設定。enabled:trueの場合のみboard-view.jsが格子線・星をSVGで重ね描画する（wood/polyvinyl_chloride/darkのように画像自体に線が焼き込み済みの盤にはgridOverlayを持たせず、二重描画を防ぐ）。lineColorは'white'または'black'。showStarsは星（星目4点）を薄く重ねるかどうか。同じ画像(image)を異なるlineColorで複数エントリから参照できる（例: planetarium_white / planetarium_black は同じplanetarium.pngを共有）。",
   "boards": [
     {
       "id": "wood",
@@ -24,6 +24,86 @@
       "width": null,
       "height": null,
       "comment": "width/heightは現在未使用（board-layout.jsonのcell_ratioで比率計算するため）。将来、比率が異なる盤を追加する際に個別のサイズを持たせる拡張用フィールドとして予約。"
+    },
+    {
+      "id": "planetarium_white",
+      "label": "天体（白線）",
+      "image": "./assets/boards/planetarium.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "planetarium_black",
+      "label": "天体（黒線）",
+      "image": "./assets/boards/planetarium.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "orange_white",
+      "label": "橙（白線）",
+      "image": "./assets/boards/orange.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "orange_black",
+      "label": "橙（黒線）",
+      "image": "./assets/boards/orange.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "green_white",
+      "label": "緑（白線）",
+      "image": "./assets/boards/green.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "green_black",
+      "label": "緑（黒線）",
+      "image": "./assets/boards/green.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "reikan_white",
+      "label": "冷感（白線）",
+      "image": "./assets/boards/reikan.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "reikan_black",
+      "label": "冷感（黒線）",
+      "image": "./assets/boards/reikan.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "snowflake_white",
+      "label": "雪（白線）",
+      "image": "./assets/boards/snowflake.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "snowflake_black",
+      "label": "雪（黒線）",
+      "image": "./assets/boards/snowflake.png",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
     }
   ],
   "pieces": [

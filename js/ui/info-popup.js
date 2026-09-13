@@ -20,7 +20,7 @@ const INFO_HTML = `
   <p class="info-popup-lead">まず自動再生で1周、流れをつかむ。<br>2周目からは自分の指で一手ずつ動かして、体に入れる。</p>
 
   <div class="info-popup-step">
-    <div class="info-popup-step-num">①</div>
+    <div class="info-popup-step-num">1</div>
     <div class="info-popup-step-body">
       <p class="info-popup-step-title">自動再生</p>
       <p>次ボタンを押すだけ。駒は自動で動きます。</p>
@@ -28,7 +28,7 @@ const INFO_HTML = `
   </div>
 
   <div class="info-popup-step">
-    <div class="info-popup-step-num">②</div>
+    <div class="info-popup-step-num">2</div>
     <div class="info-popup-step-body">
       <p class="info-popup-step-title">手動並べ</p>
       <p>盤上の駒を指でタップして動かします。正しく指せると、画面上部の符号が進みます。<br>指手を非表示にすると符号が消えるので、暗記の確認もできます。</p>
@@ -49,6 +49,13 @@ const INFO_HTML = `
     <li>将棋の棋譜配信サイト（将棋DBなど）</li>
     <li>将棋ソフト・アプリの「棋譜を保存/コピー」機能</li>
     <li>自分で対局した棋譜を将棋ソフトから書き出したもの</li>
+  </ul>
+
+  <h3>使用素材・クレジット</h3>
+  <ul>
+    <li>駒・盤画像：Shogi Images（CC0）<br><a href="https://sunfish-shogi.github.io/shogi-images/" target="_blank" rel="noopener noreferrer">https://sunfish-shogi.github.io/shogi-images/</a></li>
+    <li>駒画像：illustAC（Cherish 様）</li>
+    <li>盤画像（素材テクスチャ）：illustAC（バンタロス 様）</li>
   </ul>
 `;
 

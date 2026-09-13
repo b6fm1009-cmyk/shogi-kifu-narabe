@@ -1,7 +1,7 @@
 /**
  * ④盤面・座標符号の描画（設計書 第5部）
  */
-import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
+import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell, getGridLinesPx, getStarPointsPx } from '../assets/asset-fit.js';
 import { findBoardAsset, findPieceAsset } from '../assets/asset-manifest.js';
 import { determineKingLabels } from '../models/kifu.js';
 import { isPromotedPiece } from '../models/board.js';
@@ -71,6 +71,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
     && boardImageEl.getAttribute('src') === boardAsset.image;
 
   const renderDependents = () => {
+    renderGridOverlay(boardAsset);
     placeSquareHighlights(boardState, lastMove);
     placePieces(boardState, pieceAssetBySide, selectedSource);
     renderCoordinates(boardState.isFlipped);
@@ -134,6 +135,90 @@ function toDisplayCoord(file, rank, isFlipped) {
   const displayFile = isFlipped ? file : 10 - file;
   const displayRank = isFlipped ? 10 - rank : rank;
   return { displayFile, displayRank };
+}
+
+/**
+ * テクスチャ盤（画像に線が焼き込まれていない盤）に、格子線・星をSVGで重ね描画する。
+ * boardAsset.gridOverlay.enabled が true のときだけ描画し、それ以外（wood.png等、
+ * 画像自体に線が焼き込み済みの盤）では何もしない＝二重描画を避ける。
+ *
+ * 線・星の座標は asset-fit.js の getGridLinesPx()/getStarPointsPx() を通じて
+ * board-layout.json の比率から算出したものをそのまま使う。これにより、駒の配置
+ * （placePieces内 getSquareSizePx/getBoardOriginPx）と全く同じ基準になるため、
+ * テクスチャ盤に切り替えても駒とマス目の位置がズレない。
+ * @param {BoardAssetEntry} boardAsset
+ */
+function renderGridOverlay(boardAsset) {
+  const existing = boardWrapEl.querySelector('.grid-overlay-layer');
+  if (existing) existing.remove();
+
+  const overlay = boardAsset.gridOverlay;
+  if (!overlay || !overlay.enabled) return;
+
+  const boardSize = { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight };
+  // 画像ロード直後などでまだ実寸が取れていない場合は描画をスキップ（次の再描画で改めて呼ばれる）
+  if (!boardSize.width || !boardSize.height) return;
+
+  const grid = getGridLinesPx(boardSize, boardLayout);
+  // 「目立たないが、うっすら判別できる」バランス（要望に基づき確定）。
+  // 純白(#fff)・純黒(#000)は使わず、白は#d8d8d5、黒は#272725
+  // （白基準からの明度距離39を黒側にも対称に適用した値）とする。
+  const strokeColor = overlay.lineColor === 'white' ? '#d8d8d5' : '#272725';
+
+  const svgNs = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNs, 'svg');
+  svg.setAttribute('class', 'grid-overlay-layer');
+  svg.setAttribute('width', String(boardSize.width));
+  svg.setAttribute('height', String(boardSize.height));
+  svg.setAttribute('viewBox', `0 0 ${boardSize.width} ${boardSize.height}`);
+
+  const linesGroup = document.createElementNS(svgNs, 'g');
+  linesGroup.setAttribute('stroke', strokeColor);
+  linesGroup.setAttribute('stroke-width', '2');
+  linesGroup.setAttribute('shape-rendering', 'crispEdges');
+
+  grid.vertical.forEach(x => {
+    const line = document.createElementNS(svgNs, 'line');
+    const px = grid.originX + x;
+    line.setAttribute('x1', String(px));
+    line.setAttribute('y1', String(grid.originY));
+    line.setAttribute('x2', String(px));
+    line.setAttribute('y2', String(grid.originY + grid.innerHeight));
+    linesGroup.appendChild(line);
+  });
+
+  grid.horizontal.forEach(y => {
+    const line = document.createElementNS(svgNs, 'line');
+    const py = grid.originY + y;
+    line.setAttribute('x1', String(grid.originX));
+    line.setAttribute('y1', String(py));
+    line.setAttribute('x2', String(grid.originX + grid.innerWidth));
+    line.setAttribute('y2', String(py));
+    linesGroup.appendChild(line);
+  });
+
+  svg.appendChild(linesGroup);
+
+  if (overlay.showStars) {
+    const starPoints = getStarPointsPx(boardSize, boardLayout);
+    const starsGroup = document.createElementNS(svgNs, 'g');
+    // 目立たせすぎない: 既存wood.pngの黒丸相当ではなく、半透明かつ小さめの半径にする
+    // （テクスチャ素材の見た目を線が邪魔しすぎないようにするため）。
+    starsGroup.setAttribute('fill', strokeColor);
+    starsGroup.setAttribute('opacity', '0.45');
+    starPoints.forEach(pt => {
+      const circle = document.createElementNS(svgNs, 'circle');
+      circle.setAttribute('cx', String(grid.originX + pt.x));
+      circle.setAttribute('cy', String(grid.originY + pt.y));
+      circle.setAttribute('r', '3');
+      starsGroup.appendChild(circle);
+    });
+    svg.appendChild(starsGroup);
+  }
+
+  // pieces-layer 等より先に挿入する（boardWrapEl先頭＝盤画像の直後）ことで、
+  // 駒やハイライトより下のレイヤーになるようにする。
+  boardWrapEl.appendChild(svg);
 }
 
 /**
