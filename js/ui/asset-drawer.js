@@ -9,6 +9,7 @@ import { loadSampleManifest, importSampleKifu } from '../kifu-io/sample-import.j
 let drawerEl = null;
 let overlayEl = null;
 let activeTab = 'PIECE';
+let scrollPositions = { PIECE: 0, BOARD: 0, KIFU: 0 }; // タブごとのスクロール位置を個別に記憶する
 // 修正①（新規要望）: 駒タブ内で「先手用」「後手用」どちらの駒セットを選んでいるかを
 // 保持する内部状態。ドロワーの開閉自体はapp-state.js（isAssetDrawerOpen）が正本だが、
 // このactiveSideはドロワー内部のUI状態（どのタブ・どちらの陣営を表示中か）に過ぎず、
@@ -53,13 +54,7 @@ export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
     tab.addEventListener('click', () => {
       activeTab = tab.dataset.tab;
       updateTabs();
-      // 修正（新規要望・スクロール位置維持の副作用対策）: renderBody()は
-      // 「同じタブ内で駒/盤を選び直した際にスクロール位置を保つ」ために
-      // 直前のscrollTopを復元する仕様にしたが、タブ自体を切り替える場合に
-      // 前のタブのスクロール位置を引き継ぐと、切り替え直後に変な位置から
-      // 表示され始めてしまう。そのため、タブ切り替え時だけは
-      // resetScroll: true を渡して明示的に先頭へ戻す。
-      renderBody({ resetScroll: true });
+      renderBody();
     });
   });
 }
@@ -72,8 +67,12 @@ export function openAssetDrawer() {
   activeSide = 'SENTE'; // 修正①（新規要望）: 開くたびに先手用にリセット（駒タブと同じ考え方で毎回同じ状態から始める）
   setAssetDrawerOpen(true);
   updateTabs();
-  // 開くたびに駒タブへリセットする仕様のため、スクロール位置も先頭に戻す。
-  renderBody({ resetScroll: true });
+  // 修正（新規要望）: 表示するタブ自体は駒タブに固定してリセットするが
+  // （要件定義書5.9節）、駒タブのスクロール位置そのものは維持する。
+  // 「駒/盤を選んで一旦閉じ、盤面で見た目を確認してからまた開いて
+  // 選び直す」という一連の往復操作を想定しており、その都度スクロールが
+  // 先頭に戻ると選び直しの度に毎回下までスクロールし直す手間が生まれるため。
+  renderBody();
 }
 
 /**
@@ -99,15 +98,25 @@ function updateTabs() {
  * スクロール位置を保持できず、常に一番上へ巻き戻ってしまう不具合があった。
  * 特に駒タブを縦積みレイアウトにしたことでリストが縦に長くなり、
  * 下の方の駒を選ぶたびに先頭へ戻される挙動が目立つようになった。
- * 再構築前に現在のスクロール位置を保存し、再構築後に同じ位置へ
- * 復元することで、同じタブ内での選択操作の前後でスクロール位置を維持する。
- * @param {{resetScroll?: boolean}} [options] resetScroll: true の場合は
- *   直前のスクロール位置を引き継がず先頭(0)に戻す。タブ自体を切り替えた
- *   直後など、別内容の一覧を表示する場合に使う。
+ *
+ * ハンバーガーメニューは「駒や盤を選んで見た目を変え、都度いったん閉じて
+ * 盤面で確認し、また開いて選び直す」という使い方が中心のため、
+ * 駒/盤の選択操作はもちろん、タブの行き来（駒⇔盤⇔棋譜）や
+ * 「先手用/後手用」「先後一括変更」の切り替え、ドロワーを閉じて
+ * 開き直す操作でも、それぞれの一覧のスクロール位置を保ったままにする
+ * （openAssetDrawer()が毎回「駒タブ」を表示する仕様はそのまま維持しつつ、
+ * 駒タブ自体のスクロール位置は保持する）。
+ * scrollPositionsにタブ単位で位置を記憶しておき、renderBody()の呼び出し時に
+ * 「直前に表示していたタブ」（lastRenderedTab、モジュール内で自動追跡）の
+ * 位置を保存してから、これから表示するタブの記憶位置を復元する。
  */
-function renderBody({ resetScroll = false } = {}) {
+let lastRenderedTab = null;
+
+function renderBody() {
   const body = drawerEl.querySelector('.asset-drawer-body');
-  const previousScrollTop = resetScroll ? 0 : body.scrollTop;
+  if (lastRenderedTab && lastRenderedTab in scrollPositions) {
+    scrollPositions[lastRenderedTab] = body.scrollTop;
+  }
   body.innerHTML = '';
   if (activeTab === 'PIECE') {
     renderPieceControlBar(body);
@@ -117,10 +126,11 @@ function renderBody({ resetScroll = false } = {}) {
   } else {
     renderKifuTab(body);
   }
-  // 直前のスクロール位置を復元する。タブ切り替え直後など、再構築後の
-  // コンテンツがそもそも短くてscrollHeightが previousScrollTop より
-  // 小さい場合は、ブラウザ側で自動的に収まる範囲へ丸められる。
-  body.scrollTop = previousScrollTop;
+  // 記憶していたスクロール位置を復元する。まだ記憶がない（0のまま）場合や、
+  // 再構築後のコンテンツがそれより短い場合は、ブラウザ側で自動的に
+  // 収まる範囲へ丸められる。
+  body.scrollTop = scrollPositions[activeTab] || 0;
+  lastRenderedTab = activeTab;
 }
 
 /**
@@ -158,10 +168,7 @@ function renderPieceControlBar(body) {
     // 「先手用」「後手用」セグメントをONでは1つの一覧に戻す際、表示だけを
     // 先手基準に揃えるためのもの。
     activeSide = 'SENTE';
-    // 修正（新規要望・スクロール位置維持の副作用対策）: 一括ON/OFFの切替は
-    // 「先手用/後手用に分かれた一覧」⇔「一括の一覧」で表示内容そのものが
-    // 変わるため、直前のスクロール位置を引き継がず先頭に戻す。
-    renderBody({ resetScroll: true });
+    renderBody();
     if (renderCallback) renderCallback();
   });
   toggleWrap.appendChild(checkbox);
@@ -186,9 +193,7 @@ function renderPieceControlBar(body) {
       btn.classList.toggle('asset-piece-side-switch-btn--active', activeSide === s.side);
       btn.addEventListener('click', () => {
         activeSide = s.side;
-        // 修正（新規要望・スクロール位置維持の副作用対策）: 先手用/後手用の
-        // 切り替えも表示される駒一覧の中身が変わるため、先頭に戻す。
-        renderBody({ resetScroll: true });
+        renderBody();
       });
       switchEl.appendChild(btn);
     }
