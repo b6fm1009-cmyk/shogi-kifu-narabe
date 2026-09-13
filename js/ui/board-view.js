@@ -71,6 +71,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
     && boardImageEl.getAttribute('src') === boardAsset.image;
 
   const renderDependents = () => {
+    syncBoardWrapSize();
     renderGridOverlay(boardAsset);
     placeSquareHighlights(boardState, lastMove);
     placePieces(boardState, pieceAssetBySide, selectedSource);
@@ -121,6 +122,64 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
   } else {
     boardImageEl.addEventListener('load', renderDependentsAndNotify);
   }
+}
+
+/**
+ * .board-wrap の実表示サイズ（px）を、.board-container の実測サイズと
+ * 盤画像のアスペクト比から明示的に計算してpx指定する。
+ *
+ * 修正（盤サイズ根本対応・aspect-ratio依存の廃止）: 以前は.board-wrapに
+ * width:100%; aspect-ratio:878/960; max-height:100% を指定し、ブラウザに
+ * 「幅優先で決めた高さがmax-heightを超えたら幅を縮め直す」計算を委ねていた。
+ * この方式では、.board-containerが縦に対して横長（幅に余裕がありすぎる）
+ * 領域になった場合に、.board-wrap（ひいては中の<img>のobject-fit:contain）
+ * が余白を作る形で縮小し、その際 boardImageEl.clientWidth
+ * （＝.board-wrapの枠のサイズ）が「実際に見えている木目の絵のサイズ」より
+ * 大きい値のままになる、というズレが起こり得た
+ * （object-fit:containは<img>の"内容"だけを縮小し、要素自体の
+ * ボーダーボックスサイズ＝clientWidth/clientHeightは変えないため）。
+ * placePieces等はすべてboardImageEl.clientWidthを盤の実寸として使うため、
+ * このズレがあると駒が実際の盤の絵より外側（左右の余白部分）にまで
+ * はみ出して配置されてしまっていた（#app-frameの幅制限撤廃により
+ * .board-containerが横長になる場面が増え、顕在化した）。
+ * 対策として、.board-containerの実測clientWidth/clientHeightから
+ * 「アスペクト比を保って収まる最大サイズ」をJSで計算し、.board-wrapに
+ * 直接px指定する。これにより.board-wrap自身のサイズ（＝boardImageEl.
+ * clientWidthの基準）と実際に見える絵のサイズが常に一致することを保証し、
+ * ブラウザのaspect-ratio実装差に依存しない。
+ */
+function syncBoardWrapSize() {
+  if (!boardEl || !boardWrapEl || !boardLayout) return;
+  // 修正: clientWidth/clientHeightはpaddingを含む値のため、.board-containerの
+  // padding（座標ラベル用の余白）をそのまま含めて計算すると、.board-wrapが
+  // 実際に使える内側の領域より広く見積もってしまう（従来のCSS width:100%は
+  // %指定がコンテンツボックス基準になるため自動的にpadding分を除いていたが、
+  // JSでclientWidthから計算する場合は明示的に引く必要がある）。
+  const cs = window.getComputedStyle(boardEl);
+  const paddingX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const paddingY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const containerWidth = boardEl.clientWidth - paddingX;
+  const containerHeight = boardEl.clientHeight - paddingY;
+  if (containerWidth <= 0 || containerHeight <= 0) return;
+
+  const refW = boardLayout.image.reference_width;
+  const refH = boardLayout.image.reference_height;
+  const containerRatio = containerWidth / containerHeight;
+  const imageRatio = refW / refH;
+
+  let width, height;
+  if (containerRatio > imageRatio) {
+    // コンテナの方が横長 → 高さ基準で幅を決める
+    height = containerHeight;
+    width = height * imageRatio;
+  } else {
+    // コンテナの方が縦長（または同比率） → 幅基準で高さを決める
+    width = containerWidth;
+    height = width / imageRatio;
+  }
+
+  boardWrapEl.style.width = `${width}px`;
+  boardWrapEl.style.height = `${height}px`;
 }
 
 /**

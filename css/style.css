@@ -443,24 +443,23 @@ html, body {
 .board-wrap {
   /* 盤画像と同じ矩形を持つラッパー。pieces-layer / coordinate-label はこの要素の
      top:0,left:0,width:100%,height:100% を基準にするため、常に盤画像の実位置と一致する。
-     contain時はコンテナ内に収まる最大サイズに縮小する（アスペクト維持）。
      asset-fit.jsのclientWidth基準計算はこの実表示サイズをそのまま使う。
-     盤画像は全種878x960想定だが、将来比率違いが来ても破綻しないよう
-     aspect-ratioは目安・object-fit:containで吸収する。
 
-     修正（横幅優先）: 以前は幅を「画面の高さから逆算した値」と100%の
-     min()で決めていたため、縦の見積りが少しでも狂うと横幅が本来使える
-     量より小さく計算され、盤が必要以上に小さく表示されていた。
-     横幅を主役にする方針に変更し、幅は常に親要素（.board-container）の
-     100%を基本とする。aspect-ratioにより、縦方向に収まりきらない場合は
-     max-heightとの兼ね合いでブラウザが自動的に幅を縮めるため、
-     縦不足時の安全性は変わらない。 */
+     修正（盤サイズ根本対応・aspect-ratio依存の廃止）: 従来はwidth:100%+
+     aspect-ratio+max-height:100%の組み合わせをブラウザに計算させていたが、
+     .board-containerが横長（縦に対して幅が余る）領域になった場合に、
+     この要素自体の枠サイズ（＝boardImageEl.clientWidthとして駒配置計算が
+     参照する値）と、object-fit:containで実際に縮小表示される絵の見た目が
+     食い違い、駒が盤の絵の外側にはみ出す不具合があった。
+     そのため幅・高さは固定値をここでは指定せず、board-view.jsの
+     syncBoardWrapSize()がrenderBoard()のたびに.board-containerの実測
+     clientWidth/clientHeightから「アスペクト比を保って収まる最大サイズ」を
+     計算し、style.width/style.heightとして直接px指定する
+     （このブロックにwidth/height/aspect-ratio/max-width/max-heightを
+     置かないこと。JS側のpx指定と二重に効くと優先順位でどちらが勝つか
+     不明瞭になり、同じ種類のズレを再発させる恐れがある）。 */
   position: relative;
   display: block;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 878 / 960;
-  width: 100%;
   margin: auto;
 }
 
