@@ -120,7 +120,7 @@ html, body {
   /* 修正（レイアウト調整）: 盤の表示面積を優先するため、タップ領域を
      44px以上に保ったまま縦の余白を切り詰める（2.625rem→2.375rem）。 */
   height: 2.375rem;
-  height: clamp(2.375rem, 18cqw - 1.6875rem, 3.5rem);
+  height: clamp(2.375rem, 18cqw - 1.6875rem, 3rem);
   min-height: 2.375rem;
   display: flex;
   align-items: center;
@@ -268,7 +268,7 @@ html, body {
    親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
 .player-info {
   height: 2.5rem;
-  height: clamp(2.5rem, 18cqw - 1.6875rem, 4rem);
+  height: clamp(2.5rem, 18cqw - 1.6875rem, 3.25rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
@@ -308,7 +308,7 @@ html, body {
      iPhone幅では下限2.375rem(旧値)で一致。iPad級では3.125rem上限が効く。
      中身は縦中央寄せのまま。 */
   height: 2.375rem;
-  height: clamp(2.375rem, 18cqw - 1.6875rem, 3.85rem);
+  height: clamp(2.375rem, 18cqw - 1.6875rem, 3.125rem);
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -583,7 +583,7 @@ html, body {
      子ボタン(.bottom-btn)は中央寄せのまま（親背景が伸びるだけ）。
      ボタンのmin-height:44pxは維持し、タップ下限は保つ。 */
   height: 2.875rem;
-  height: clamp(2.875rem, 18cqw - 1.6875rem, 3.75rem);
+  height: clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem);
   min-height: 46px;
   display: flex;
   align-items: center;
