@@ -85,15 +85,25 @@ html, body {
 }
 
 #app-frame {
-  /* 高さ制約時は幅を絞って全体を収めるcontain。
-     縦長画面では100vwいっぱい、横向き等で高さ不足時は100dvh*--app-ratioに絞る。 */
-  width: min(100vw, calc(100dvh * var(--app-ratio)));
+  /* 修正（--app-ratio根本対応）: 従来はmin(100vw, 100dvh*0.62)を常時適用しており、
+     コメント上は「縦長画面では100vwいっぱいになる」想定だったが、実際には
+     画面が正方形に近い端末（iPad mini/Pro等）では縦持ちでも100dvh*0.62の方が
+     100vwより小さくなり、常に幅が絞られてしまっていた（ヘッダーのボタン群が
+     右側に不自然に寄る・盤が本来より小さくなる、の根本原因）。
+     0.62という値自体、旧・各要素固定remサイズ時代の実測値であり、
+     .header/.player-info/.bottom-controlsがclamp可変になった現在の設計とも
+     もはや対応していない。
+     そこで縦持ち(portrait)では幅制限を撤廃し、常に100vw（＝画面幅いっぱい）を
+     使う。.board-containerがflex:1で残り高さを占め、その中の.board-wrapが
+     aspect-ratio+containで自らサイズを決める設計のため、幅を絞らなくても
+     縦方向にはみ出すことはない。
+     横向き(landscape)は画面が極端に横長になり得るため、盤が潰れて小さくなる
+     事故を避ける安全策として、従来通り--app-ratioによる幅の頭打ちを残す。 */
+  width: 100vw;
   height: 100dvh;
   max-height: 100dvh;
   /* container-type: inline-size は子孫の cqw 単位の基準にするための指定。
      .player-info の高さ clamp() が、この枠幅を基準に連続可変する。
-     縦長時は 100vw と一致するため、iPhone では従来の vw 基準と同値になる。
-     横向き等で枠が絞られる場合は枠幅基準の方が正確。
      inline-size のみのため縦方向の flex 伸縮には影響しない。
      なお .header-btn の cqw は祖先ではなく直近コンテナ(.header-buttons)を
      参照するため、この追加による変化はない（最も近い祖先が優先される）。 */
@@ -105,6 +115,15 @@ html, body {
   position: relative;
   overflow: hidden;
   min-height: 0;
+}
+
+@media (orientation: landscape) {
+  #app-frame {
+    /* 横向きは画面幅が高さに対して極端に大きくなり得るため、
+       安全策として従来通り高さ基準で幅の上限を設ける（盤が横に間延びして
+       潰れるのを防ぐ）。縦持ち用の分岐（上記）とはここでのみ分離する。 */
+    width: min(100vw, calc(100dvh * var(--app-ratio)));
+  }
 }
 
 /* ---------- ①ヘッダー ---------- */
@@ -249,26 +268,27 @@ html, body {
 
 /* ---------- ③⑤プレイヤー情報 ---------- */
 /* 名前＋持ち駒を一枚の駒台として扱う。
-   修正（iPad mini持ち駒切れ対応・Dライト）: 高さを2.5rem固定から
-   clamp(2.5rem, 18cqw - 1.6875rem, 3.25rem)の連続可変にする。
-   持ち駒サイズは盤マス連動（main.js renderAll→getSquareSizePx）で、
-   枠幅が広いほど大きくなるのに対し、駒台が2.5rem固定ではiPad級で
-   75px級の駒が47.5pxに入らずoverflow:hiddenで切れていた。
-   盤幅の約11.8%がマス高のため、18cqw-27px(=約11.8cqw+6cqw余白)の傾きで
-   駒に追従させる。iPhone幅(390px=約24.4rem)では下限2.5remが選ばれて
-   旧寸法と一致する。iPad mini縦(枠約635px=約33.4rem)では上限3.25remが
-   効く（4remでは広すぎるとの指摘を受け、前回2.5remと前案4remの中間
-   3.25remに引き下げ。切れは上方余白0.625rem→約0.1remに圧縮して解消、
-   盤の上下余りも約45px→約20pxに削減）。
-   増えた分は盤の上下余白を食うだけのため、駒・盤の縮小は発生しない。
-   @media分岐は使わずarch2.6のclamp方針に沿う。
-   駒画像自体のサイズはsquareSizePx（盤マス基準、player-info.js側で算出）
-   で決まるため、この枠を詰めても駒が縮むわけではない。
+   修正（player-info高さ根本対応・cqw近似の廃止）:
+   旧方式は「18cqw - 1.6875rem」のように、コンテナの"横幅"から駒台の高さを
+   逆算するclamp式だった。これはiPhone/iPad miniのように盤が横幅で頭打ちになる
+   画面では駒サイズとおおむね連動したが、iPad Proのように画面に余裕があり、
+   盤が"縦（高さ）"側の制約で頭打ちになる画面では、横幅だけがまだ余っているため
+   cqwが過大な値を返し、駒台がclamp上限に張り付いて分厚くなりすぎ、盤を圧迫していた
+   （幅が同程度でも高さ律速か幅律速かで必要な駒台高さが変わるため、横幅だけを見る
+   近似はどの上限値を選んでも縦横比次第でどこかの端末で破綻する）。
+   そこで近似をやめ、main.js renderAll()が盤の実描画結果から算出する
+   squareSize.height（駒1個の実ピクセル高さ、asset-fit.js getSquareSizePx）を
+   そのつどCSS変数 --piece-h に反映し、駒台の高さはこの実測値から直接計算する。
+   盤が幅・高さどちらの制約で頭打ちになっていても、--piece-hは常に「今実際に
+   描画されている駒のサイズ」なので、駒台は駒がちょうど収まる最小限の高さになり、
+   余った分は必ず盤の取り分に回る。
+   バッファ値0.9375rem(15px @16pxフォント基準)はiPhone実測
+   （駒高さ約36px・駒台高さ約51px）から算出した固定量で、端末间で変えない
+   （--piece-h自体が実測連動のため、固定バッファのままで各端末に追従する）。
    子要素（.player-info-box / .hand-piece）は縦中央寄せのまま。
    親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
 .player-info {
-  height: 2.5rem;
-  height: clamp(2.5rem, 18cqw - 1.6875rem, 3.65rem);
+  height: calc(var(--piece-h, 36px) + 0.9375rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
@@ -302,13 +322,11 @@ html, body {
 .player-info-box {
   flex-shrink: 0;
   width: clamp(5.375rem, 22vw, 7.5rem);
-  /* 修正（iPad mini余白分配・Dライト・①名前欄追従）: 親(.player-info)と
-     同じclamp式で連動させる。height:100%だけだと親padding/borderの影響で
-     実寸がズレるため、親と同じ式を明示して上下限を一致させる。
-     iPhone幅では下限2.375rem(旧値)で一致。iPad級では3.125rem上限が効く。
+  /* 修正（player-info高さ根本対応）: 親(.player-info)と同じ実測値ベースの式で
+     連動させる。height:100%だけだと親のborder(1px×2)の影響で実寸がズレるため、
+     親から2px（border分）を引いた式を明示して上下限を一致させる。
      中身は縦中央寄せのまま。 */
-  height: 2.375rem;
-  height: clamp(2.375rem, 18cqw - 1.6875rem, 3.5rem);
+  height: calc(var(--piece-h, 36px) + 0.9375rem - 2px);
   min-height: 0;
   display: flex;
   flex-direction: column;

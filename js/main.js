@@ -137,6 +137,16 @@ function renderAll() {
     : fallbackBoardSize;
   const squareSize = getSquareSizePx(actualBoardSize, layouts.boardLayout);
 
+  // 修正（player-info高さ根本対応）: 駒台(.player-info)の高さをCSSのcqw近似
+  // （コンテナ幅からの推測）で決めていたが、盤が横幅ではなく縦（高さ）で頭打ちに
+  // なる画面（例: iPad Pro縦）では、実際の盤サイズより過大な値になり、駒台が
+  // 分厚くなりすぎて盤を圧迫していた。cqwによる近似をやめ、この行で実測した
+  // squareSize.height（駒1個の実ピクセル高さ）をCSS変数として公開し、
+  // .player-info側はこの実測値から高さを直接計算する（style.css参照）。
+  // 幅・高さどちらが制約になっている画面でも、盤の実際の描画結果を見ているため
+  // 破綻しない。
+  document.documentElement.style.setProperty('--piece-h', `${squareSize.height}px`);
+
   const topPieces = state.boardState.isFlipped ? state.boardState.handSente : state.boardState.handGote;
   const bottomPieces = state.boardState.isFlipped ? state.boardState.handGote : state.boardState.handSente;
 
