@@ -80,7 +80,7 @@ export function getGridLinesPx(boardImageSize, boardLayout) {
 
 /**
  * 星（星目）4点の座標を算出する。
- * wood.png（既存の線入り盤）を実測した結果、星は「線index 3と6の交点」4箇所
+ * wood.avif（既存の線入り盤）を実測した結果、星は「線index 3と6の交点」4箇所
  * （0始まりで線0〜9の10本のうち、左/上から4本目・7本目の交点）に打たれている。
  * これは9路盤の慣習上の位置（マス3とマス4の境界、マス6とマス7の境界の交点）と一致する。
  * @param {{width: number, height: number}} boardImageSize
@@ -89,7 +89,7 @@ export function getGridLinesPx(boardImageSize, boardLayout) {
  */
 export function getStarPointsPx(boardImageSize, boardLayout) {
   const squareSize = getSquareSizePx(boardImageSize, boardLayout);
-  const starLineIndexes = [3, 6]; // 実測（wood.png）に基づく線index（0始まり、線0〜9の10本中）
+  const starLineIndexes = [3, 6]; // 実測（wood.avif）に基づく線index（0始まり、線0〜9の10本中）
   const points = [];
   for (const yi of starLineIndexes) {
     for (const xi of starLineIndexes) {

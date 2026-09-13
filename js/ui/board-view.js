@@ -139,7 +139,7 @@ function toDisplayCoord(file, rank, isFlipped) {
 
 /**
  * テクスチャ盤（画像に線が焼き込まれていない盤）に、格子線・星をSVGで重ね描画する。
- * boardAsset.gridOverlay.enabled が true のときだけ描画し、それ以外（wood.png等、
+ * boardAsset.gridOverlay.enabled が true のときだけ描画し、それ以外（wood.avif等、
  * 画像自体に線が焼き込み済みの盤）では何もしない＝二重描画を避ける。
  *
  * 線・星の座標は asset-fit.js の getGridLinesPx()/getStarPointsPx() を通じて
@@ -202,7 +202,7 @@ function renderGridOverlay(boardAsset) {
   if (overlay.showStars) {
     const starPoints = getStarPointsPx(boardSize, boardLayout);
     const starsGroup = document.createElementNS(svgNs, 'g');
-    // 目立たせすぎない: 既存wood.pngの黒丸相当ではなく、半透明かつ小さめの半径にする
+    // 目立たせすぎない: 既存wood.avifの黒丸相当ではなく、半透明かつ小さめの半径にする
     // （テクスチャ素材の見た目を線が邪魔しすぎないようにするため）。
     starsGroup.setAttribute('fill', strokeColor);
     starsGroup.setAttribute('opacity', '0.45');

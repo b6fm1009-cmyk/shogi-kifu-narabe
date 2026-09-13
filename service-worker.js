@@ -4,7 +4,7 @@
  * CACHE_NAME はビルド時に scripts/build-sw-version.js が注入する
  */
 
-const CACHE_NAME = 'shogi-app-8c2ae178f372';
+const CACHE_NAME = 'shogi-app-a4e5e4558eb6';
 
 // 盤・駒・背景画像はアプリの見た目に必須だが、一覧を手で書き下すと
 // 「ファイルを追加したのにキャッシュに入れ忘れる」事故が起きやすい。
@@ -13,21 +13,26 @@ const CACHE_NAME = 'shogi-app-8c2ae178f372';
 // （この配列が空のまま＝ビルド未実行＝開発中の状態）
 const ASSET_URLS = [
   // __ASSETS_CACHE_URLS_START__
-  './assets/boards/polyvinyl_chloride.png',
-  './assets/boards/wood.png',
-  './assets/boards/~tmp07_dark.png',
+  './assets/boards/dark.avif',
+  './assets/boards/green.avif',
+  './assets/boards/orange.avif',
+  './assets/boards/planetarium.avif',
+  './assets/boards/polyvinyl_chloride.avif',
+  './assets/boards/reikan.avif',
+  './assets/boards/snowflake.avif',
+  './assets/boards/wood.avif',
   './assets/icons/icon-180.png',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
-  './assets/pieces/dark_1_letter.png',
-  './assets/pieces/dark_gothic_font_1_letter.png',
-  './assets/pieces/gothic_font_1_letter.png',
-  './assets/pieces/grain_wood_1_letter.png',
-  './assets/pieces/kosho_1_letter.png',
-  './assets/pieces/maki_ryoko_1_letter.png',
-  './assets/pieces/maki_ryoko_2_letter.png',
-  './assets/pieces/polyvinyl_chloride_1_letter.png',
-  './assets/pieces/polyvinyl_chloride_2_letter.png',
+  './assets/pieces/dark_1_letter.avif',
+  './assets/pieces/dark_gothic_font_1_letter.avif',
+  './assets/pieces/gothic_font_1_letter.avif',
+  './assets/pieces/grain_wood_1_letter.avif',
+  './assets/pieces/kosho_1_letter.avif',
+  './assets/pieces/maki_ryoko_1_letter.avif',
+  './assets/pieces/maki_ryoko_2_letter.avif',
+  './assets/pieces/polyvinyl_chloride_1_letter.avif',
+  './assets/pieces/polyvinyl_chloride_2_letter.avif',
 // __ASSETS_CACHE_URLS_END__
 ];
 
