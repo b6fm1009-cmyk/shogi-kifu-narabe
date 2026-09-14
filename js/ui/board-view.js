@@ -178,8 +178,13 @@ function syncBoardWrapSize() {
     height = width / imageRatio;
   }
 
-  boardWrapEl.style.width = `${width}px`;
-  boardWrapEl.style.height = `${height}px`;
+  // 修正（1手ごとの盤サイズ微振動対策）: 端数のままpx指定すると、
+  // .player-info高さ→.board-container残り高さ→盤サイズという循環参照
+  // （main.js renderAll()のコメント参照）の中でサブピクセル単位の差が
+  // 蓄積し、指すたびに盤がわずかに伸縮して見える一因になる。
+  // 整数pxに丸めて循環が同じ値に収束しやすくする。
+  boardWrapEl.style.width = `${Math.floor(width)}px`;
+  boardWrapEl.style.height = `${Math.floor(height)}px`;
 }
 
 /**
