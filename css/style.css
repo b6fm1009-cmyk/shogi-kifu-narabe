@@ -282,13 +282,14 @@ html, body {
    盤が幅・高さどちらの制約で頭打ちになっていても、--piece-hは常に「今実際に
    描画されている駒のサイズ」なので、駒台は駒がちょうど収まる最小限の高さになり、
    余った分は必ず盤の取り分に回る。
-   バッファ値0.9375rem(15px @16pxフォント基準)はiPhone実測
-   （駒高さ約36px・駒台高さ約51px）から算出した固定量で、端末间で変えない
-   （--piece-h自体が実測連動のため、固定バッファのままで各端末に追従する）。
+   バッファ値0.625rem(10px @16pxフォント基準)はiPhone実測を元に、
+   ①の要望（駒台をもう少し薄くしたい）を踏まえてさらに詰めた固定量で、
+   端末間で変えない（--piece-h自体が実測連動のため、固定バッファのままで
+   各端末に追従する）。
    子要素（.player-info-box / .hand-piece）は縦中央寄せのまま。
    親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
 .player-info {
-  height: calc(var(--piece-h, 36px) + 0.9375rem);
+  height: calc(var(--piece-h, 36px) + 0.625rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
@@ -326,7 +327,7 @@ html, body {
      連動させる。height:100%だけだと親のborder(1px×2)の影響で実寸がズレるため、
      親から2px（border分）を引いた式を明示して上下限を一致させる。
      中身は縦中央寄せのまま。 */
-  height: calc(var(--piece-h, 36px) + 0.9375rem - 2px);
+  height: calc(var(--piece-h, 36px) + 0.625rem - 2px);
   min-height: 0;
   display: flex;
   flex-direction: column;
