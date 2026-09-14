@@ -2,7 +2,7 @@
  * エントリーポイント。各モジュールの初期化・イベント登録（設計書 第1部）
  */
 import { loadAssetManifest } from './assets/asset-manifest.js';
-import { initBoardView, renderBoard, resyncBoardSize } from './ui/board-view.js';
+import { initBoardView, renderBoard } from './ui/board-view.js';
 import { initHeaderButtons, updateHeaderButtons } from './ui/header-buttons.js';
 import { initBottomControls, updateBottomControls } from './ui/bottom-controls.js';
 import { renderKifuBar, getKifuBarContent } from './ui/kifu-bar.js';
@@ -21,6 +21,100 @@ let layouts = null;
 // 相手側・自分側の持ち駒並び順
 const OPPONENT_HAND_ORDER = ['HI', 'KA', 'KI', 'GI', 'KE', 'KY', 'FU']; // 右詰め（要件定義書5.3節）
 const SELF_HAND_ORDER = ['FU', 'KY', 'KE', 'GI', 'KI', 'KA', 'HI'];     // 左詰め（要件定義書5.5節）
+
+// .player-info の height: calc(var(--piece-h) + 0.625rem) と同じバッファ値
+// （css/style.cssと必ず同じ値を保つ）。px換算はhtmlのfont-sizeに依存するため
+// 固定pxではなくrem値をここに記録し、使用箇所でgetComputedStyle経由のpxに変換する。
+const PLAYER_INFO_BUFFER_REM = 0.625;
+
+/**
+ * 盤サイズ・駒サイズ・player-info高さを、循環参照なしで一括して算出する。
+ *
+ * 修正（盤サイズ循環参照の根本対応）: 従来は
+ *   squareSize(盤の実測サイズから算出)
+ *     → --piece-h(CSS変数)
+ *       → .player-infoの実高さ(calc(--piece-h + buffer))
+ *         → .board-containerの残り高さ(flexで自動計算)
+ *           → 盤の実測サイズ(.board-wrapのcontain計算)
+ *             → squareSize …(振り出しに戻る)
+ * という循環があり、整数丸め・その場再計算（前回までの対策）を重ねても、
+ * 指し手のたびに.player-info/.kifu-barの内容が変わることで1px未満の端数の
+ * 丸まり方が変化し、値が2つの整数の間を往復し続けるケースがあった
+ * （先手/後手で交互に盤サイズが変わって見える、として報告された）。
+ *
+ * 根本対応として、.board-containerのclientHeightを一切参照せず、
+ * 「#app-frameの高さ－固定要素(header/kifu-bar-row/bottom-controls)の高さ
+ * ＝盤の高さ＋player-info高さ×2」という関係から、盤マス1個の高さ
+ * (squareSize.height)を一次方程式として直接解く。
+ * squareSize.height = S とおくと、
+ *   availableH = appFrameH - fixedH - 2*(S + bufferPx)
+ *   boardImageHeight = availableH （高さ律速の場合、盤はこの高さいっぱいになる）
+ *   S = boardImageHeight * innerHeightRatio / 9
+ * を連立させ、Sについて解く:
+ *   S = (appFrameH - fixedH - 2*bufferPx) * innerHeightRatio / (9 + 2*innerHeightRatio)
+ * .board-containerの実測値を経由しないため、循環そのものが構造的に存在しない。
+ *
+ * 幅方向は.player-infoの高さと無関係（横方向のflexに.player-infoは関与しない）
+ * なので、.board-containerの実測clientWidthをそのまま使ってよい。
+ * 幅律速（横に窮屈な画面）の場合は、この高さ方程式の結果ではなく、
+ * 幅から決まる高さのほうが小さくなるはずなので、両方を計算して小さい方
+ * （＝実際にcontainされる側）を採用する。
+ *
+ * @param {HTMLElement} appFrameEl
+ * @param {HTMLElement} boardContainerEl
+ * @param {Object} boardLayout - board-layout.json
+ * @returns {{squareSize: {width:number,height:number}, boardWrapWidth:number, boardWrapHeight:number} | null}
+ */
+function computeLayoutSizes(appFrameEl, boardContainerEl, boardLayout) {
+  if (!appFrameEl || !boardContainerEl) return null;
+
+  const appFrameH = appFrameEl.clientHeight;
+  if (!appFrameH) return null;
+
+  const headerEl = document.querySelector('.header');
+  const kifuBarRowEl = document.querySelector('.kifu-bar-row');
+  const bottomControlsEl = document.querySelector('.bottom-controls');
+  if (!headerEl || !kifuBarRowEl || !bottomControlsEl) return null;
+
+  const fixedH = headerEl.offsetHeight + kifuBarRowEl.offsetHeight + bottomControlsEl.offsetHeight;
+
+  // .player-info の height: calc(var(--piece-h) + 0.625rem) と同じバッファを
+  // px換算する。remのpx換算はhtmlのfont-sizeに依存するため、固定16px決め打ちに
+  // せずgetComputedStyleで実際の値を取る。
+  const rootFontSizePx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+  const bufferPx = PLAYER_INFO_BUFFER_REM * rootFontSizePx;
+
+  const innerHeightRatio = 1 - boardLayout.margin_ratio.top - boardLayout.margin_ratio.bottom;
+  const innerWidthRatio = 1 - boardLayout.margin_ratio.left - boardLayout.margin_ratio.right;
+  const rows = boardLayout.grid.rows;
+  const cols = boardLayout.grid.cols;
+
+  // 高さ律速の場合のsquareSize.height（方程式の解）。
+  const heightLimitedSquareH =
+    ((appFrameH - fixedH - 2 * bufferPx) * innerHeightRatio) / (rows + 2 * innerHeightRatio);
+
+  // 幅律速の場合のsquareSize（.board-containerの実測幅を使う。横方向は
+  // .player-infoと無関係なので循環が発生しない）。
+  const cs = window.getComputedStyle(boardContainerEl);
+  const paddingX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const containerWidth = boardContainerEl.clientWidth - paddingX;
+  const imageRatio = boardLayout.image.reference_width / boardLayout.image.reference_height;
+  const widthLimitedBoardHeight = containerWidth / imageRatio;
+  const widthLimitedSquareH = (widthLimitedBoardHeight * innerHeightRatio) / rows;
+
+  // 小さい方（＝より厳しい制約）を採用する。これはCSSのcontainと同じ考え方。
+  const squareH = Math.min(heightLimitedSquareH, widthLimitedSquareH);
+  const squareW = (squareH / innerHeightRatio) * innerWidthRatio; // 縦横比を保った対応する幅側squareSize（参考値）
+
+  const boardImageHeight = (squareH * rows) / innerHeightRatio;
+  const boardImageWidth = boardImageHeight * imageRatio;
+
+  return {
+    squareSize: { width: squareW, height: squareH },
+    boardWrapWidth: boardImageWidth,
+    boardWrapHeight: boardImageHeight
+  };
+}
 
 /**
  * アプリ初期化。
@@ -113,91 +207,69 @@ function renderAll() {
   const state = getState();
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
 
+  const lastMove = state.moveHistory.length > 0
+    ? state.moveHistory[state.moveHistory.length - 1]
+    : null;
+
+  // 修正（盤サイズ循環参照の根本対応）: 従来はrenderBoard()が.board-containerの
+  // 実測clientHeightから盤サイズを決め、その盤サイズから--piece-hを計算する
+  // 順序だった。--piece-hは.player-infoの高さを介して.board-containerの
+  // 残り高さに影響するため、この順序では常に「1周遅れた.board-container高さ」
+  // を基準に盤サイズを計算することになり、指し手のたびに.player-info/
+  // .kifu-barの内容が変わって端数の丸まり方が変化すると、盤サイズが
+  // 値の間を往復し続ける不具合があった（詳細はcomputeLayoutSizes()参照）。
+  // 対策として、renderBoard()より前にcomputeLayoutSizes()で盤サイズ・
+  // squareSize・player-info高さを.board-containerの実測値を経由せずに
+  // 一括算出し、--piece-hと.board-wrapのサイズを確定させてから
+  // renderBoard()を呼ぶ順序に変更する。
+  const appFrameEl = document.getElementById('app-frame');
+  const boardContainerEl = document.getElementById('board');
+  const layoutSizes = computeLayoutSizes(appFrameEl, boardContainerEl, layouts.boardLayout);
+
+  // 修正: squareSizeは.player-info高さ計算だけでなく、この後のrenderHandPieces
+  // （持ち駒の実描画サイズ）でも使うため、関数スコープで保持する。
+  // layoutSizesがまだ無い（#app-frameがレイアウト前でclientHeightが0等）回は
+  // nullのままにし、renderHandPieces等の呼び出し自体を後段でスキップする。
+  let squareSize = null;
+
+  if (layoutSizes) {
+    squareSize = layoutSizes.squareSize;
+
+    // 修正（player-info高さ根本対応）: 駒台(.player-info)の高さをCSSのcqw近似
+    // （コンテナ幅からの推測）で決めていたが、盤が横幅ではなく縦（高さ）で頭打ちに
+    // なる画面（例: iPad Pro縦）では、実際の盤サイズより過大な値になり、駒台が
+    // 分厚くなりすぎて盤を圧迫していた。cqwによる近似をやめ、computeLayoutSizes()
+    // が方程式で求めたsquareSize.height（駒1個の実ピクセル高さ）をCSS変数として
+    // 公開し、.player-info側はこの値から高さを直接計算する（style.css参照）。
+    //
+    // 修正（1手ごとの盤サイズ微振動対策）: 端数のままだとサブピクセル単位の
+    // 差が指し手ごとに生じうるため、整数pxに丸め、かつ前回値と同じであれば
+    // style.setPropertyそのものを呼ばない（不要な再レイアウトの発生源を断つ）。
+    const pieceHeightPx = Math.round(squareSize.height);
+    if (pieceHeightPx !== lastPieceHeightPx) {
+      lastPieceHeightPx = pieceHeightPx;
+      document.documentElement.style.setProperty('--piece-h', `${pieceHeightPx}px`);
+    }
+  }
+
   // 盤面
   // 修正①（新規要望）: 先手用・後手用の駒セットを別々に渡す
   // 修正②（新規要望）: 直前に指した駒が視覚的にわかるよう、moveHistoryの最後の手を渡す。
   // 手番の制約自体（8.6節）は撤廃されたままであり、これはあくまで表示上のヒント
   // （「この駒を動かしたなら逆側の手番」）であって入力を制限するものではない。
-  const lastMove = state.moveHistory.length > 0
-    ? state.moveHistory[state.moveHistory.length - 1]
-    : null;
+  // 修正（盤サイズ循環参照の根本対応）: layoutSizesのboard-wrapサイズを
+  // renderBoard()に直接渡す。renderBoard内部でboardWrapEl生成/使い回しの
+  // 直後・駒配置の前に、このサイズを適用する（board-view.js側コメント参照）。
+  // これにより.board-containerの実測clientHeightを一切経由せずに盤サイズが
+  // 確定し、循環が構造的に発生しない。
   renderBoard(state.boardState, state.selectedBoardId,
     { sente: state.selectedPieceIdSente, gote: state.selectedPieceIdGote },
-    state.selectedSource, lastMove);
+    state.selectedSource, lastMove,
+    layoutSizes ? { width: layoutSizes.boardWrapWidth, height: layoutSizes.boardWrapHeight } : null);
 
   // 棋譜符号バー
   const kifuBarContent = getKifuBarContent(isKifuMode, kifuProgress, state.kifuData, state.moveHistory);
   renderKifuBar(document.getElementById('kifu-bar'), kifuBarContent, state.isKifuBarVisible);
-
-  // 持ち駒（反転時は入れ替え）
-  // 盤画像は要素の実測サイズを使う（.board-wrapはcontainで可変のため、
-  // 固定値を使うと実際の駒サイズとズレる）。
-  //
-  // 修正（初回描画でplayer-infoが盤に被る不具合の根本対応）: 従来は
-  // 「.board-image要素が存在するか」だけで実測値/フォールバック値を
-  // 切り替えていたが、renderBoard()は<img>を生成した直後（画像のロード完了を
-  // 待たず）に呼び出し元へ戻るため、初回起動時はこの時点で要素こそ存在するが
-  // 画像はまだロード中で、clientWidth/clientHeightは0になっている。
-  // このケースを「要素あり」と誤判定してfallbackBoardSizeを使わず、
-  // 0に近い異常な--piece-hを計算・適用してしまい、.player-infoの高さが
-  // 潰れて盤と重なって見えていた（棋譜インポート等で再度renderAll()が
-  // 呼ばれると、その時には画像ロードが完了しているため正しい値になり、
-  // 見た目上「インポートすると直る」ように見えていた）。
-  // 対策として判定基準を「clientWidthが実際に0より大きいか」に変更する。
-  // 画像ロード完了時はrenderBoard()内のimageLoadCallback経由でrenderAll()が
-  // 再度呼ばれるため、ロード前のこの回は--piece-h更新を丸ごとスキップしても、
-  // 直後の再描画で正しい値が反映される。
-  const boardImageEl = document.querySelector('.board-image');
-  const actualBoardSize = boardImageEl && boardImageEl.clientWidth > 0
-    ? { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight }
-    : null;
-
-  // 修正: squareSizeは.player-info高さ計算だけでなく、この後のrenderHandPieces
-  // （持ち駒の実描画サイズ）でも使うため、if文の外（関数スコープ）で保持する。
-  // actualBoardSizeがまだ無い（画像ロード前）回はnullのままにし、
-  // renderHandPiecesの呼び出し自体も後段でスキップする。
-  let squareSize = null;
-
-  if (actualBoardSize) {
-    squareSize = getSquareSizePx(actualBoardSize, layouts.boardLayout);
-
-    // 修正（player-info高さ根本対応）: 駒台(.player-info)の高さをCSSのcqw近似
-    // （コンテナ幅からの推測）で決めていたが、盤が横幅ではなく縦（高さ）で頭打ちに
-    // なる画面（例: iPad Pro縦）では、実際の盤サイズより過大な値になり、駒台が
-    // 分厚くなりすぎて盤を圧迫していた。cqwによる近似をやめ、この行で実測した
-    // squareSize.height（駒1個の実ピクセル高さ）をCSS変数として公開し、
-    // .player-info側はこの実測値から高さを直接計算する（style.css参照）。
-    // 幅・高さどちらが制約になっている画面でも、盤の実際の描画結果を見ているため
-    // 破綻しない。
-    //
-    // 修正（1手ごとの盤サイズ微振動対策）: --piece-h（駒台高さの根拠）→
-    // .player-infoの実高さ→.board-containerの残り高さ→盤の実測サイズ→
-    // squareSize、という経路が1周する循環参照になっており、指し手のたびに
-    // renderAll()が呼ばれると「前回のsquareSizeを基にした駒台高さ」が
-    // 「今回の盤サイズ計算」に使われ、そこからまた次のsquareSizeを算出する、
-    // という1ステップ遅れの収束計算になっていた。squareSize.heightは
-    // 浮動小数点(例: 44.0637...px)であり、サブピクセル単位の端数がこの循環の
-    // 中でノイズとなり、指すたびに盤がわずかに伸縮して見える原因になっていた。
-    // 対策として、CSS変数に反映する値は整数pxに丸め、かつ前回値と同じであれば
-    // style.setPropertyそのものを呼ばない（不要な再レイアウトの発生源を断つ）。
-    // 端数を切り捨てることで循環が数回のうちに同じ整数値へ収束し、以降は
-    // 変化しなくなる。
-    const pieceHeightPx = Math.round(squareSize.height);
-    if (pieceHeightPx !== lastPieceHeightPx) {
-      lastPieceHeightPx = pieceHeightPx;
-      document.documentElement.style.setProperty('--piece-h', `${pieceHeightPx}px`);
-
-      // 修正（盤サイズ振動の根本対応）: --piece-hが実際に変わった＝.player-infoの
-      // 高さが変わった＝.board-containerの残り高さが変わった、ということなので、
-      // 変化を反映した最新の残り高さで盤サイズ・駒配置を即座に再計算する。
-      // これをしないと、今回確定した--piece-hが盤サイズに反映されるのは次回の
-      // renderAll()（＝次の指し手）まで持ち越しになり、1周遅れの循環によって
-      // 指すたびに盤がわずかに伸縮し続けてしまう（resyncBoardSize()側のコメント
-      // 参照）。値が変わらなかった場合は.board-containerの残り高さも変わらない
-      // ため、無駄な再計算を避けてここでは呼ばない。
-      resyncBoardSize();
-    }
-  }
 
   const topPieces = state.boardState.isFlipped ? state.boardState.handSente : state.boardState.handGote;
   const bottomPieces = state.boardState.isFlipped ? state.boardState.handGote : state.boardState.handSente;
