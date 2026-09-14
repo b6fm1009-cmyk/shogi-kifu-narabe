@@ -103,6 +103,9 @@ async function init() {
   }
 }
 
+// 直前に反映した --piece-h の値（px、整数）。振動防止用に保持する。
+let lastPieceHeightPx = null;
+
 /**
  * 画面全体を再描画する。
  */
@@ -145,7 +148,24 @@ function renderAll() {
   // .player-info側はこの実測値から高さを直接計算する（style.css参照）。
   // 幅・高さどちらが制約になっている画面でも、盤の実際の描画結果を見ているため
   // 破綻しない。
-  document.documentElement.style.setProperty('--piece-h', `${squareSize.height}px`);
+  //
+  // 修正（1手ごとの盤サイズ微振動対策）: --piece-h（駒台高さの根拠）→
+  // .player-infoの実高さ→.board-containerの残り高さ→盤の実測サイズ→
+  // squareSize、という経路が1周する循環参照になっており、指し手のたびに
+  // renderAll()が呼ばれると「前回のsquareSizeを基にした駒台高さ」が
+  // 「今回の盤サイズ計算」に使われ、そこからまた次のsquareSizeを算出する、
+  // という1ステップ遅れの収束計算になっていた。squareSize.heightは
+  // 浮動小数点(例: 44.0637...px)であり、サブピクセル単位の端数がこの循環の
+  // 中でノイズとなり、指すたびに盤がわずかに伸縮して見える原因になっていた。
+  // 対策として、CSS変数に反映する値は整数pxに丸め、かつ前回値と同じであれば
+  // style.setPropertyそのものを呼ばない（不要な再レイアウトの発生源を断つ）。
+  // 端数を切り捨てることで循環が数回のうちに同じ整数値へ収束し、以降は
+  // 変化しなくなる。
+  const pieceHeightPx = Math.round(squareSize.height);
+  if (pieceHeightPx !== lastPieceHeightPx) {
+    lastPieceHeightPx = pieceHeightPx;
+    document.documentElement.style.setProperty('--piece-h', `${pieceHeightPx}px`);
+  }
 
   const topPieces = state.boardState.isFlipped ? state.boardState.handSente : state.boardState.handGote;
   const bottomPieces = state.boardState.isFlipped ? state.boardState.handGote : state.boardState.handSente;
