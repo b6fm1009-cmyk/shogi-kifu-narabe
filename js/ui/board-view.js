@@ -15,6 +15,47 @@ let pieceFit = null;
 let manifest = null;
 let imageLoadCallback = null;
 
+// 直近のrenderBoard()呼び出しで使ったパラメータ。resyncBoardSize()が
+// 「盤サイズだけ再計算して駒等を再配置する」際に、呼び出し元(main.js)に
+// 同じ引数を再度渡させずに済むよう、ここに保持しておく。
+let lastRenderParams = null;
+
+/**
+ * 盤画像・駒・ハイライト・座標ラベルの再配置一式。
+ * renderBoard()内部からも、resyncBoardSize()からも呼ばれる共通処理。
+ */
+function renderBoardDependents(boardAsset, boardState, lastMove, pieceAssetBySide, selectedSource) {
+  syncBoardWrapSize();
+  renderGridOverlay(boardAsset);
+  placeSquareHighlights(boardState, lastMove);
+  placePieces(boardState, pieceAssetBySide, selectedSource);
+  renderCoordinates(boardState.isFlipped);
+}
+
+/**
+ * .board-containerの残り高さが変わった後（.player-info高さの更新後など）に、
+ * 盤サイズ・駒配置・座標ラベルだけを最新の実測値で再計算する。
+ *
+ * 修正（盤サイズ振動の根本対応）: renderAll()は従来「renderBoard()で盤サイズを
+ * 決定→その盤サイズからsquareSizeを計算→--piece-hを更新」という順序だった。
+ * --piece-hの変化が.player-infoの高さ、ひいては.board-containerの残り高さに
+ * 反映されるのは"次の"renderAll()呼び出し時であり、常に1周遅れた
+ * .board-container高さを基準に盤サイズを計算していたことになる
+ * （squareSize→--piece-h→player-info高さ→board-container残り高さ→盤サイズ
+ * →squareSize…という循環参照）。整数丸め・ヒステリシス（既存の対策）だけでは
+ * 値が2つの整数の間を往復するリミットサイクルに陥るケースを防ぎきれず、
+ * 指すたびに盤がわずかに伸縮し続ける症状が残っていた。
+ * 対策として、main.js側で--piece-hを確定させた直後にこの関数を呼び、
+ * 「今回確定した--piece-hが反映された後の.board-container残り高さ」で
+ * 盤サイズ・駒配置を再計算する。これにより同一renderAll()呼び出しの中で
+ * 循環が1周で収束し、次の指し手を待たずに正しいサイズが得られる。
+ */
+export function resyncBoardSize() {
+  if (!lastRenderParams) return;
+  const { boardAsset, boardState, lastMove, pieceAssetBySide, selectedSource } = lastRenderParams;
+  renderBoardDependents(boardAsset, boardState, lastMove, pieceAssetBySide, selectedSource);
+}
+
 /**
  * 盤面描画の初期化。
  * @param {HTMLElement} containerEl - 盤面コンテナ
@@ -56,6 +97,9 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
     GOTE: findPieceAsset(manifest, selectedPieceIds.gote)
   };
 
+  // resyncBoardSize()が後から同じ内容で再配置できるよう、今回の引数一式を保持する。
+  lastRenderParams = { boardAsset, boardState, lastMove, pieceAssetBySide, selectedSource };
+
   // 修正（無限ループ対策）: 以前はrenderBoard()が呼ばれるたびに<img>要素を
   // 作り直していた。新しく生成された<img>はブラウザキャッシュがあっても
   // completeがfalseから始まり得るため、load完了時にimageLoadCallback()
@@ -70,13 +114,7 @@ export function renderBoard(boardState, selectedBoardId, selectedPieceIds, selec
     && boardEl.contains(boardWrapEl)
     && boardImageEl.getAttribute('src') === boardAsset.image;
 
-  const renderDependents = () => {
-    syncBoardWrapSize();
-    renderGridOverlay(boardAsset);
-    placeSquareHighlights(boardState, lastMove);
-    placePieces(boardState, pieceAssetBySide, selectedSource);
-    renderCoordinates(boardState.isFlipped);
-  };
+  const renderDependents = () => renderBoardDependents(boardAsset, boardState, lastMove, pieceAssetBySide, selectedSource);
 
   if (isSameBoardImage) {
     // 盤画像は変わっていないので<img>はそのまま、駒・ハイライト・座標だけ描き直す。
