@@ -2,7 +2,7 @@
  * エントリーポイント。各モジュールの初期化・イベント登録（設計書 第1部）
  */
 import { loadAssetManifest } from './assets/asset-manifest.js';
-import { initBoardView, renderBoard } from './ui/board-view.js';
+import { initBoardView, renderBoard, resyncBoardSize } from './ui/board-view.js';
 import { initHeaderButtons, updateHeaderButtons } from './ui/header-buttons.js';
 import { initBottomControls, updateBottomControls } from './ui/bottom-controls.js';
 import { renderKifuBar, getKifuBarContent } from './ui/kifu-bar.js';
@@ -131,40 +131,72 @@ function renderAll() {
 
   // 持ち駒（反転時は入れ替え）
   // 盤画像は要素の実測サイズを使う（.board-wrapはcontainで可変のため、
-  // 固定値をフォールバックにすると実際の駒サイズとズレる）。画像がまだ無い初回のみ
-  // app-frame幅の目安値（正方形仮置き）を使う。描画完了後のrenderAllで実測に置き換わる。
-  const boardImageEl = document.querySelector('.board-image');
-  const fallbackBoardSize = { width: 320, height: 350 };
-  const actualBoardSize = boardImageEl
-    ? { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight }
-    : fallbackBoardSize;
-  const squareSize = getSquareSizePx(actualBoardSize, layouts.boardLayout);
-
-  // 修正（player-info高さ根本対応）: 駒台(.player-info)の高さをCSSのcqw近似
-  // （コンテナ幅からの推測）で決めていたが、盤が横幅ではなく縦（高さ）で頭打ちに
-  // なる画面（例: iPad Pro縦）では、実際の盤サイズより過大な値になり、駒台が
-  // 分厚くなりすぎて盤を圧迫していた。cqwによる近似をやめ、この行で実測した
-  // squareSize.height（駒1個の実ピクセル高さ）をCSS変数として公開し、
-  // .player-info側はこの実測値から高さを直接計算する（style.css参照）。
-  // 幅・高さどちらが制約になっている画面でも、盤の実際の描画結果を見ているため
-  // 破綻しない。
+  // 固定値を使うと実際の駒サイズとズレる）。
   //
-  // 修正（1手ごとの盤サイズ微振動対策）: --piece-h（駒台高さの根拠）→
-  // .player-infoの実高さ→.board-containerの残り高さ→盤の実測サイズ→
-  // squareSize、という経路が1周する循環参照になっており、指し手のたびに
-  // renderAll()が呼ばれると「前回のsquareSizeを基にした駒台高さ」が
-  // 「今回の盤サイズ計算」に使われ、そこからまた次のsquareSizeを算出する、
-  // という1ステップ遅れの収束計算になっていた。squareSize.heightは
-  // 浮動小数点(例: 44.0637...px)であり、サブピクセル単位の端数がこの循環の
-  // 中でノイズとなり、指すたびに盤がわずかに伸縮して見える原因になっていた。
-  // 対策として、CSS変数に反映する値は整数pxに丸め、かつ前回値と同じであれば
-  // style.setPropertyそのものを呼ばない（不要な再レイアウトの発生源を断つ）。
-  // 端数を切り捨てることで循環が数回のうちに同じ整数値へ収束し、以降は
-  // 変化しなくなる。
-  const pieceHeightPx = Math.round(squareSize.height);
-  if (pieceHeightPx !== lastPieceHeightPx) {
-    lastPieceHeightPx = pieceHeightPx;
-    document.documentElement.style.setProperty('--piece-h', `${pieceHeightPx}px`);
+  // 修正（初回描画でplayer-infoが盤に被る不具合の根本対応）: 従来は
+  // 「.board-image要素が存在するか」だけで実測値/フォールバック値を
+  // 切り替えていたが、renderBoard()は<img>を生成した直後（画像のロード完了を
+  // 待たず）に呼び出し元へ戻るため、初回起動時はこの時点で要素こそ存在するが
+  // 画像はまだロード中で、clientWidth/clientHeightは0になっている。
+  // このケースを「要素あり」と誤判定してfallbackBoardSizeを使わず、
+  // 0に近い異常な--piece-hを計算・適用してしまい、.player-infoの高さが
+  // 潰れて盤と重なって見えていた（棋譜インポート等で再度renderAll()が
+  // 呼ばれると、その時には画像ロードが完了しているため正しい値になり、
+  // 見た目上「インポートすると直る」ように見えていた）。
+  // 対策として判定基準を「clientWidthが実際に0より大きいか」に変更する。
+  // 画像ロード完了時はrenderBoard()内のimageLoadCallback経由でrenderAll()が
+  // 再度呼ばれるため、ロード前のこの回は--piece-h更新を丸ごとスキップしても、
+  // 直後の再描画で正しい値が反映される。
+  const boardImageEl = document.querySelector('.board-image');
+  const actualBoardSize = boardImageEl && boardImageEl.clientWidth > 0
+    ? { width: boardImageEl.clientWidth, height: boardImageEl.clientHeight }
+    : null;
+
+  // 修正: squareSizeは.player-info高さ計算だけでなく、この後のrenderHandPieces
+  // （持ち駒の実描画サイズ）でも使うため、if文の外（関数スコープ）で保持する。
+  // actualBoardSizeがまだ無い（画像ロード前）回はnullのままにし、
+  // renderHandPiecesの呼び出し自体も後段でスキップする。
+  let squareSize = null;
+
+  if (actualBoardSize) {
+    squareSize = getSquareSizePx(actualBoardSize, layouts.boardLayout);
+
+    // 修正（player-info高さ根本対応）: 駒台(.player-info)の高さをCSSのcqw近似
+    // （コンテナ幅からの推測）で決めていたが、盤が横幅ではなく縦（高さ）で頭打ちに
+    // なる画面（例: iPad Pro縦）では、実際の盤サイズより過大な値になり、駒台が
+    // 分厚くなりすぎて盤を圧迫していた。cqwによる近似をやめ、この行で実測した
+    // squareSize.height（駒1個の実ピクセル高さ）をCSS変数として公開し、
+    // .player-info側はこの実測値から高さを直接計算する（style.css参照）。
+    // 幅・高さどちらが制約になっている画面でも、盤の実際の描画結果を見ているため
+    // 破綻しない。
+    //
+    // 修正（1手ごとの盤サイズ微振動対策）: --piece-h（駒台高さの根拠）→
+    // .player-infoの実高さ→.board-containerの残り高さ→盤の実測サイズ→
+    // squareSize、という経路が1周する循環参照になっており、指し手のたびに
+    // renderAll()が呼ばれると「前回のsquareSizeを基にした駒台高さ」が
+    // 「今回の盤サイズ計算」に使われ、そこからまた次のsquareSizeを算出する、
+    // という1ステップ遅れの収束計算になっていた。squareSize.heightは
+    // 浮動小数点(例: 44.0637...px)であり、サブピクセル単位の端数がこの循環の
+    // 中でノイズとなり、指すたびに盤がわずかに伸縮して見える原因になっていた。
+    // 対策として、CSS変数に反映する値は整数pxに丸め、かつ前回値と同じであれば
+    // style.setPropertyそのものを呼ばない（不要な再レイアウトの発生源を断つ）。
+    // 端数を切り捨てることで循環が数回のうちに同じ整数値へ収束し、以降は
+    // 変化しなくなる。
+    const pieceHeightPx = Math.round(squareSize.height);
+    if (pieceHeightPx !== lastPieceHeightPx) {
+      lastPieceHeightPx = pieceHeightPx;
+      document.documentElement.style.setProperty('--piece-h', `${pieceHeightPx}px`);
+
+      // 修正（盤サイズ振動の根本対応）: --piece-hが実際に変わった＝.player-infoの
+      // 高さが変わった＝.board-containerの残り高さが変わった、ということなので、
+      // 変化を反映した最新の残り高さで盤サイズ・駒配置を即座に再計算する。
+      // これをしないと、今回確定した--piece-hが盤サイズに反映されるのは次回の
+      // renderAll()（＝次の指し手）まで持ち越しになり、1周遅れの循環によって
+      // 指すたびに盤がわずかに伸縮し続けてしまう（resyncBoardSize()側のコメント
+      // 参照）。値が変わらなかった場合は.board-containerの残り高さも変わらない
+      // ため、無駄な再計算を避けてここでは呼ばない。
+      resyncBoardSize();
+    }
   }
 
   const topPieces = state.boardState.isFlipped ? state.boardState.handSente : state.boardState.handGote;
@@ -185,15 +217,21 @@ function renderAll() {
     && (state.boardState.isFlipped ? selected.side === 'GOTE' : selected.side === 'SENTE')
     ? selected.pieceType : null;
 
-  renderHandPieces(topPieces, 'RIGHT', OPPONENT_HAND_ORDER,
-    document.getElementById('opponent-hand'), topSelected, squareSize,
-    topPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
-    'GOTE'); // 修正③: 画面奥は常に倒立（将棋ウォーズ準拠。isFlippedと無関係に固定）
+  // 修正（初回描画でplayer-infoが盤に被る不具合の根本対応・続き）: 画像ロード前で
+  // squareSizeがまだ計算できていない回は、駒サイズが不明な持ち駒欄の描画も
+  // スキップする。画像ロード完了後にrenderBoard()のimageLoadCallback経由で
+  // renderAll()が再度呼ばれ、そこで正しいsquareSizeを使って描画される。
+  if (squareSize) {
+    renderHandPieces(topPieces, 'RIGHT', OPPONENT_HAND_ORDER,
+      document.getElementById('opponent-hand'), topSelected, squareSize,
+      topPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+      'GOTE'); // 修正③: 画面奥は常に倒立（将棋ウォーズ準拠。isFlippedと無関係に固定）
 
-  renderHandPieces(bottomPieces, 'LEFT', SELF_HAND_ORDER,
-    document.getElementById('self-hand'), bottomSelected, squareSize,
-    bottomPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
-    'SENTE'); // 修正③: 画面手前は常に正立（将棋ウォーズ準拠。isFlippedと無関係に固定）
+    renderHandPieces(bottomPieces, 'LEFT', SELF_HAND_ORDER,
+      document.getElementById('self-hand'), bottomSelected, squareSize,
+      bottomPieceId, layouts.pieceLayout, layouts.pieceFit, manifestRef,
+      'SENTE'); // 修正③: 画面手前は常に正立（将棋ウォーズ準拠。isFlippedと無関係に固定）
+  }
 
   // 対戦者名・段級位（反転時は入れ替え）
   const senteName = state.kifuData ? state.kifuData.header.senteName : '先手';
