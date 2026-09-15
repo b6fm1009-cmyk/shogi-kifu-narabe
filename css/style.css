@@ -152,21 +152,36 @@ html, body {
 }
 
 .header-btn {
-  /* 修正（幅に応じた可変フォント・第2版）: 実機確認の結果、iPhone14でも
-     4ボタンが1行に収まる余裕が確認できたため下限を10px→12.5pxに引き上げ、
-     上限も一般的なUIの本文サイズ相当である18pxに引き上げた
-     （15pxはボタンラベルとしてやや控えめすぎるとの判断）。
+  /* 修正（幅に応じた可変フォント・第3版）: iPad mini等の広い画面で、ヘッダー
+     全体の箱は画面に合わせて大きいのに文字だけ相対的に小さく見える、との
+     指摘を受けて調整。試算の結果、傾き3.8cqwではiPhone幅で計算値が下限
+     12.5pxを下回り常に下限止まりになる一方、iPad mini幅でもcqw値は
+     14px程度までしか伸びず、上限18px到達前に頭打ち感が出るわけではないが
+     「画面が広がった割に文字が育たない」状態だった。
+     傾きを3.8→5.5に引き上げ、上限も18px→21pxに引き上げた。
+     iPhone幅では相変わらず計算値が下限を下回るため見た目は変わらず、
+     iPad mini幅（.header-buttons実測約370px想定）では約20px程度まで
+     育つようになる。
      .header-buttons を container-type: inline-size 化し（下記参照）、
-     その実測幅（cqw = コンテナ幅の1%）を基準にfont-sizeを可変にする。
-     clamp(12.5px, 3.8cqw, 18px):
-       - スマホ全般（コンテナ幅300〜370px程度）では約12.5〜14px程度で、
-         4ボタンが1行に収まる範囲で画面の広さに応じて滑らかに変化する。
-       - 広い画面（iPad mini相当）では上限18pxで頭打ちになる。 */
+     その実測幅（cqw = コンテナ幅の1%）を基準にfont-sizeを可変にする。 */
   /* clamp()/cqw非対応の古いブラウザ向けフォールバック。
      対応ブラウザでは下の行のclamp()で上書きされる。 */
   font-size: 0.8125rem;
-  font-size: clamp(12.5px, 3.8cqw, 18px);
-  padding: 0.25rem 0.3125rem;
+  font-size: clamp(12.5px, 5.5cqw, 21px);
+  /* 修正（iPad miniの余白が目立つとの指摘対応）: paddingが0.25rem 0.3125rem
+     固定だったため、iPad miniのように.header-buttonsの実測幅が広い画面では
+     文字サイズ(font-size)だけがcqwで大きくなる一方、ボタンの余白は
+     iPhoneと同じ狭いままで、ボタン全体としては「文字だけ大きくて窮屈」
+     かつ「ボタン間・ボタン外側に余白が余っている」見た目になっていた。
+     paddingもfont-sizeと同じcqw基準のclampにして、画面が広いほど
+     ボタンの余白（＝タップ領域）も比例して大きくなるようにする。
+     試算（.header-buttons実測: iPhone約260px, iPad mini約370px想定）:
+       縦 clamp(0.25rem, 1.8cqw, 0.875rem) → iPhone約4.7px, iPad mini約6.7px
+       横 clamp(0.3125rem, 3cqw, 1.375rem) → iPhone約7.8px, iPad mini約11.1px
+     iPhoneでも下限からわずかに増えるため4ボタンが1行に収まるか要確認
+     （収まらない場合は.header-buttonsのoverflow-x:autoで横スクロール可能
+     なので操作不能にはならない）。 */
+  padding: clamp(0.25rem, 1.8cqw, 0.875rem) clamp(0.3125rem, 3cqw, 1.375rem);
   min-height: 2.125rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;

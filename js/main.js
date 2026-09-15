@@ -84,19 +84,34 @@ function computeLayoutSizes(appFrameEl, boardContainerEl, boardLayout) {
   const rootFontSizePx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
   const bufferPx = PLAYER_INFO_BUFFER_REM * rootFontSizePx;
 
+  // 修正（盤とplayer-infoのわずかな被り対応）: .board-containerには座標ラベル用の
+  // padding（上下）があり、盤画像(.board-wrap)はそのpaddingを除いた内側にしか
+  // 描画されない。従来の方程式はこのpaddingを考慮せず「availableHをまるごと
+  // 盤画像の高さ」として計算していたため、実際に必要な高さ（盤画像＋paddingY）が
+  // availableHよりpaddingY分だけ大きくなり、.board-wrapがpx直接指定で
+  // .board-containerの実際の残り高さをわずかに超えてはみ出していた
+  // （.player-info側に食い込んで見える不具合の原因）。
+  // 方程式にpaddingYを組み込み、盤画像＋padding＋player-info×2が
+  // ちょうどavailableHに収まるよう解き直す。
+  const boardContainerCs = window.getComputedStyle(boardContainerEl);
+  const paddingY = parseFloat(boardContainerCs.paddingTop) + parseFloat(boardContainerCs.paddingBottom);
+
   const innerHeightRatio = 1 - boardLayout.margin_ratio.top - boardLayout.margin_ratio.bottom;
   const innerWidthRatio = 1 - boardLayout.margin_ratio.left - boardLayout.margin_ratio.right;
   const rows = boardLayout.grid.rows;
   const cols = boardLayout.grid.cols;
 
   // 高さ律速の場合のsquareSize.height（方程式の解）。
+  // appFrameH = fixedH + 2*(S+bufferPx) + boardImageHeight + paddingY
+  //           = fixedH + 2*(S+bufferPx) + (S*rows/innerHeightRatio) + paddingY
+  // について S を解く。
   const heightLimitedSquareH =
-    ((appFrameH - fixedH - 2 * bufferPx) * innerHeightRatio) / (rows + 2 * innerHeightRatio);
+    (appFrameH - fixedH - paddingY - 2 * bufferPx) /
+    (rows / innerHeightRatio + 2);
 
   // 幅律速の場合のsquareSize（.board-containerの実測幅を使う。横方向は
   // .player-infoと無関係なので循環が発生しない）。
-  const cs = window.getComputedStyle(boardContainerEl);
-  const paddingX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const paddingX = parseFloat(boardContainerCs.paddingLeft) + parseFloat(boardContainerCs.paddingRight);
   const containerWidth = boardContainerEl.clientWidth - paddingX;
   const imageRatio = boardLayout.image.reference_width / boardLayout.image.reference_height;
   const widthLimitedBoardHeight = containerWidth / imageRatio;
