@@ -437,6 +437,21 @@ function renderCoordinates(isFlipped) {
   const squareSize = getSquareSizePx(boardSize, boardLayout);
   const boardOrigin = getBoardOriginPx(boardSize, boardLayout);
 
+  // 修正（筋番号ラベルが.board-containerのoverflow:hiddenで上半分が
+  // 切れる不具合の根本対応）: 従来はラベルのtopを'-8px'という固定値で
+  // 指定していた。.board-containerのpadding-top（座標ラベル用の余白）は
+  // rem基準でhtmlのfont-sizeに応じて可変（clamp(14px,3.6vmin+4px,19px)）
+  // なので、固定8pxでは実際のpadding-topと連動せず、フォントサイズが
+  // 大きい端末ではラベル文字の上半分がpadding領域からはみ出し、
+  // .board-containerのoverflow:hiddenで物理的に切り取られていた
+  // （「数字が若干切れている」として報告された不具合）。
+  // .board-containerの実測padding-topを取得し、その中央（padding領域の
+  // ちょうど真ん中）に文字の中心が来るよう配置する。これなら文字サイズ
+  // (0.625rem)がpadding-top以下である限り、はみ出しが起きない。
+  const containerCs = boardEl ? window.getComputedStyle(boardEl) : null;
+  const paddingTopPx = containerCs ? parseFloat(containerCs.paddingTop) : 10;
+  const fileLabelTop = -(paddingTopPx / 2);
+
   // 筋（上）※ boardWrapEl は画像と同サイズなので、pieces-layer と同じ基準（top:0,left:0）で配置できる
   const files = isFlipped ? [1,2,3,4,5,6,7,8,9] : [9,8,7,6,5,4,3,2,1];
   files.forEach((file, i) => {
@@ -444,7 +459,7 @@ function renderCoordinates(isFlipped) {
     label.className = 'coordinate-label coordinate-label--file';
     label.textContent = String(file);
     label.style.left = `${boardOrigin.x + i * squareSize.width + squareSize.width / 2}px`;
-    label.style.top = '-8px';
+    label.style.top = `${fileLabelTop}px`;
     boardWrapEl.appendChild(label);
   });
 

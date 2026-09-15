@@ -454,8 +454,15 @@ html, body {
   min-width: 0;
   overflow: hidden;
   /* 上に筋の座標（数字）、右に段の座標（漢数字）を出すための最小限の余白。
-     修正（レイアウト調整）: 盤の表示面積を優先し、必要最小限まで詰める。 */
-  padding: 0.625rem 0.875rem 0.1875rem 0.25rem;
+     修正（レイアウト調整）: 盤の表示面積を優先し、必要最小限まで詰める。
+     修正（筋番号ラベルの上半分が切れる不具合対応）: padding-topが
+     ラベルのfont-size（0.625rem）とほぼ同じ値だったため、ラベル文字を
+     この領域の中央に配置しても、文字の実際の描画高さ（line-height等を
+     含む）がわずかにpadding-topをはみ出し、overflow:hiddenで上半分が
+     切れる余地が残っていた。0.625rem→0.875remに増やし、文字がはみ出さない
+     余裕を持たせる（board-view.js renderCoordinates()のfileLabelTop計算と
+     セットで、padding-topの実測値を使うためここを変えれば自動で追従する）。 */
+  padding: 0.875rem 0.875rem 0.1875rem 0.25rem;
   touch-action: manipulation;
 }
 
