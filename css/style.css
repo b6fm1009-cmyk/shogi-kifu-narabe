@@ -152,36 +152,34 @@ html, body {
 }
 
 .header-btn {
-  /* 修正（幅に応じた可変フォント・第3版）: iPad mini等の広い画面で、ヘッダー
-     全体の箱は画面に合わせて大きいのに文字だけ相対的に小さく見える、との
-     指摘を受けて調整。試算の結果、傾き3.8cqwではiPhone幅で計算値が下限
-     12.5pxを下回り常に下限止まりになる一方、iPad mini幅でもcqw値は
-     14px程度までしか伸びず、上限18px到達前に頭打ち感が出るわけではないが
-     「画面が広がった割に文字が育たない」状態だった。
-     傾きを3.8→5.5に引き上げ、上限も18px→21pxに引き上げた。
-     iPhone幅では相変わらず計算値が下限を下回るため見た目は変わらず、
-     iPad mini幅（.header-buttons実測約370px想定）では約20px程度まで
-     育つようになる。
+  /* 修正（幅に応じた可変フォント・第4版・cqw基準を#app-frameに変更）:
+     以前は.header-buttons（4ボタン自身の確保幅）を基準にcqwを計算しており、
+     「paddingが増える→ボタンが大きくなる→.header-buttonsの幅が増える→
+     cqw基準も増える→paddingがさらに増える」という正のフィードバックで
+     iPhoneでもボタンが肥大化し、4つ目が画面外に出て3つしか見えなくなる
+     不具合があった（.header-buttons側のcontainer-type指定を削除済み）。
+     cqwの基準を、ボタン自身のサイズに左右されない#app-frame（画面幅相当、
+     常にcontainer-type指定済み）に変更し、係数をその新基準で計算し直した。
+     試算（#app-frame実測: iPhone14=390pt, iPad mini=744pt想定）:
+       font-size clamp(12.5px, 2.7cqw, 21px)
+         → iPhone: 390*0.027≈10.5px→下限12.5pxで頭打ち(旧来と同じ見た目)
+         → iPad mini: 744*0.027≈20.1px
      .header-buttons を container-type: inline-size 化し（下記参照）、
      その実測幅（cqw = コンテナ幅の1%）を基準にfont-sizeを可変にする。 */
   /* clamp()/cqw非対応の古いブラウザ向けフォールバック。
      対応ブラウザでは下の行のclamp()で上書きされる。 */
   font-size: 0.8125rem;
-  font-size: clamp(12.5px, 5.5cqw, 21px);
-  /* 修正（iPad miniの余白が目立つとの指摘対応）: paddingが0.25rem 0.3125rem
-     固定だったため、iPad miniのように.header-buttonsの実測幅が広い画面では
-     文字サイズ(font-size)だけがcqwで大きくなる一方、ボタンの余白は
-     iPhoneと同じ狭いままで、ボタン全体としては「文字だけ大きくて窮屈」
-     かつ「ボタン間・ボタン外側に余白が余っている」見た目になっていた。
-     paddingもfont-sizeと同じcqw基準のclampにして、画面が広いほど
-     ボタンの余白（＝タップ領域）も比例して大きくなるようにする。
-     試算（.header-buttons実測: iPhone約260px, iPad mini約370px想定）:
-       縦 clamp(0.25rem, 1.8cqw, 0.875rem) → iPhone約4.7px, iPad mini約6.7px
-       横 clamp(0.3125rem, 3cqw, 1.375rem) → iPhone約7.8px, iPad mini約11.1px
-     iPhoneでも下限からわずかに増えるため4ボタンが1行に収まるか要確認
-     （収まらない場合は.header-buttonsのoverflow-x:autoで横スクロール可能
-     なので操作不能にはならない）。 */
-  padding: clamp(0.25rem, 1.8cqw, 0.875rem) clamp(0.3125rem, 3cqw, 1.375rem);
+  font-size: clamp(12.5px, 2.7cqw, 21px);
+  /* 修正（iPad miniの余白が目立つとの指摘対応・cqw基準を#app-frameに変更）:
+     paddingのcqwも上と同じ理由・同じ基準（#app-frame）に揃える。
+     試算（#app-frame実測: iPhone14=390pt, iPad mini=744pt想定）:
+       縦 clamp(0.25rem, 0.9cqw, 0.875rem)
+         → iPhone: 390*0.009≈3.5px→下限4pxで頭打ち(旧来とほぼ同じ)
+         → iPad mini: 744*0.009≈6.7px
+       横 clamp(0.3125rem, 1.5cqw, 1.375rem)
+         → iPhone: 390*0.015≈5.9px→下限5pxよりわずかに大きいが軽微
+         → iPad mini: 744*0.015≈11.2px */
+  padding: clamp(0.25rem, 0.9cqw, 0.875rem) clamp(0.3125rem, 1.5cqw, 1.375rem);
   min-height: 2.125rem;
   border: 1px solid var(--paper-deep);
   border-radius: 4px;
@@ -212,14 +210,19 @@ html, body {
   flex: 1;
   justify-content: flex-end;
   min-width: 0;
-  /* 修正（幅に応じた可変フォント）: .header-btn の font-size で使う cqw
-     （コンテナクエリ単位）は、container-type を明示した祖先要素の実測幅を
-     基準にする。このコンテナ自体がflexの伸縮対象（flex:1）なので、
-     inline-size（横方向のみ）をコンテナ化の対象にする。 */
-  container-type: inline-size;
-  /* 修正（安全策）: 極端に幅が狭い端末でボタンが収まりきらない場合でも、
-     文字が見切れて操作不能になるのではなく、横スクロールで全ボタンに
-     到達できるようにする（隠れて押せなくなる事故を避ける）。 */
+  /* 修正（iPhoneでボタンが3つしか見えなくなる不具合の根本対応）: 以前は
+     ここにcontainer-type: inline-sizeを指定し、.header-btnのcqwは
+     このコンテナ（.header-buttons自身の確保幅）を基準にしていた。
+     しかし.header-buttonsはflex:1で中身（4ボタン）に応じて伸縮するため、
+     「paddingが増える→ボタンが大きくなる→.header-buttonsに必要な幅が
+     増える→cqw基準も増える→paddingがさらに増える」という正のフィード
+     バックが働き、ボタンが際限なく肥大化して4つ目が画面外に押し出される
+     事態を招いた（iPad miniのpadding拡大がiPhoneにも波及して悪化した
+     ことの直接原因）。
+     このcontainer-typeを外すことで、.header-btnのcqwは次に近い祖先である
+     #app-frame（ボタン自身のサイズに左右されない、画面幅ベースの安定した
+     コンテナ）を自動的に基準にするようになり、循環が構造的になくなる。
+     overflow-x:autoの安全策は引き続き有効。 */
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
@@ -297,14 +300,14 @@ html, body {
    盤が幅・高さどちらの制約で頭打ちになっていても、--piece-hは常に「今実際に
    描画されている駒のサイズ」なので、駒台は駒がちょうど収まる最小限の高さになり、
    余った分は必ず盤の取り分に回る。
-   バッファ値0.625rem(10px @16pxフォント基準)はiPhone実測を元に、
-   ①の要望（駒台をもう少し薄くしたい）を踏まえてさらに詰めた固定量で、
+   バッファ値0.4375rem(7px @16pxフォント基準)はiPhone実測を元に、
+   盤上の座標ラベルとの被りを解消するためさらに詰めた固定量で、
    端末間で変えない（--piece-h自体が実測連動のため、固定バッファのままで
    各端末に追従する）。
    子要素（.player-info-box / .hand-piece）は縦中央寄せのまま。
    親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
 .player-info {
-  height: calc(var(--piece-h, 36px) + 0.625rem);
+  height: calc(var(--piece-h, 36px) + 0.4375rem);
   min-height: 2.5rem;
   margin: 0.125rem 0.5rem;
   display: flex;
@@ -342,7 +345,7 @@ html, body {
      連動させる。height:100%だけだと親のborder(1px×2)の影響で実寸がズレるため、
      親から2px（border分）を引いた式を明示して上下限を一致させる。
      中身は縦中央寄せのまま。 */
-  height: calc(var(--piece-h, 36px) + 0.625rem - 2px);
+  height: calc(var(--piece-h, 36px) + 0.4375rem - 2px);
   min-height: 0;
   display: flex;
   flex-direction: column;

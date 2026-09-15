@@ -22,10 +22,10 @@ let layouts = null;
 const OPPONENT_HAND_ORDER = ['HI', 'KA', 'KI', 'GI', 'KE', 'KY', 'FU']; // 右詰め（要件定義書5.3節）
 const SELF_HAND_ORDER = ['FU', 'KY', 'KE', 'GI', 'KI', 'KA', 'HI'];     // 左詰め（要件定義書5.5節）
 
-// .player-info の height: calc(var(--piece-h) + 0.625rem) と同じバッファ値
+// .player-info の height: calc(var(--piece-h) + 0.4375rem) と同じバッファ値
 // （css/style.cssと必ず同じ値を保つ）。px換算はhtmlのfont-sizeに依存するため
 // 固定pxではなくrem値をここに記録し、使用箇所でgetComputedStyle経由のpxに変換する。
-const PLAYER_INFO_BUFFER_REM = 0.625;
+const PLAYER_INFO_BUFFER_REM = 0.4375;
 
 /**
  * 盤サイズ・駒サイズ・player-info高さを、循環参照なしで一括して算出する。
@@ -78,7 +78,7 @@ function computeLayoutSizes(appFrameEl, boardContainerEl, boardLayout) {
 
   const fixedH = headerEl.offsetHeight + kifuBarRowEl.offsetHeight + bottomControlsEl.offsetHeight;
 
-  // .player-info の height: calc(var(--piece-h) + 0.625rem) と同じバッファを
+  // .player-info の height: calc(var(--piece-h) + 0.4375rem) と同じバッファを
   // px換算する。remのpx換算はhtmlのfont-sizeに依存するため、固定16px決め打ちに
   // せずgetComputedStyleで実際の値を取る。
   const rootFontSizePx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
