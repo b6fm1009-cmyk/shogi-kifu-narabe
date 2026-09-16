@@ -127,19 +127,38 @@ html, body {
 }
 
 /* ---------- ①ヘッダー ---------- */
-/* 修正（iPad mini余白分配・Dライト）: 高さを2.375rem固定から
-   clamp(2.375rem, 18cqw - 1.6875rem, 2.75rem)の連続可変にする。
-   中間式は.player-infoと同一（枠幅基準・@mediaなし・arch2.6に沿う）。
+/* 修正（ヘッダー・符号バー・フッターの高さ統一・新規要望）:
+   従来はヘッダー(2.375rem〜3rem)・棋譜符号バー(2.5rem固定)・フッター
+   (2.875rem〜3.25rem)がそれぞれ異なる上限を持ち、iPad miniなど画面に
+   余裕のある端末で3帯の厚みがバラバラに見え、統一感がないとの指摘を受けた。
+   下限値はそれぞれ別の理由（ヘッダー/フッターはタップ領域44px確保、
+   符号バーはタップ対象ではないため元々やや小さめ）で決まっているため、
+   下限まで無理に揃えることはしない。iPhone幅では中間式が下限を下回るため
+   3帯とも現状の見た目のまま変化しない。
+   一方、上限（画面に余裕がある端末で実際に使われる値）は3帯とも2.875rem
+   に統一する。旧ヘッダー上限3rem・旧フッター上限3.25remより低いため、
+   iPad miniのような画面では3帯の合計が従来より薄くなり、その分盤の表示
+   面積が増える（3帯を厚くして統一するのではなく、薄い側に合わせて統一する）。
+   2.875remを選んだ理由: フッター(.bottom-controls)の下限がもともと
+   2.875rem（.bottom-btnのmin-height:44px確保のための値）であり、これより
+   低い上限にするとフッターのclamp()が「下限>上限」の矛盾した指定になって
+   しまう（矛盾するとブラウザは常に下限側を採用するため、フッターだけ
+   意図せず可変でなくなる）。2.875remならこの矛盾が起きず、かつフッターは
+   「下限=上限=2.875rem」で常に固定値になる（.bottom-controls側のコメント
+   参照）ため、ヘッダー・符号バーが上限まで伸びたときに常にフッターと
+   ぴったり一致する。
+   中間式は.player-infoの--piece-h連動とは別系統で、従来通り枠幅（cqw）
+   基準・@mediaなしのまま3帯で共通にする（arch2.6に沿う）。
    iPhone幅(390px)では中間値が下限を下回り2.375remで旧寸法と一致。
-   iPad級では上限2.75rem(+0.375rem)が効き、盤の上下余りの一部を
-   ヘッダー側に割り当ててタップ領域・見た目のバランスを整える。
+   iPad級では上限2.875remが効き、3帯の高さが完全に一致した状態で、
+   浮いた分は必ず盤の取り分に回る。
    子ボタンは中央寄せのまま（親背景が伸びて呼吸幅が増えるだけ）。
    盤・駒の縮小は発生しない（余白の付け替えのみ）。 */
 .header {
   /* 修正（レイアウト調整）: 盤の表示面積を優先するため、タップ領域を
      44px以上に保ったまま縦の余白を切り詰める（2.625rem→2.375rem）。 */
   height: 2.375rem;
-  height: clamp(2.375rem, 18cqw - 1.6875rem, 3rem);
+  height: clamp(2.375rem, 18cqw - 1.6875rem, 2.875rem);
   min-height: 2.375rem;
   display: flex;
   align-items: center;
@@ -238,9 +257,17 @@ html, body {
    kifu-bar自体はJS側でinnerHTMLを毎回クリアして再描画するため、
    ボタンをkifu-barの内部に置くと再描画のたびに消えてしまう。
    そのため兄弟要素として並べ、行の背景（--sumi）はこちらに持たせる。
-   修正（レイアウト調整）: 盤の表示面積を優先し、2.75rem→2.5remに詰める。 */
+   修正（レイアウト調整）: 盤の表示面積を優先し、2.75rem→2.5remに詰める。
+   修正（ヘッダー・符号バー・フッターの高さ統一・新規要望）: 2.5rem固定
+   だったものを、ヘッダー・フッターと同じclamp式（.header参照）に変更する。
+   下限は従来通り2.5rem（iPhone幅ではここで頭打ちのため見た目は不変）、
+   上限も.header/.bottom-controlsと共通の2.875remに揃える
+   （揃え方の詳しい経緯は.headerのコメントを参照）。
+   これにより画面に余裕のある端末（iPad mini等）でヘッダー・符号バー・
+   フッターの3帯の高さが完全に一致する。 */
 .kifu-bar-row {
   height: 2.5rem;
+  height: clamp(2.5rem, 18cqw - 1.6875rem, 2.875rem);
   min-height: 2.5rem;
   background-color: var(--sumi);
   display: flex;
@@ -249,7 +276,7 @@ html, body {
 }
 
 .kifu-bar {
-  height: 2.5rem;
+  height: 100%;
   background-color: transparent;
   display: flex;
   align-items: center;
@@ -266,7 +293,21 @@ html, body {
 }
 
 .kifu-move {
+  /* 修正（ヘッダー・符号バー・フッターの高さ統一・新規要望・続き）:
+     符号バー(.kifu-bar-row)自体を可変にした（上記参照）ことで、iPad mini
+     等の広い画面では帯の高さが従来（固定2.5rem）より伸びるようになった。
+     文字サイズが1.125rem固定のままだと、帯だけ大きくなって文字は据え置き
+     となり、帯の中で文字が相対的に小さく・寂しく見えてしまう。
+     .header-btnと同じ考え方（#app-frame幅基準のcqw、clamp()の下限で
+     iPhone14の見た目を固定する）で、帯の高さの伸び率とほぼ同じ比率
+     （iPhone14基準1.125rem→iPad mini相当で約1.36rem）まで文字も
+     大きくなるよう、3.3cqwを係数とするclamp()に変更する。
+     試算（#app-frame実測: iPhone14=390pt, iPad mini=744pt想定）:
+       clamp(1.125rem, 3.3cqw, 1.4rem)
+         → iPhone: 390*0.033≈12.9px→下限1.125rem(≒20.3px)で頭打ち(旧来と同じ見た目)
+         → iPad mini: 744*0.033≈24.6px(≒1.36rem、上限1.4remの手前で収まる) */
   font-size: 1.125rem;
+  font-size: clamp(1.125rem, 3.3cqw, 1.4rem);
   white-space: nowrap;
 }
 
@@ -300,15 +341,26 @@ html, body {
    盤が幅・高さどちらの制約で頭打ちになっていても、--piece-hは常に「今実際に
    描画されている駒のサイズ」なので、駒台は駒がちょうど収まる最小限の高さになり、
    余った分は必ず盤の取り分に回る。
-   バッファ値0.4375rem(7px @16pxフォント基準)はiPhone実測を元に、
-   盤上の座標ラベルとの被りを解消するためさらに詰めた固定量で、
-   端末間で変えない（--piece-h自体が実測連動のため、固定バッファのままで
-   各端末に追従する）。
+   修正（駒台の余白詰め・新規要望）: バッファ値は元々0.4375rem(7px @16pxフォント基準)
+   だったが、実機（iPhone14/iPad mini）で駒台の見た目の余白が目立つとの指摘を受け、
+   0.1875rem(3px @16pxフォント基準)まで詰めた。
+   このバッファの当初の狙いは「盤上の座標ラベル（筋番号1〜9）との被り回避」だったが、
+   実際にはその被り回避は.board-containerのpadding-top（座標ラベル専用の余白。
+   下記.board-container参照）だけで完結しており、このバッファとは独立している。
+   そのためここを詰めても座標ラベルとの被りは再発しない。詰めた後も駒台自体の
+   見た目のゆとり（駒の角が枠線に接触して窮屈に見えるのを防ぐ最小限の呼吸代）
+   として0.1875rem分は残す。
+   端末間で変えない固定値である点は変わらない（--piece-h自体が実測連動のため、
+   固定バッファのままで各端末に追従する）。
    子要素（.player-info-box / .hand-piece）は縦中央寄せのまま。
    親だけ伸ばし、名前欄・持ち駒の横幅・並びは変えない。 */
+:root {
+  --player-info-buffer: 0.1875rem;
+}
+
 .player-info {
-  height: calc(var(--piece-h, 36px) + 0.4375rem);
-  min-height: 2.5rem;
+  height: calc(var(--piece-h, 36px) + var(--player-info-buffer));
+  min-height: 2.25rem;
   margin: 0.125rem 0.5rem;
   display: flex;
   align-items: center;
@@ -321,6 +373,7 @@ html, body {
   box-shadow: inset 0 1px 2px rgba(60,45,20,0.06);
   overflow: hidden;
 }
+
 
 .player-info--opponent {
   justify-content: flex-start;
@@ -344,8 +397,10 @@ html, body {
   /* 修正（player-info高さ根本対応）: 親(.player-info)と同じ実測値ベースの式で
      連動させる。height:100%だけだと親のborder(1px×2)の影響で実寸がズレるため、
      親から2px（border分）を引いた式を明示して上下限を一致させる。
-     中身は縦中央寄せのまま。 */
-  height: calc(var(--piece-h, 36px) + 0.4375rem - 2px);
+     中身は縦中央寄せのまま。
+     修正（駒台の余白詰め・新規要望）: バッファを--player-info-buffer変数に統一。
+     親.player-infoと必ず同じ値を使うことで上下限を一致させ続ける。 */
+  height: calc(var(--piece-h, 36px) + var(--player-info-buffer) - 2px);
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -619,14 +674,21 @@ html, body {
      修正（レイアウト調整）: 外枠の余白のみ詰め、ボタンの最小タップ領域
      （min-height: 44px、下記.bottom-btn参照）はそのまま維持する。
      修正（iPad mini余白分配・Dライト・③フッター可変）: 高さを2.875rem固定から
-     clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem)の連続可変にする。
-     中間式は.header/.player-infoと同一（枠幅基準・@mediaなし）。
-     iPhone幅では下限2.875remで旧寸法と一致。iPad級では上限3.25rem(+0.375rem)が
-     効き、盤の上下余りの一部をフッター側に割り当てる。
+     clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem)の連続可変にしていた。
+     修正（ヘッダー・符号バー・フッターの高さ統一・新規要望）:
+     ヘッダー(.header)・棋譜符号バー(.kifu-bar-row)の上限を2.875remに揃えた
+     ところ、フッター自身の下限がもともと2.875rem（.bottom-btnのmin-height:
+     44px確保のための値）だったため、「下限=上限=2.875rem」となり、
+     結果としてフッターは常に2.875rem固定になった（clamp()の中間式は
+     このrem下限を上回ることがなく、実質評価されない）。
+     これは意図した副産物であり、ヘッダー・符号バーがiPad mini等の広い画面で
+     上限2.875remまで伸びたとき、常に固定2.875remのフッターとちょうど
+     一致する。3.25rem→2.875remで縮んだ分、盤の表示面積がその分増える。
+     可変にする意味がなくなったため、2.875rem固定のシンプルな指定に戻す
+     （clamp式は削除。詳細はこのコメントと.header側のコメントを参照）。
      子ボタン(.bottom-btn)は中央寄せのまま（親背景が伸びるだけ）。
      ボタンのmin-height:44pxは維持し、タップ下限は保つ。 */
   height: 2.875rem;
-  height: clamp(2.875rem, 18cqw - 1.6875rem, 3.25rem);
   min-height: 46px;
   display: flex;
   align-items: center;
@@ -639,7 +701,18 @@ html, body {
 }
 
 .bottom-btn {
+  /* 修正（ヘッダー・符号バー・フッターの高さ統一・新規要望・続き）:
+     フッター(.bottom-controls)の高さがiPad mini等で従来（clamp上限3.25rem）
+     よりわずかに縮んで2.875rem固定になった（上記.bottom-controls参照）が、
+     ヘッダー・符号バーの帯は逆に伸びるため、3帯全体で見ると依然としてiPad
+     miniでは各帯がiPhone14よりも厚くなる。.header-btn/.kifu-moveと同じ
+     考え方で、ボタン文字もその伸び率に応じてやや大きくなるようclamp()化する。
+     試算（#app-frame実測: iPhone14=390pt, iPad mini=744pt想定）:
+       clamp(0.9375rem, 2.4cqw, 1.1875rem)
+         → iPhone: 390*0.024≈9.4px→下限0.9375rem(≒16.9px)で頭打ち(旧来と同じ見た目)
+         → iPad mini: 744*0.024≈17.9px(≒1.11rem、上限1.1875remの手前で収まる) */
   font-size: 0.9375rem;
+  font-size: clamp(0.9375rem, 2.4cqw, 1.1875rem);
   padding: 0.25rem 0.375rem;
   min-height: 2.75rem;
   border: 1px solid var(--paper-deep);

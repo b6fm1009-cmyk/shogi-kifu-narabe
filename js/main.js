@@ -22,10 +22,12 @@ let layouts = null;
 const OPPONENT_HAND_ORDER = ['HI', 'KA', 'KI', 'GI', 'KE', 'KY', 'FU']; // 右詰め（要件定義書5.3節）
 const SELF_HAND_ORDER = ['FU', 'KY', 'KE', 'GI', 'KI', 'KA', 'HI'];     // 左詰め（要件定義書5.5節）
 
-// .player-info の height: calc(var(--piece-h) + 0.4375rem) と同じバッファ値
-// （css/style.cssと必ず同じ値を保つ）。px換算はhtmlのfont-sizeに依存するため
-// 固定pxではなくrem値をここに記録し、使用箇所でgetComputedStyle経由のpxに変換する。
-const PLAYER_INFO_BUFFER_REM = 0.4375;
+// .player-info の height: calc(var(--piece-h) + var(--player-info-buffer)) と
+// 同じバッファ値（css/style.cssの--player-info-buffer変数と必ず同じ値を保つ）。
+// 修正（駒台の余白詰め・新規要望）: 0.4375rem→0.1875remに変更。
+// px換算はhtmlのfont-sizeに依存するため固定pxではなくrem値をここに記録し、
+// 使用箇所でgetComputedStyle経由のpxに変換する。
+const PLAYER_INFO_BUFFER_REM = 0.1875;
 
 /**
  * 盤サイズ・駒サイズ・player-info高さを、循環参照なしで一括して算出する。
@@ -78,9 +80,9 @@ function computeLayoutSizes(appFrameEl, boardContainerEl, boardLayout) {
 
   const fixedH = headerEl.offsetHeight + kifuBarRowEl.offsetHeight + bottomControlsEl.offsetHeight;
 
-  // .player-info の height: calc(var(--piece-h) + 0.4375rem) と同じバッファを
-  // px換算する。remのpx換算はhtmlのfont-sizeに依存するため、固定16px決め打ちに
-  // せずgetComputedStyleで実際の値を取る。
+  // .player-info の height: calc(var(--piece-h) + var(--player-info-buffer)) と
+  // 同じバッファをpx換算する。remのpx換算はhtmlのfont-sizeに依存するため、
+  // 固定16px決め打ちにせずgetComputedStyleで実際の値を取る。
   const rootFontSizePx = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
   const bufferPx = PLAYER_INFO_BUFFER_REM * rootFontSizePx;
 
@@ -119,7 +121,20 @@ function computeLayoutSizes(appFrameEl, boardContainerEl, boardLayout) {
 
   // 小さい方（＝より厳しい制約）を採用する。これはCSSのcontainと同じ考え方。
   const squareH = Math.min(heightLimitedSquareH, widthLimitedSquareH);
-  const squareW = (squareH / innerHeightRatio) * innerWidthRatio; // 縦横比を保った対応する幅側squareSize（参考値）
+  // 修正（squareW算出式の根本対応）: 従来は
+  // squareW = (squareH / innerHeightRatio) * innerWidthRatioという式で、
+  // 「margin_ratio（余白比率）どうしの比」だけからsquareWを求めていた。
+  // これは暗黙に「盤画像自体の縦横比が1:1（正方形）である」場合にしか正しくない式で、
+  // 実際の盤画像（例: wood.avif 878×960、縦横比0.9146）では、盤マス自体も正方形では
+  // なく横がやや狭い（実測比率で約0.91）。そのため従来の式はsquareWを実際より約9%
+  // 大きく見積もっており、renderHandPieces()に渡るsquareSize.widthも過大だった
+  // （持ち駒欄の駒が、盤上に置かれた駒よりわずかに幅広に描画されるズレの原因）。
+  // 正しくは、盤画像自体の縦横比（imageRatio、下記で計算済み）を使い、
+  // 「画像上のマスの幅と高さの比」= imageRatio * innerWidthRatio / innerHeightRatio
+  // として求める（画像全体の内枠を9等分した実ピクセル比と一致する式。
+  // asset-fit.jsのgetSquareSizePx()が盤画像の実測clientWidth/Heightから
+  // 直接計算しているのと同じ考え方を、実測値を経由せず式で再現したもの）。
+  const squareW = squareH * (imageRatio * innerWidthRatio / innerHeightRatio);
 
   const boardImageHeight = (squareH * rows) / innerHeightRatio;
   const boardImageWidth = boardImageHeight * imageRatio;
