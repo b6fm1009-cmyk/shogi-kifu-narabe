@@ -19,6 +19,19 @@
   <link rel="icon" type="image/avif" sizes="16x16" href="./assets/icons/icon-16.avif">
   <title>将棋 棋譜並べ</title>
   <link rel="manifest" href="./manifest.webmanifest">
+  <!-- OGP（LINE・Twitter・Slack等でのリンクシェア用プレビュー）
+       og:image は LINE のプレビューが AVIF/WebP に未対応な場合があるため PNG を使用。
+       他のアセット（アイコン等）は AVIF のまま。 -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="将棋 棋譜並べ">
+  <meta property="og:description" content="棋譜を自分の手で並べる将棋アプリ">
+  <meta property="og:image" content="https://b6fm1009-cmyk.github.io/shogi-kifu-narabe/ogp/og-image.png">
+  <meta property="og:url" content="https://b6fm1009-cmyk.github.io/shogi-kifu-narabe/">
+  <meta property="og:locale" content="ja_JP">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="将棋 棋譜並べ">
+  <meta name="twitter:description" content="棋譜を自分の手で並べる将棋アプリ">
+  <meta name="twitter:image" content="https://b6fm1009-cmyk.github.io/shogi-kifu-narabe/ogp/og-image.png">
   <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>

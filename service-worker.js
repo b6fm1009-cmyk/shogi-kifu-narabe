@@ -4,7 +4,7 @@
  * CACHE_NAME はビルド時に scripts/build-sw-version.js が注入する
  */
 
-const CACHE_NAME = 'shogi-app-2100aec25374';
+const CACHE_NAME = 'shogi-app-3ffafd7b1483';
 
 // 盤・駒・背景画像はアプリの見た目に必須だが、一覧を手で書き下すと
 // 「ファイルを追加したのにキャッシュに入れ忘れる」事故が起きやすい。
