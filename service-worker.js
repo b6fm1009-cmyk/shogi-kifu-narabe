@@ -4,7 +4,7 @@
  * CACHE_NAME はビルド時に scripts/build-sw-version.js が注入する
  */
 
-const CACHE_NAME = 'shogi-app-a4e5e4558eb6';
+const CACHE_NAME = 'shogi-app-2100aec25374';
 
 // 盤・駒・背景画像はアプリの見た目に必須だが、一覧を手で書き下すと
 // 「ファイルを追加したのにキャッシュに入れ忘れる」事故が起きやすい。
@@ -21,9 +21,11 @@ const ASSET_URLS = [
   './assets/boards/reikan.avif',
   './assets/boards/snowflake.avif',
   './assets/boards/wood.avif',
-  './assets/icons/icon-180.png',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
+  './assets/icons/icon-16.avif',
+  './assets/icons/icon-180.avif',
+  './assets/icons/icon-192.avif',
+  './assets/icons/icon-32.avif',
+  './assets/icons/icon-512.avif',
   './assets/pieces/dark_1_letter.avif',
   './assets/pieces/dark_gothic_font_1_letter.avif',
   './assets/pieces/gothic_font_1_letter.avif',
