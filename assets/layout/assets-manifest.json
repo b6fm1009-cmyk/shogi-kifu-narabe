@@ -104,6 +104,54 @@
       "width": null,
       "height": null,
       "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "water_surface_white",
+      "label": "水面（白線）",
+      "image": "./assets/boards/water_surface.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "water_surface_black",
+      "label": "水面（黒線）",
+      "image": "./assets/boards/water_surface.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "black_gold_marble_white",
+      "label": "大理石・黒（白線）",
+      "image": "./assets/boards/black_gold_marble.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "black_gold_marble_black",
+      "label": "大理石・黒（黒線）",
+      "image": "./assets/boards/black_gold_marble.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
+    },
+    {
+      "id": "japan_lightblue_gold_white",
+      "label": "和柄・水色（白線）",
+      "image": "./assets/boards/japan_lightblue_gold.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "white", "showStars": true }
+    },
+    {
+      "id": "japan_lightblue_gold_black",
+      "label": "和柄・水色（黒線）",
+      "image": "./assets/boards/japan_lightblue_gold.avif",
+      "width": null,
+      "height": null,
+      "gridOverlay": { "enabled": true, "lineColor": "black", "showStars": true }
     }
   ],
   "pieces": [

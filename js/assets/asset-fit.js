@@ -103,6 +103,54 @@ export function getStarPointsPx(boardImageSize, boardLayout) {
 }
 
 /**
+ * object-fit:cover で表示された盤画像サムネイル上に、格子線・星をどのpx座標に
+ * 重ねればよいかを算出する（ハンバーガーメニュー「盤」タブのサムネイル用）。
+ *
+ * サムネイルは box（例:60x60の正方形）に対し、盤画像の原寸比率
+ * （board-layout.jsonのimage.reference_width/height）を保ったまま
+ * object-fit:cover で表示される。coverは「箱を隙間なく覆うように拡大し、
+ * はみ出た分は上下または左右が切れる」動作のため、getGridLinesPx()が前提とする
+ * 「boardImageSize=画像の実表示サイズ」とは基準が異なる（サムネイルでは画像の
+ * 表示サイズがboxより大きく、中心を揃えてクロップされている）。
+ * そのため、まず画像の原寸比率で「もし全体を表示したら何pxになるか」
+ * （coverでスケールされた仮想サイズ）を求め、getGridLinesPx()/getStarPointsPx()を
+ * その仮想サイズで呼んだ上で、box中心に対するクロップ分のオフセット
+ * （はみ出た分の半分）を引く。これにより、盤面本体（board-view.js）の駒配置と
+ * 完全に同じ比率ロジック（margin_ratio/cell_ratio）を再利用しつつ、
+ * object-fit:coverによるクロップ位置のズレも正しく補正できる。
+ * @param {{width: number, height: number}} box - サムネイル枠の実表示サイズ（px）
+ * @param {Object} boardLayout - board-layout.json をパースしたオブジェクト
+ * @returns {{grid: ReturnType<typeof getGridLinesPx>, stars: ReturnType<typeof getStarPointsPx>}}
+ */
+export function getGridOverlayForCoverBox(box, boardLayout) {
+  const imgW = boardLayout.image.reference_width;
+  const imgH = boardLayout.image.reference_height;
+  const imgRatio = imgW / imgH;
+  const boxRatio = box.width / box.height;
+
+  // cover: 箱の縦横比より画像が「横長寄り」なら高さを箱に合わせて幅がはみ出し、
+  // 「縦長寄り」なら幅を箱に合わせて高さがはみ出す。
+  const scale = imgRatio > boxRatio ? (box.height / imgH) : (box.width / imgW);
+  const virtualSize = { width: imgW * scale, height: imgH * scale };
+
+  const cropOffsetX = (virtualSize.width - box.width) / 2;
+  const cropOffsetY = (virtualSize.height - box.height) / 2;
+
+  const grid = getGridLinesPx(virtualSize, boardLayout);
+  const stars = getStarPointsPx(virtualSize, boardLayout);
+
+  return {
+    grid: {
+      ...grid,
+      originX: grid.originX - cropOffsetX,
+      originY: grid.originY - cropOffsetY
+    },
+    stars: stars.map(pt => ({ x: pt.x, y: pt.y })),
+    starsOrigin: { x: grid.originX - cropOffsetX, y: grid.originY - cropOffsetY }
+  };
+}
+
+/**
  * 駒コマの描画矩形を算出する。
  * @param {{width: number, height: number}} squareSizePx - getSquareSizePx() の返り値
  * @param {{width: number, height: number}} pieceImageNaturalSize - 選択中の駒画像の実サイズ

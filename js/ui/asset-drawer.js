@@ -2,7 +2,7 @@
  * ハンバーガーメニュー：盤・駒選択ドロワー（設計書 第4部10章）
  */
 import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, setPieceAssetLinked, getState } from '../state/app-state.js';
-import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
+import { getPieceRenderRect, resolvePieceCell, getGridOverlayForCoverBox } from '../assets/asset-fit.js';
 import { PROMOTION_MAP } from '../models/board.js';
 import { loadSampleManifest, importSampleKifu } from '../kifu-io/sample-import.js';
 
@@ -20,13 +20,14 @@ let activeSide = 'SENTE';
 let manifest = null;
 let pieceLayout = null;
 let pieceFit = null;
+let boardLayout = null;
 let renderCallback = null;
 
 /**
  * ドロワーの初期化。
  * @param {HTMLElement} containerEl - ドロワーコンテナ
  * @param {AssetManifest} assetManifest
- * @param {Object} layouts - { pieceLayout, pieceFit }
+ * @param {Object} layouts - { boardLayout, pieceLayout, pieceFit }
  * @param {() => void} onRender - 選択変更後の再描画コールバック
  */
 export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
@@ -34,6 +35,7 @@ export function initAssetDrawer(containerEl, assetManifest, layouts, onRender) {
   manifest = assetManifest;
   pieceLayout = layouts.pieceLayout;
   pieceFit = layouts.pieceFit;
+  boardLayout = layouts.boardLayout;
   renderCallback = onRender;
 
   // ドロワー構造を作成
@@ -421,6 +423,106 @@ function renderBoardTab(body) {
     });
 
     body.appendChild(row);
+
+    // gridOverlay.enabledな盤（画像自体に線が焼き込まれていないテクスチャ盤）だけ、
+    // サムネイルにも格子線・星をSVGで重ね描画する。wood/polyvinyl_chloride/darkの
+    // ように画像そのものに線が入っている盤はgridOverlayを持たないため、ここでは
+    // 何もしない（=盤面本体と同じ「二重描画を避ける」規則をサムネイルにも適用する）。
+    // thumbがDOMに接続された後（clientWidth/Heightが取得できる状態）でないと
+    // 正しいboxサイズが取れないため、appendChild後にこの処理を行う。
+    if (board.gridOverlay && board.gridOverlay.enabled) {
+      renderBoardThumbGridOverlay(thumb, img, board.gridOverlay);
+    }
+  }
+}
+
+/**
+ * 盤サムネイル（.asset-board-thumb、object-fit:coverで表示中のimg）に
+ * 格子線・星をSVGで重ね描画する。
+ *
+ * サムネイルの<img>はCSSで object-fit:cover のため、盤画像本来の縦横比
+ * （878:960相当）のまま拡大され、正方形の枠からはみ出た上下（または左右）が
+ * クロップされて表示されている。asset-fit.js の getGridOverlayForCoverBox() が
+ * そのクロップ位置を踏まえた線・星の座標をbox基準で返すため、ここではその結果を
+ * そのままSVGの座標として使うだけでよい（board-view.js の renderGridOverlay() と
+ * 見た目のトーン・線幅・色を完全に揃えている）。
+ * @param {HTMLElement} thumbEl - .asset-board-thumb 要素（box）
+ * @param {HTMLImageElement} imgEl
+ * @param {{enabled: boolean, lineColor: 'white'|'black', showStars: boolean}} overlay
+ */
+function renderBoardThumbGridOverlay(thumbEl, imgEl, overlay) {
+  const draw = () => {
+    // 既に描画済みなら描き直さない（同じboardが再描画対象になることはないが、念のため）
+    const existing = thumbEl.querySelector('.grid-overlay-layer');
+    if (existing) existing.remove();
+
+    const box = { width: thumbEl.clientWidth, height: thumbEl.clientHeight };
+    if (!box.width || !box.height || !boardLayout) return;
+
+    const { grid, stars, starsOrigin } = getGridOverlayForCoverBox(box, boardLayout);
+    // 盤面本体（board-view.js renderGridOverlay）と同じ配色・線幅に揃える。
+    const strokeColor = overlay.lineColor === 'white' ? '#d8d8d5' : '#272725';
+
+    const svgNs = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNs, 'svg');
+    svg.setAttribute('class', 'grid-overlay-layer');
+    svg.setAttribute('width', String(box.width));
+    svg.setAttribute('height', String(box.height));
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    svg.style.position = 'absolute';
+    svg.style.left = '0';
+    svg.style.top = '0';
+    svg.style.pointerEvents = 'none';
+
+    const linesGroup = document.createElementNS(svgNs, 'g');
+    linesGroup.setAttribute('stroke', strokeColor);
+    linesGroup.setAttribute('stroke-width', '1');
+    linesGroup.setAttribute('shape-rendering', 'crispEdges');
+
+    grid.vertical.forEach(x => {
+      const line = document.createElementNS(svgNs, 'line');
+      const px = grid.originX + x;
+      line.setAttribute('x1', String(px));
+      line.setAttribute('y1', String(grid.originY));
+      line.setAttribute('x2', String(px));
+      line.setAttribute('y2', String(grid.originY + grid.innerHeight));
+      linesGroup.appendChild(line);
+    });
+
+    grid.horizontal.forEach(y => {
+      const line = document.createElementNS(svgNs, 'line');
+      const py = grid.originY + y;
+      line.setAttribute('x1', String(grid.originX));
+      line.setAttribute('y1', String(py));
+      line.setAttribute('x2', String(grid.originX + grid.innerWidth));
+      line.setAttribute('y2', String(py));
+      linesGroup.appendChild(line);
+    });
+
+    svg.appendChild(linesGroup);
+
+    if (overlay.showStars) {
+      const starsGroup = document.createElementNS(svgNs, 'g');
+      starsGroup.setAttribute('fill', strokeColor);
+      starsGroup.setAttribute('opacity', '0.45');
+      stars.forEach(pt => {
+        const circle = document.createElementNS(svgNs, 'circle');
+        circle.setAttribute('cx', String(starsOrigin.x + pt.x));
+        circle.setAttribute('cy', String(starsOrigin.y + pt.y));
+        circle.setAttribute('r', '1.2');
+        starsGroup.appendChild(circle);
+      });
+      svg.appendChild(starsGroup);
+    }
+
+    thumbEl.style.position = 'relative';
+    thumbEl.appendChild(svg);
+  };
+
+  if (imgEl.complete && imgEl.naturalWidth) {
+    draw();
+  } else {
+    imgEl.addEventListener('load', draw);
   }
 }
 
