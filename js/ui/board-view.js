@@ -239,7 +239,7 @@ function renderGridOverlay(boardAsset) {
       const circle = document.createElementNS(svgNs, 'circle');
       circle.setAttribute('cx', String(grid.originX + pt.x));
       circle.setAttribute('cy', String(grid.originY + pt.y));
-      circle.setAttribute('r', '3');
+      circle.setAttribute('r', '5');
       starsGroup.appendChild(circle);
     });
     svg.appendChild(starsGroup);

@@ -476,7 +476,13 @@ function renderBoardThumbGridOverlay(thumbEl, imgEl, overlay) {
 
     const linesGroup = document.createElementNS(svgNs, 'g');
     linesGroup.setAttribute('stroke', strokeColor);
-    linesGroup.setAttribute('stroke-width', '1');
+    linesGroup.setAttribute('stroke-width', '0.5');
+    // 修正（要望: サムネイルの線が太く主張しすぎる）: 盤面本体（board-view.js）は
+    // 60px角という極小サイズを想定していないため、そのままの線幅・不透明度を
+    // 流用すると相対的に線が太く濃く見えすぎる。「よく見ると線が入っているのが
+    // わかる」程度に抑えるため、線自体にも透明度を持たせる（星と同じ0.45より
+    // さらに薄い0.35とし、線の存在感を星よりも控えめにする）。
+    linesGroup.setAttribute('stroke-opacity', '0.35');
     linesGroup.setAttribute('shape-rendering', 'crispEdges');
 
     grid.vertical.forEach(x => {
@@ -504,7 +510,9 @@ function renderBoardThumbGridOverlay(thumbEl, imgEl, overlay) {
     if (overlay.showStars) {
       const starsGroup = document.createElementNS(svgNs, 'g');
       starsGroup.setAttribute('fill', strokeColor);
-      starsGroup.setAttribute('opacity', '0.45');
+      // 線と同様、60px角のサムネイルでは盤面本体基準の見た目（半径3px・opacity0.45）だと
+      // 目立ちすぎるため、控えめな値に落とす。
+      starsGroup.setAttribute('opacity', '0.3');
       stars.forEach(pt => {
         const circle = document.createElementNS(svgNs, 'circle');
         circle.setAttribute('cx', String(starsOrigin.x + pt.x));
