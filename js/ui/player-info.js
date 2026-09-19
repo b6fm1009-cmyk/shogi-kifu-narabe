@@ -99,11 +99,48 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
 // 修正③: 名前が固定幅ボックスに収まらない場合に段階的に縮小するフォントサイズ候補。
 // rem基準(.player-name 0.875rem=14px相当)に合わせたem値で指定する。
 // ルート可変時も比率で追従し、等倍containのため実測(scrollWidth/clientWidth)と一致する。
-const PLAYER_NAME_FONT_SIZES = ['1em', '0.857em', '0.714em', '0.643em'];
+//
+// 【不具合修正】サンプル棋譜「大橋宗桂（初代）」（全角8文字）がクリップされる
+// 問題を受け、基準文字数を全角7文字→8文字に変更した。既存の縮小段階の
+// 進み方（分母7の等差：6/7, 5/7, 4.5/7）と同じ考え方を保ったまま、
+// 単純に全体を7/8倍して基準を8文字に引き伸ばす（要件定義書の合意通り）。
+const PLAYER_NAME_FONT_SIZES = [1, 6 / 7, 5 / 7, 4.5 / 7].map((v) => `${(v * 7 / 8).toFixed(4)}em`);
+
+// 段級位（ラベル行の「先手/後手」に続く部分）専用の縮小フォントサイズ候補。
+// 【設計判断】段級位は自由入力ではなく rank-extractor.js の正規表現に
+// マッチした語彙のみが入るため、最長ケース（例:「二十一世竜王」全角6文字）を
+// 洗い出し済み。この範囲であれば最終段階のフォントサイズで必ず収まる想定のため、
+// 名前欄と異なり clip は行わない（要件定義書合意：段級位はclip対象外）。
+//
+// 【注意】.player-labelの基本フォントサイズ(1em=0.625rem)は元々「先手」
+// 「後手」の2文字専用に設計された値であり、.player-name（全角7文字基準）
+// のような文字数基準は存在しない。そのためPLAYER_NAME_FONT_SIZESのような
+// 「7/8倍」の再スケールは適用しない（1emの土台が違うため単純比較できない）。
+// ここでは.player-nameと同じ「分母7の等差で4段階縮小する」という
+// “縮小の進み方”だけを踏襲し、基準文字数はゼロから6文字用に設定する。
+const PLAYER_RANK_FONT_SIZES = [1, 6 / 7, 5 / 7, 4.5 / 7].map((v) => `${v.toFixed(4)}em`);
+
+/**
+ * 指定した要素のフォントサイズを、候補配列の順に段階的に縮小しながら
+ * 「ボックス幅に収まる」状態を探す共通ヘルパー。
+ * 候補を全て試しても収まらない場合は、最後の（最小の）候補のまま返す
+ * （呼び出し元が、その後にclipするかどうかを決める）。
+ * @param {HTMLElement} el - フォントサイズを操作し、scrollWidth/clientWidthを測る要素
+ * @param {string[]} fontSizes - 大きい順に並んだフォントサイズ候補（em文字列等）
+ */
+function shrinkToFit(el, fontSizes) {
+  el.style.fontSize = '';
+  for (const size of fontSizes) {
+    if (el.scrollWidth <= el.clientWidth) break;
+    el.style.fontSize = size;
+  }
+}
 
 /**
  * ③⑤対局者名ボックス（先手/後手ラベル＋段級位＋名前）を描画する単一関数。
- * @param {HTMLElement} labelEl - ラベル（「先手 六段」等）を表示する要素
+ * @param {HTMLElement} labelEl - ラベル（「先手 六段」等）を表示する要素。
+ *   内部に `.player-label-side`（先手/後手、常に等倍・不変）と
+ *   `.player-label-rank`（段級位、縮小対象）の2つのspanを組み立てる。
  * @param {HTMLElement} nameEl - 名前を表示する要素
  * @param {'SENTE'|'GOTE'} side - このボックスに表示する対局者の陣営
  *   （画面上の位置＝奥/手前ではなく、実際にどちらの駒か。反転時の入れ替えは
@@ -113,15 +150,44 @@ const PLAYER_NAME_FONT_SIZES = ['1em', '0.857em', '0.714em', '0.643em'];
  */
 export function renderPlayerInfoBox(labelEl, nameEl, side, name, rank) {
   const sideLabel = side === 'SENTE' ? '先手' : '後手';
-  labelEl.textContent = rank ? `${sideLabel} ${rank}` : sideLabel;
+
+  // 【不具合修正】従来は labelEl.textContent = "先手 六段" のように
+  // 1つのテキストノードへまとめて描画していたため、「先手/後手」自体まで
+  // 縮小対象になってしまっていた。「先手/後手」は常に等倍で確保し、
+  // 段級位部分のみを独立して縮小できるよう、2つのspanに分けて描画する。
+  labelEl.innerHTML = '';
+  const sideSpan = document.createElement('span');
+  sideSpan.className = 'player-label-side';
+  sideSpan.textContent = sideLabel;
+  labelEl.appendChild(sideSpan);
+
+  let rankSpan = null;
+  if (rank) {
+    labelEl.appendChild(document.createTextNode('\u00A0')); // 半角スペース相当（noBreakSpaceで折返し防止）
+    rankSpan = document.createElement('span');
+    rankSpan.className = 'player-label-rank';
+    rankSpan.textContent = rank;
+    labelEl.appendChild(rankSpan);
+  }
+
   nameEl.textContent = name;
 
   // 修正③: 固定幅ボックスに収まるかを実測し、収まらなければフォントサイズを
   // 段階的に縮小する。まず基本サイズにリセットしてから測定する
   // （前回描画時に縮小された状態が残っていると正しく測定できないため）。
-  nameEl.style.fontSize = '';
-  for (const size of PLAYER_NAME_FONT_SIZES) {
-    if (nameEl.scrollWidth <= nameEl.clientWidth) break;
-    nameEl.style.fontSize = size;
+  shrinkToFit(nameEl, PLAYER_NAME_FONT_SIZES);
+
+  // 段級位side（rankSpan）のみを縮小対象にする。「先手/後手」（sideSpan）は
+  // 一切フォントサイズを操作しない＝常に確保される。
+  // 判定に使う幅は rankSpan 自身ではなく labelEl 全体（親）で行う：
+  // rankSpan単体のclientWidthは常に「必要なぶんぴったり」を返してしまい
+  // （インライン要素が中身の幅で自然に確保されるため）、labelEl側の
+  // 実際の残り幅と比較する意味のある測定にならないため。
+  if (rankSpan) {
+    rankSpan.style.fontSize = '';
+    for (const size of PLAYER_RANK_FONT_SIZES) {
+      if (labelEl.scrollWidth <= labelEl.clientWidth) break;
+      rankSpan.style.fontSize = size;
+    }
   }
 }

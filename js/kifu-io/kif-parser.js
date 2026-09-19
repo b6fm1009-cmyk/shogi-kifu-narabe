@@ -2,6 +2,7 @@
  * KIFテキスト→JKF→アプリ内KifuData変換（設計書 第4部・第6部）
  */
 import { createEmptyHandPieces } from '../models/board.js';
+import { extractRank } from './rank-extractor.js';
 
 let JSONKifuFormat = null;
 
@@ -68,11 +69,34 @@ export function parseKifText(kifText) {
     // 修正②: 段級位（先手段級／後手段級）も取得する。KIFヘッダーに存在しない場合は
     // null とし、表示側で「段級位欄ごと非表示にする」判定に使う（名前のような
     // デフォルト文言は設けない。要件定義書8.8節rev3参照）。
+    //
+    // 【不具合修正】KIFの「先手：」「後手：」行に、名前と段級位が
+    // （例:「斎藤明日斗 六段」のように）1つの文字列として混在して
+    // 書かれているKIFが存在する。この場合、専用フィールド「先手段級：」
+    // 「後手段級：」は存在しないため従来は senteRank が null のままとなり、
+    // 段級位が名前の一部として扱われた結果、固定幅の名前欄で
+    // 「六段」の「段」がクリップされて見切れる不具合があった。
+    //
+    // 対応：専用フィールド（先手段級／後手段級）を優先し、それが無い場合に
+    // 限り、名前文字列の末尾から段級位/タイトルらしき部分を
+    // extractRank() で抽出して分離する（rank-extractor.js参照）。
+    // 専用フィールドが存在する場合は、名前文字列側は一切加工しない
+    // （食い違いがあってもどちらが正しいかアプリ側では判断できないため、
+    // 専用フィールドを常に信頼するという決め打ちの優先順位。
+    // 詳細はdocs/decisions参照）。
+    const rawSenteName = kifu.header['先手'] || '先手';
+    const rawGoteName = kifu.header['後手'] || '後手';
+    const senteRankField = kifu.header['先手段級'] || null;
+    const goteRankField = kifu.header['後手段級'] || null;
+
+    const senteExtracted = senteRankField ? null : extractRank(rawSenteName);
+    const goteExtracted = goteRankField ? null : extractRank(rawGoteName);
+
     const header = {
-      senteName: kifu.header['先手'] || '先手',
-      goteName: kifu.header['後手'] || '後手',
-      senteRank: kifu.header['先手段級'] || null,
-      goteRank: kifu.header['後手段級'] || null
+      senteName: senteExtracted ? senteExtracted.name : rawSenteName,
+      goteName: goteExtracted ? goteExtracted.name : rawGoteName,
+      senteRank: senteRankField || (senteExtracted ? senteExtracted.rank : null),
+      goteRank: goteRankField || (goteExtracted ? goteExtracted.rank : null)
     };
 
     // 初期局面

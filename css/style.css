@@ -428,10 +428,33 @@ html, body {
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  /* 【不具合修正】親(.player-info-box)はflexboxのため、指定が無いと
+     子要素は中身の幅をそのまま確保しようとし、labelEl.clientWidthが
+     「実際に使える幅」ではなく「中身に必要な幅」を返してしまい、
+     player-info.js側の縮小判定（scrollWidth <= clientWidth）が
+     常にtrueになって機能しなくなる。.player-nameと同じく、
+     親の幅で頭打ちにする指定が必要。 */
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .player-label:empty {
   display: none;
+}
+
+/* 「先手/後手」部分。常に等倍を確保し、フォントサイズは一切操作しない
+   （player-info.js側もこの前提で実装している）。 */
+.player-label-side {
+  white-space: nowrap;
+}
+
+/* 段級位部分。縮小対象。「先手/後手」の可読性を優先するため、
+   色をsumi（本文の黒系）にして、赤系のsideラベルと視覚的に区別する
+   （縮小されて読みにくくなりがちな段級位を、色でも見分けやすくする）。 */
+.player-label-rank {
+  display: inline-block;
+  color: var(--sumi);
+  white-space: nowrap;
 }
 
 .player-name {

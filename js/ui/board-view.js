@@ -233,13 +233,15 @@ function renderGridOverlay(boardAsset) {
     const starsGroup = document.createElementNS(svgNs, 'g');
     // 目立たせすぎない: 既存wood.avifの黒丸相当ではなく、半透明かつ小さめの半径にする
     // （テクスチャ素材の見た目を線が邪魔しすぎないようにするため）。
+    // 修正（星点の視認性調整・ユーザー要望）: 半径5px→4px、不透明度0.45→0.6に変更。
+    // 色を少し濃くしつつ小さくすることで、盤面を邪魔しすぎない範囲で視認性を上げる。
     starsGroup.setAttribute('fill', strokeColor);
-    starsGroup.setAttribute('opacity', '0.45');
+    starsGroup.setAttribute('opacity', '0.6');
     starPoints.forEach(pt => {
       const circle = document.createElementNS(svgNs, 'circle');
       circle.setAttribute('cx', String(grid.originX + pt.x));
       circle.setAttribute('cy', String(grid.originY + pt.y));
-      circle.setAttribute('r', '5');
+      circle.setAttribute('r', '4');
       starsGroup.appendChild(circle);
     });
     svg.appendChild(starsGroup);
