@@ -422,7 +422,14 @@ html, body {
 }
 
 .player-label {
-  font-size: 0.625rem;
+  /* 【不具合修正】画面幅が広がるほど文字が相対的に小さく見える問題への対応。
+     .player-info-boxの幅は clamp(5.375rem, 22vw, 7.5rem) で画面幅に連動して
+     広がるが、font-sizeが0.625remの固定値だったため、ボックスが広がる
+     iPad miniのような大画面ほど、箱に対して文字が小さく見えていた。
+     ボックス幅と同じ拡大率（5.375rem→7.5remは1.395倍）で文字サイズも
+     広がるようclamp()化し、ボックスとほぼ同じ画面幅（約545px）で
+     双方が上限に達するよう揃える。 */
+  font-size: clamp(0.625rem, 2.558vw, 0.8721rem);
   line-height: 1.2;
   color: var(--bengara);
   font-weight: 600;
@@ -458,7 +465,12 @@ html, body {
 }
 
 .player-name {
-  font-size: 0.875rem;
+  /* 【不具合修正】.player-labelと同じ理由・同じ考え方で、.player-info-box
+     の幅拡大率(1.395倍)に合わせてclamp()化した。
+     player-info.js側の縮小ロジック(PLAYER_NAME_FONT_SIZES)はem単位の
+     相対倍率で動作するため、この基本フォントサイズが変わっても
+     そのまま正しく機能する。 */
+  font-size: clamp(0.875rem, 3.581vw, 1.2209rem);
   line-height: 1.25;
   color: var(--sumi);
   font-weight: 600;

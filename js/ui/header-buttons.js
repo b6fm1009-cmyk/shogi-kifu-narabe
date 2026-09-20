@@ -38,7 +38,22 @@ export function initHeaderButtons() {
     if (!fileInput) {
       fileInput = document.createElement('input');
       fileInput.type = 'file';
-      fileInput.accept = '.kif,.kifu';
+      // 【不具合修正】iPadOSのFilesピッカーで.kif/.kifuがグレーアウトして
+      // 選択できない不具合への対応。
+      // 原因：iOS/iPadOSのFilesアプリの新しいピッカーは、accept属性に
+      // 拡張子のみを指定した場合、その拡張子に対応するUTI
+      // （Uniform Type Identifier）をOS側で解決できないと、
+      // 該当ファイルをグレーアウトして選択不可にすることがある
+      // （.kif/.kifuは独自拡張子でOSに未登録のため発生）。
+      // .txtが選択できていたのは、text/plainという標準MIMEタイプに
+      // 対応するUTI（public.plain-text）が解決できるため。
+      // 対応：拡張子指定に加えてtext/plainを明示的に指定することで、
+      // 「プレーンテキストとして開ける」とOS側に伝え、グレーアウトを回避する。
+      // これによりiPhoneとiPadで同じ挙動になることを期待する。
+      // （.kif/.kifu以外のテキストファイルも選べるようになるが、
+      // 拡張子と中身のバリデーションはfile-import.js側で別途行っているため、
+      // 実害はない）。
+      fileInput.accept = '.kif,.kifu,text/plain';
       fileInput.addEventListener('change', () => {
         const file = fileInput.files[0];
         if (file) importFromFile(file);
