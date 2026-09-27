@@ -43,3 +43,19 @@ export function setButtonDisabled(btn, isDisabled) {
 export function isButtonDisabled(btn) {
   return btn.getAttribute('aria-disabled') === 'true';
 }
+
+/**
+ * クリックハンドラ先頭のガード条件をまとめたもの。
+ * header-buttons.js / bottom-controls.js の各クリックハンドラで
+ * `if (isAnyControlDisabled() || isButtonDisabled(btn)) return;` という同じ2条件が
+ * 繰り返されていたため、1つの呼び出しにまとめた
+ * （`if (isInteractionBlocked(btn, isAnyControlDisabled())) return;` の形で使う）。
+ * isAnyControlDisabled() 自体はapp-state.jsが正本のため、button-state.js側から
+ * app-state.jsへ依存を作らないよう、呼び出し側で評価した結果を引数として渡す。
+ * @param {HTMLButtonElement} btn
+ * @param {boolean} isAnyControlDisabledResult - 呼び出し元で isAnyControlDisabled() を評価した結果
+ * @returns {boolean}
+ */
+export function isInteractionBlocked(btn, isAnyControlDisabledResult) {
+  return isAnyControlDisabledResult || isButtonDisabled(btn);
+}

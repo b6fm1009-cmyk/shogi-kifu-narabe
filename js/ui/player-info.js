@@ -1,7 +1,7 @@
 /**
  * ③⑤対戦相手情報・自分の情報＋持ち駒（共通化）（設計書 第4部4節）
  */
-import { getPieceRenderRect, resolvePieceCell } from '../assets/asset-fit.js';
+import { getPieceRenderRect, resolvePieceCell, createPieceSpriteElement } from '../assets/asset-fit.js';
 import { findPieceAsset } from '../assets/asset-manifest.js';
 
 /**
@@ -62,26 +62,7 @@ export function renderHandPieces(pieces, alignment, order, containerEl, selected
       continue;
     }
     const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
-
-    const cols = pieceLayout.grid.cols;
-    const rows = pieceLayout.grid.rows;
-    const bgWidth = renderRect.width * cols;
-    const bgHeight = renderRect.height * rows;
-    const bgX = -(cell.col * renderRect.width);
-    const bgY = -(cell.row * renderRect.height);
-
-    const spriteEl = document.createElement('div');
-    spriteEl.style.position = 'absolute';
-    spriteEl.style.left = `${renderRect.offsetX}px`;
-    spriteEl.style.top = `${renderRect.offsetY}px`;
-    spriteEl.style.width = `${renderRect.width}px`;
-    spriteEl.style.height = `${renderRect.height}px`;
-    spriteEl.style.overflow = 'hidden';
-    spriteEl.style.pointerEvents = 'none';
-    spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
-    spriteEl.style.backgroundRepeat = 'no-repeat';
-    spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-    spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    const spriteEl = createPieceSpriteElement(renderRect, cell, pieceLayout, pieceAsset.image);
     item.appendChild(spriteEl);
 
     // 複数枚の場合は右下に数字

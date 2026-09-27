@@ -5,7 +5,7 @@ import { importFromClipboard } from '../kifu-io/clipboard-import.js';
 import { importFromFile } from '../kifu-io/file-import.js';
 import { getState, toggleKifuBarVisibility, jumpToKifuProgress, getKifuModeInfo, isAnyControlDisabled } from '../state/app-state.js';
 import { openAssetDrawer, closeAssetDrawer } from './asset-drawer.js';
-import { setButtonDisabled, isButtonDisabled } from './button-state.js';
+import { setButtonDisabled, isInteractionBlocked } from './button-state.js';
 
 let fileInput = null;
 
@@ -27,14 +27,14 @@ export function initHeaderButtons() {
   // 棋譜貼付
   const pasteBtn = document.getElementById('btn-paste');
   pasteBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(pasteBtn)) return;
+    if (isInteractionBlocked(pasteBtn, isAnyControlDisabled())) return;
     importFromClipboard();
   });
 
   // 棋譜読込
   const loadBtn = document.getElementById('btn-load');
   loadBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(loadBtn)) return;
+    if (isInteractionBlocked(loadBtn, isAnyControlDisabled())) return;
     if (!fileInput) {
       fileInput = document.createElement('input');
       fileInput.type = 'file';
@@ -66,7 +66,7 @@ export function initHeaderButtons() {
   // 分岐に戻る
   const backBtn = document.getElementById('btn-back-to-kifu');
   backBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(backBtn)) return;
+    if (isInteractionBlocked(backBtn, isAnyControlDisabled())) return;
     const { kifuProgress } = getKifuModeInfo();
     jumpToKifuProgress(kifuProgress);
   });
@@ -74,7 +74,7 @@ export function initHeaderButtons() {
   // 指手を非表示
   const toggleBarBtn = document.getElementById('btn-toggle-bar');
   toggleBarBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(toggleBarBtn)) return;
+    if (isInteractionBlocked(toggleBarBtn, isAnyControlDisabled())) return;
     toggleKifuBarVisibility();
   });
 }

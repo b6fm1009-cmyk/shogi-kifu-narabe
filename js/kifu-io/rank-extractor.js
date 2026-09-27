@@ -94,9 +94,9 @@ const SEI_TITLE_ALT = toAlternation(
 // 段（初段、一段〜十段）。算用数字1〜10段は別途リテラルで扱う。
 const DAN_KANJI_ALT = toAlternation(DAN_KANJI_LIST, '段');
 // アマ＋段（アマ初段〜アマ十段）
-const AMA_DAN_ALT = toAlternation(DAN_KANJI_LIST, '段').split('|').map((s) => `アマ${s}`).join('|');
+const AMA_DAN_ALT = DAN_KANJI_ALT.split('|').map((s) => `アマ${s}`).join('|');
 // 奨励会＋段（奨励会初段〜奨励会十段）
-const SHOUREIKAI_DAN_ALT = toAlternation(DAN_KANJI_LIST, '段').split('|').map((s) => `奨励会${s}`).join('|');
+const SHOUREIKAI_DAN_ALT = DAN_KANJI_ALT.split('|').map((s) => `奨励会${s}`).join('|');
 // 永世＋タイトル
 const EISEI_TITLE_ALT = toAlternation(TITLES.map((t) => `永世${t}`));
 

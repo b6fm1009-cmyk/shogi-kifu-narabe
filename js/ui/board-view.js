@@ -1,7 +1,7 @@
 /**
  * ④盤面・座標符号の描画（設計書 第5部）
  */
-import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell, getGridLinesPx, getStarPointsPx } from '../assets/asset-fit.js';
+import { getSquareSizePx, getBoardOriginPx, getPieceRenderRect, resolvePieceCell, getGridLinesPx, getStarPointsPx, createPieceSpriteElement } from '../assets/asset-fit.js';
 import { findBoardAsset, findPieceAsset } from '../assets/asset-manifest.js';
 import { determineKingLabels } from '../models/kifu.js';
 import { isPromotedPiece } from '../models/board.js';
@@ -398,30 +398,8 @@ function renderPieceImage(pieceEl, pieceAsset, cell, squareSize) {
   const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
   const renderRect = getPieceRenderRect(squareSize, pieceImageSize, pieceLayout, pieceFit);
 
-  const cols = pieceLayout.grid.cols;
-  const rows = pieceLayout.grid.rows;
-
-  // renderRect（1コマの表示サイズ）を基準に、スプライト画像全体の表示サイズを逆算する
-  const bgWidth = renderRect.width * cols;
-  const bgHeight = renderRect.height * rows;
-
-  // スプライトの切り出し位置（表示サイズ基準）
-  const bgX = -(cell.col * renderRect.width);
-  const bgY = -(cell.row * renderRect.height);
-
   pieceEl.innerHTML = '';
-  const spriteEl = document.createElement('div');
-  spriteEl.style.position = 'absolute';
-  spriteEl.style.left = `${renderRect.offsetX}px`;
-  spriteEl.style.top = `${renderRect.offsetY}px`;
-  spriteEl.style.width = `${renderRect.width}px`;
-  spriteEl.style.height = `${renderRect.height}px`;
-  spriteEl.style.overflow = 'hidden';
-  spriteEl.style.pointerEvents = 'none';
-  spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
-  spriteEl.style.backgroundRepeat = 'no-repeat';
-  spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-  spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+  const spriteEl = createPieceSpriteElement(renderRect, cell, pieceLayout, pieceAsset.image);
   pieceEl.appendChild(spriteEl);
 }
 

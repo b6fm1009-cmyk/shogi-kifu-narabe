@@ -218,6 +218,51 @@ export function getPieceRenderRect(squareSizePx, pieceImageNaturalSize, pieceLay
 }
 
 /**
+ * スプライトシートから駒コマ1つ分を切り出すdiv要素を生成する。
+ *
+ * <img>のobject-fit:none + object-positionは「画像原寸をボックス内に置く」指定であり、
+ * background-positionのような「切り出し位置の指定」としては機能しない。そのため、
+ * divのbackground-image + background-size + background-positionでスプライトシートを
+ * 1コマ分だけ切り出す方式を取る。この生成処理自体は board-view.js（盤上の駒）・
+ * player-info.js（持ち駒欄）・nari-popup.js（成りポップアップ）・asset-drawer.js
+ * （駒選択ドロワーのサムネイル）の4箇所で完全に同一のロジックが重複していたため、
+ * ここに集約した。呼び出し側は返された要素を、目的の親要素（相対配置の基準となる
+ * position:relative or overflow:hiddenの箱）へ appendChild するだけでよい。
+ * @param {{width: number, height: number, offsetX: number, offsetY: number}} renderRect -
+ *   getPieceRenderRect() の返り値（1コマの表示サイズ・親要素内でのオフセット）
+ * @param {{row: number, col: number}} cell - resolvePieceCell() の返り値（切り出し対象のマス目位置）
+ * @param {Object} pieceLayout - piece-layout.json をパースしたオブジェクト（grid.cols/rowsを参照する）
+ * @param {string} pieceImageUrl - スプライトシート画像のURL（pieceAsset.image）
+ * @returns {HTMLDivElement} まだどこにもappendされていないdiv要素
+ */
+export function createPieceSpriteElement(renderRect, cell, pieceLayout, pieceImageUrl) {
+  const cols = pieceLayout.grid.cols;
+  const rows = pieceLayout.grid.rows;
+
+  // renderRect（1コマの表示サイズ）を基準に、スプライト画像全体の表示サイズを逆算する
+  const bgWidth = renderRect.width * cols;
+  const bgHeight = renderRect.height * rows;
+
+  // スプライトの切り出し位置（表示サイズ基準）
+  const bgX = -(cell.col * renderRect.width);
+  const bgY = -(cell.row * renderRect.height);
+
+  const spriteEl = document.createElement('div');
+  spriteEl.style.position = 'absolute';
+  spriteEl.style.left = `${renderRect.offsetX}px`;
+  spriteEl.style.top = `${renderRect.offsetY}px`;
+  spriteEl.style.width = `${renderRect.width}px`;
+  spriteEl.style.height = `${renderRect.height}px`;
+  spriteEl.style.overflow = 'hidden';
+  spriteEl.style.pointerEvents = 'none';
+  spriteEl.style.backgroundImage = `url(${pieceImageUrl})`;
+  spriteEl.style.backgroundRepeat = 'no-repeat';
+  spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+  spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+  return spriteEl;
+}
+
+/**
  * 駒種から piece-layout.json 上の座標を求める。
  *
  * facingの決定について：

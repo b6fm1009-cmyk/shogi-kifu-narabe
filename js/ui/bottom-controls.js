@@ -1,10 +1,10 @@
 /**
  * ⑥下部操作列（設計書 第5部）
  */
-import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo, isAnyControlDisabled, isBackwardNavigationEnabled, isForwardNavigationEnabled, isLastButtonEnabled, advanceBranch, getNextBranchCandidates } from '../state/app-state.js';
+import { getState, flipBoard, jumpToKifuProgress, undoLastMove, advanceToKifuProgress, getKifuModeInfo, isAnyControlDisabled, isBackwardNavigationEnabled, isForwardNavigationEnabled, isLastButtonEnabled, advanceBranch, getNextBranchCandidates, getKifuMoves } from '../state/app-state.js';
 import { openMoveListPopup } from './move-list-popup.js';
 import { openBranchPopup } from './branch-popup.js';
-import { setButtonDisabled, isButtonDisabled } from './button-state.js';
+import { setButtonDisabled, isInteractionBlocked } from './button-state.js';
 
 // 新規要望：「次」ボタンの長押し検出用しきい値・タイマー
 const LONG_PRESS_THRESHOLD_MS = 500;
@@ -18,21 +18,21 @@ export function initBottomControls() {
   // 盤面反転
   const flipBtn = document.getElementById('btn-flip');
   flipBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(flipBtn)) return;
+    if (isInteractionBlocked(flipBtn, isAnyControlDisabled())) return;
     flipBoard();
   });
 
   // 最初
   const firstBtn = document.getElementById('btn-first');
   firstBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(firstBtn)) return;
+    if (isInteractionBlocked(firstBtn, isAnyControlDisabled())) return;
     jumpToKifuProgress(0);
   });
 
   // 前
   const prevBtn = document.getElementById('btn-prev');
   prevBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(prevBtn)) return;
+    if (isInteractionBlocked(prevBtn, isAnyControlDisabled())) return;
     undoLastMove();
   });
 
@@ -45,7 +45,7 @@ export function initBottomControls() {
   // 選択ポップアップを開く（click本来の処理はlongPressTriggeredで抑止する）。
   const nextBtn = document.getElementById('btn-next');
   nextBtn.addEventListener('pointerdown', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(nextBtn)) return;
+    if (isInteractionBlocked(nextBtn, isAnyControlDisabled())) return;
     longPressTriggered = false;
     longPressTimer = setTimeout(() => {
       const candidates = getNextBranchCandidates();
@@ -61,7 +61,7 @@ export function initBottomControls() {
     });
   });
   nextBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(nextBtn)) return;
+    if (isInteractionBlocked(nextBtn, isAnyControlDisabled())) return;
     if (longPressTriggered) {
       // 長押しでポップアップを開いた分のclickは、通常の1手進める処理をしない
       longPressTriggered = false;
@@ -73,17 +73,16 @@ export function initBottomControls() {
   // 最後
   const lastBtn = document.getElementById('btn-last');
   lastBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(lastBtn)) return;
+    if (isInteractionBlocked(lastBtn, isAnyControlDisabled())) return;
     const { kifuData } = getState();
     if (!kifuData) return;
-    const kifuMoves = kifuData.entries.filter(e => e.move !== null);
-    advanceToKifuProgress(kifuMoves.length);
+    advanceToKifuProgress(getKifuMoves().length);
   });
 
   // 局面選択（追加②：n手目ジャンプ）
   const moveListBtn = document.getElementById('btn-move-list');
   moveListBtn.addEventListener('click', () => {
-    if (isAnyControlDisabled() || isButtonDisabled(moveListBtn)) return;
+    if (isInteractionBlocked(moveListBtn, isAnyControlDisabled())) return;
     const { kifuData } = getState();
     if (!kifuData) return;
     openMoveListPopup();

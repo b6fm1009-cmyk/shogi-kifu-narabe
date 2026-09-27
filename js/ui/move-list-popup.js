@@ -9,6 +9,7 @@
  */
 import { getState, setMoveListOpen, goToKifuMoveNumber } from '../state/app-state.js';
 import { formatMoveText, formatSpecialText } from './kifu-bar.js';
+import { buildModalScaffold } from './modal-scaffold.js';
 
 let overlayEl = null;
 
@@ -23,43 +24,18 @@ export function openMoveListPopup() {
 
   if (overlayEl) overlayEl.remove();
 
-  overlayEl = document.createElement('div');
-  overlayEl.className = 'move-list-overlay';
-
-  const popup = document.createElement('div');
-  popup.className = 'move-list-popup';
-
-  const header = document.createElement('div');
-  header.className = 'move-list-header';
-  const title = document.createElement('span');
-  title.className = 'move-list-title';
-  title.textContent = '局面を選択';
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'move-list-close';
-  closeBtn.setAttribute('aria-label', '閉じる');
-  closeBtn.textContent = '×';
-  closeBtn.addEventListener('click', closeMoveListPopup);
-  header.appendChild(title);
-  header.appendChild(closeBtn);
-  popup.appendChild(header);
-
-  const list = document.createElement('div');
-  list.className = 'move-list-body';
-  renderList(list, kifuData, moveHistory.length);
-  popup.appendChild(list);
-
-  overlayEl.appendChild(popup);
-
-  // 背景タップで閉じる（成りポップアップ・アセットドロワーと同様の誤操作対策）
-  overlayEl.addEventListener('click', (e) => {
-    if (e.target === overlayEl) closeMoveListPopup();
+  const { overlayEl: newOverlayEl, listEl } = buildModalScaffold({
+    overlayClassName: 'move-list-overlay',
+    popupClassName: 'move-list-popup',
+    title: '局面を選択',
+    renderList: (listEl) => renderList(listEl, kifuData, moveHistory.length),
+    onClose: closeMoveListPopup
   });
-
-  document.body.appendChild(overlayEl);
+  overlayEl = newOverlayEl;
 
   // 現在地の行までスクロールしておく（末尾付近の棋譜を並べている最中に開いた場合、
   // 毎回リスト最上部からスクロールし直す手間を省く）
-  const currentEl = list.querySelector('.move-list-row--current');
+  const currentEl = listEl.querySelector('.move-list-row--current');
   if (currentEl) {
     currentEl.scrollIntoView({ block: 'center' });
   }

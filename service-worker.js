@@ -55,7 +55,12 @@ const CACHE_URLS = [
   './js/core/nari-judge.js',
   './js/assets/asset-manifest.js',
   './js/assets/asset-fit.js',
+  // main.js が静的importする情報ポップアップ（初回案内）。main.js本体と同じ理由で必須。
+  './js/ui/info-popup.js',
   './js/kifu-io/kif-parser.js',
+  // kif-parser.js が静的importする段級位抽出ヘルパー。キャッシュ漏れするとkif-parser.js
+  // の解決自体が失敗し、棋譜読込が一切できなくなる。
+  './js/kifu-io/rank-extractor.js',
   './js/kifu-io/clipboard-import.js',
   './js/kifu-io/file-import.js',
   './js/kifu-io/sample-import.js',
@@ -70,6 +75,9 @@ const CACHE_URLS = [
   './js/ui/bottom-controls.js',
   './js/ui/branch-popup.js',
   './js/ui/button-state.js',
+  // move-list-popup.js / branch-popup.js が静的importする共通モーダル骨組み。
+  // この2ファイルと同じ理由（キャッシュ漏れするとESモジュール解決に失敗する）で追加。
+  './js/ui/modal-scaffold.js',
   './js/pwa/register-sw.js',
   './assets/layout/assets-manifest.json',
   './assets/layout/board-layout.json',

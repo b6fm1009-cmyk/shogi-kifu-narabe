@@ -2,7 +2,7 @@
  * 成り選択ポップアップ（設計書 第4部6節）
  */
 import { PROMOTION_MAP } from '../models/board.js';
-import { resolvePieceCell, getPieceRenderRect } from '../assets/asset-fit.js';
+import { resolvePieceCell, getPieceRenderRect, createPieceSpriteElement } from '../assets/asset-fit.js';
 import { loadAssetManifest, findPieceAsset } from '../assets/asset-manifest.js';
 import { setNariPopupOpen } from '../state/app-state.js';
 
@@ -122,30 +122,10 @@ function renderPieceIcon(btn, pieceType, side, promoted, pieceId) {
       const pieceImageSize = { width: pieceAsset.width, height: pieceAsset.height };
       const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
 
-      const cols = pieceLayout.grid.cols;
-      const rows = pieceLayout.grid.rows;
-
-      // renderRect（1コマの表示サイズ）を基準に、スプライト画像全体の表示サイズを逆算する
-      const bgWidth = renderRect.width * cols;
-      const bgHeight = renderRect.height * rows;
-      const bgX = -(cell.col * renderRect.width);
-      const bgY = -(cell.row * renderRect.height);
-
       // board-view.js / player-info.js と同じ理由で、<img>のobject-fit:none +
       // object-positionではなく、background-imageでスプライトを切り出す
       // （<img>のobject-positionは切り出し位置の指定としては機能しない）。
-      const spriteEl = document.createElement('div');
-      spriteEl.style.position = 'absolute';
-      spriteEl.style.left = `${renderRect.offsetX}px`;
-      spriteEl.style.top = `${renderRect.offsetY}px`;
-      spriteEl.style.width = `${renderRect.width}px`;
-      spriteEl.style.height = `${renderRect.height}px`;
-      spriteEl.style.overflow = 'hidden';
-      spriteEl.style.pointerEvents = 'none';
-      spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
-      spriteEl.style.backgroundRepeat = 'no-repeat';
-      spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-      spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+      const spriteEl = createPieceSpriteElement(renderRect, cell, pieceLayout, pieceAsset.image);
       btn.appendChild(spriteEl);
     })
     .catch(e => console.error('成りポップアップの駒アイコン描画に失敗しました:', e));

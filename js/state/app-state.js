@@ -124,6 +124,19 @@ export function getBranchCandidates(prefix) {
 }
 
 /**
+ * kifuData.entries から「特殊表記（move === null）を除いた実際の指し手配列」を取り出す。
+ * getNextBranchCandidates() / isForwardNavigationEnabled() / isLastButtonEnabled() /
+ * getDefaultForwardMove() / advanceToKifuProgress() で同じ抽出処理が重複していたため
+ * ヘルパー化した。kifuData未読込（null）の場合は空配列を返す。
+ * bottom-controls.js（「最後」ボタンの目標手数算出）からも同じ抽出が必要なため export する。
+ * @returns {Move[]}
+ */
+export function getKifuMoves() {
+  if (state.kifuData === null) return [];
+  return state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
+}
+
+/**
  * 現在の局面から「次」を押した際に進める先の候補一覧を返す（長押しメニュー用）。
  *
  * 修正（分岐モード判定バグ対応）：分岐キャッシュは実際に指した（＝commitMove()や
@@ -151,8 +164,7 @@ export function getNextBranchCandidates() {
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
   if (!isKifuMode || state.kifuData === null) return cached;
 
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
-  const kifuNextMove = kifuMoves[kifuProgress];
+  const kifuNextMove = getKifuMoves()[kifuProgress];
   if (!kifuNextMove) return cached;
 
   const alreadyCached = cached.some(entry => movesEqual(entry.move, kifuNextMove));
@@ -194,7 +206,13 @@ export function isBackToKifuButtonEnabled() {
 }
 
 /**
- * 派生値：isForwardNavigationEnabled（次ボタン専用）
+ * 「次」が実際に進める先の手を1つ決定する（内部専用）。
+ * isForwardNavigationEnabled() と getDefaultForwardMove() は判定内容が同一で、
+ * 返す型（boolean / Move|null）が違うだけだったため、決定ロジックをここに集約した。
+ * 優先順位：
+ *   1. 分岐キャッシュに候補があれば「最後に検討した変化」（先頭要素）
+ *   2. 候補が無ければ、棋譜モード中は棋譜本譜の次の手
+ *   3. どちらも無ければ null
  *
  * 新規要望を踏まえた考え方：「次」は棋譜モード／分岐モードを問わず、
  * 「直近に検討していた変化」（分岐キャッシュの最新候補）があればそれを優先する。
@@ -203,14 +221,23 @@ export function isBackToKifuButtonEnabled() {
  * 戻るが、直近に検討していたのは△8四歩なので、「次」はそちらを優先する必要がある。
  * 分岐キャッシュに候補が無ければ、棋譜モード中は棋譜本譜の次の手にフォールバックする
  * （＝従来通りの挙動。今まで一度も分岐を試していない大多数のケースはこちらに該当する）。
+ * @returns {Move|null}
  */
-export function isForwardNavigationEnabled() {
-  if (getNextBranchCandidates().length > 0) return true;
+function resolveForwardMove() {
+  const candidates = getNextBranchCandidates();
+  if (candidates.length > 0) return candidates[0].move;
 
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
-  if (!isKifuMode || state.kifuData === null) return false;
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null);
-  return kifuProgress < kifuMoves.length;
+  if (!isKifuMode || state.kifuData === null) return null;
+  return getKifuMoves()[kifuProgress] || null;
+}
+
+/**
+ * 派生値：isForwardNavigationEnabled（次ボタン専用）
+ * resolveForwardMove() が手を決定できるかどうかだけを見る薄いラッパー。
+ */
+export function isForwardNavigationEnabled() {
+  return resolveForwardMove() !== null;
 }
 
 /**
@@ -222,26 +249,16 @@ export function isForwardNavigationEnabled() {
 export function isLastButtonEnabled() {
   const { isKifuMode, kifuProgress } = getKifuModeInfo();
   if (!isKifuMode || state.kifuData === null) return false;
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null);
-  return kifuProgress < kifuMoves.length;
+  return kifuProgress < getKifuMoves().length;
 }
 
 /**
  * 新規要望：「次」を押した際、進める先の手を1つ返す（長押しでない通常タップの挙動）。
- * 優先順位：
- *   1. 分岐キャッシュに候補があれば「最後に検討した変化」（先頭要素）
- *   2. 候補が無ければ、棋譜モード中は棋譜本譜の次の手
- *   3. どちらも無ければ null（＝「次」は無効化されているはずなので通常到達しない）
+ * 判定ロジックは resolveForwardMove() を参照。
  * @returns {Move|null}
  */
 export function getDefaultForwardMove() {
-  const candidates = getNextBranchCandidates();
-  if (candidates.length > 0) return candidates[0].move;
-
-  const { isKifuMode, kifuProgress } = getKifuModeInfo();
-  if (!isKifuMode || state.kifuData === null) return null;
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
-  return kifuMoves[kifuProgress] || null;
+  return resolveForwardMove();
 }
 
 /**
@@ -393,8 +410,7 @@ export function advanceToKifuProgress(targetProgress) {
   const { kifuProgress } = getKifuModeInfo();
   if (targetProgress < kifuProgress) return;
 
-  const kifuMoves = state.kifuData.entries.filter(e => e.move !== null).map(e => e.move);
-  const movesToAdd = kifuMoves.slice(kifuProgress, targetProgress);
+  const movesToAdd = getKifuMoves().slice(kifuProgress, targetProgress);
   const newHistory = [...state.moveHistory, ...movesToAdd];
   const initial = state.kifuData.initial;
   const boardState = rebuildBoardState(newHistory, initial, state.boardState.isFlipped);

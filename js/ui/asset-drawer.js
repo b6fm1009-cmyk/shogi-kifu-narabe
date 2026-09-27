@@ -2,7 +2,7 @@
  * ハンバーガーメニュー：盤・駒選択ドロワー（設計書 第4部10章）
  */
 import { selectPieceAsset, selectBoardAsset, setAssetDrawerOpen, setPieceAssetLinked, getState } from '../state/app-state.js';
-import { getPieceRenderRect, resolvePieceCell, getGridOverlayForCoverBox } from '../assets/asset-fit.js';
+import { getPieceRenderRect, resolvePieceCell, getGridOverlayForCoverBox, createPieceSpriteElement } from '../assets/asset-fit.js';
 import { PROMOTION_MAP } from '../models/board.js';
 import { loadSampleManifest, importSampleKifu } from '../kifu-io/sample-import.js';
 
@@ -292,13 +292,6 @@ function renderPieceThumb(thumbEl, pieceAsset, tc) {
     const cell = resolvePieceCell(resolvedType, 'SENTE', tc.promoted, null, pieceLayout);
     const renderRect = getPieceRenderRect(squareSizePx, pieceImageSize, pieceLayout, pieceFit);
 
-    const cols = pieceLayout.grid.cols;
-    const rows = pieceLayout.grid.rows;
-    const bgWidth = renderRect.width * cols;
-    const bgHeight = renderRect.height * rows;
-    const bgX = -(cell.col * renderRect.width);
-    const bgY = -(cell.row * renderRect.height);
-
     // 修正②: board-view.js / player-info.js と同様、thumbEl（40x48固定の枠）に
     // 直接背景を貼るのではなく、内側に renderRect のサイズ・offsetX/offsetY を反映した
     // 「切り出し窓」spriteEl を作り、そこへ背景画像を敷く。これにより
@@ -309,18 +302,7 @@ function renderPieceThumb(thumbEl, pieceAsset, tc) {
     thumbEl.style.position = 'relative';
     thumbEl.style.overflow = 'hidden';
 
-    const spriteEl = document.createElement('div');
-    spriteEl.style.position = 'absolute';
-    spriteEl.style.left = `${renderRect.offsetX}px`;
-    spriteEl.style.top = `${renderRect.offsetY}px`;
-    spriteEl.style.width = `${renderRect.width}px`;
-    spriteEl.style.height = `${renderRect.height}px`;
-    spriteEl.style.overflow = 'hidden';
-    spriteEl.style.pointerEvents = 'none';
-    spriteEl.style.backgroundImage = `url(${pieceAsset.image})`;
-    spriteEl.style.backgroundRepeat = 'no-repeat';
-    spriteEl.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
-    spriteEl.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    const spriteEl = createPieceSpriteElement(renderRect, cell, pieceLayout, pieceAsset.image);
     thumbEl.appendChild(spriteEl);
   } catch (e) {
     console.error(`駒サムネイルの描画に失敗しました (piece=${pieceAsset.id}, type=${tc.type}, promoted=${tc.promoted}):`, e);
