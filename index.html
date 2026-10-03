@@ -14,14 +14,15 @@
        アイコンを参照しないことが多く、この link が無いと画面上のスクリーンショット
        を代用アイコンにされてしまうため、正方形の専用アイコンを明示する。 -->
   <meta name="theme-color" content="#231f18">
-  <link rel="apple-touch-icon" href="./assets/icons/icon-180.avif">
-  <link rel="icon" type="image/avif" sizes="32x32" href="./assets/icons/icon-32.avif">
-  <link rel="icon" type="image/avif" sizes="16x16" href="./assets/icons/icon-16.avif">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/icon-16.png">
   <title>将棋 棋譜並べ</title>
   <link rel="manifest" href="./manifest.webmanifest">
   <!-- OGP（LINE・Twitter・Slack等でのリンクシェア用プレビュー）
-       og:image は LINE のプレビューが AVIF/WebP に未対応な場合があるため PNG を使用。
-       他のアセット（アイコン等）は AVIF のまま。 -->
+       og:image は LINE のプレビューが AVIF に対応せず、実機で表示されなかったため PNG を使用。
+       アイコン類（apple-touch-icon / favicon / manifest）も同様に PNG に統一している。
+       AVIF を使うのは盤・駒などアプリ内で表示する画像のみ。 -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="将棋 棋譜並べ">
   <meta property="og:description" content="棋譜を自分の手で並べる将棋アプリ">
