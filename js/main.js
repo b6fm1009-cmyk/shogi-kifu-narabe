@@ -2,7 +2,6 @@
  * エントリーポイント。各モジュールの初期化・イベント登録（設計書 第1部）
  */
 import { loadAssetManifest } from './assets/asset-manifest.js';
-import { loadLayouts } from './assets/layout-loader.js';
 import { initBoardView, renderBoard } from './ui/board-view.js';
 import { initHeaderButtons, updateHeaderButtons } from './ui/header-buttons.js';
 import { initBottomControls, updateBottomControls } from './ui/bottom-controls.js';
@@ -156,8 +155,13 @@ async function init() {
     const manifest = await loadAssetManifest();
     manifestRef = manifest;
 
-    // レイアウトJSONの読み込み（取得・キャッシュは layout-loader.js に集約）
-    layouts = await loadLayouts();
+    // レイアウトJSONの読み込み
+    const [boardLayout, pieceLayout, pieceFit] = await Promise.all([
+      fetch('./assets/layout/board-layout.json').then(r => r.json()),
+      fetch('./assets/layout/piece-layout.json').then(r => r.json()),
+      fetch('./assets/layout/piece-fit.json').then(r => r.json())
+    ]);
+    layouts = { boardLayout, pieceLayout, pieceFit };
 
     // 盤面ビューの初期化。contain設計ではapp-frame自体が等倍のため
     // scale再計算コールバックは不要。画像ロード完了時はrenderAllのみ行う。

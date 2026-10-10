@@ -105,8 +105,8 @@ function injectAssetUrls(swContent) {
   const tail = swContent.slice(endIdx);
   const assetUrls = collectImageFiles();
   const body = assetUrls.length === 0
-    ? '\n  // (assets配下に画像は無い)'
-    : '\n' + assetUrls.map((url) => `  '${url}',`).join('\n') + '\n';
+    ? '\r\n  // (assets配下に画像は無い)'
+    : '\r\n' + assetUrls.map((url) => `  '${url}',`).join('\r\n') + '\r\n';
   return head + body + tail;
 }
 
@@ -144,7 +144,7 @@ function injectSampleUrls(swContent) {
   const head = swContent.slice(0, startIdx + SAMPLE_START.length);
   const tail = swContent.slice(endIdx);
   const sampleUrls = collectSampleUrls();
-  const body = '\n' + sampleUrls.map((url) => `  '${url}',`).join('\n') + '\n';
+  const body = '\r\n' + sampleUrls.map((url) => `  '${url}',`).join('\r\n') + '\r\n';
   return head + body + tail;
 }
 

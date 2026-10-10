@@ -4,7 +4,7 @@
  * CACHE_NAME はビルド時に scripts/build-sw-version.js が注入する
  */
 
-const CACHE_NAME = 'shogi-app-d2f7d16881d1';
+const CACHE_NAME = 'shogi-app-3ffafd7b1483';
 
 // 盤・駒・背景画像はアプリの見た目に必須だが、一覧を手で書き下すと
 // 「ファイルを追加したのにキャッシュに入れ忘れる」事故が起きやすい。
@@ -13,22 +13,19 @@ const CACHE_NAME = 'shogi-app-d2f7d16881d1';
 // （この配列が空のまま＝ビルド未実行＝開発中の状態）
 const ASSET_URLS = [
   // __ASSETS_CACHE_URLS_START__
-  './assets/boards/black_gold_marble.avif',
   './assets/boards/dark.avif',
   './assets/boards/green.avif',
-  './assets/boards/japan_lightblue_gold.avif',
   './assets/boards/orange.avif',
   './assets/boards/planetarium.avif',
   './assets/boards/polyvinyl_chloride.avif',
   './assets/boards/reikan.avif',
   './assets/boards/snowflake.avif',
-  './assets/boards/water_surface.avif',
   './assets/boards/wood.avif',
-  './assets/icons/icon-16.png',
-  './assets/icons/icon-180.png',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-32.png',
-  './assets/icons/icon-512.png',
+  './assets/icons/icon-16.avif',
+  './assets/icons/icon-180.avif',
+  './assets/icons/icon-192.avif',
+  './assets/icons/icon-32.avif',
+  './assets/icons/icon-512.avif',
   './assets/pieces/dark_1_letter.avif',
   './assets/pieces/dark_gothic_font_1_letter.avif',
   './assets/pieces/gothic_font_1_letter.avif',
@@ -58,7 +55,6 @@ const CACHE_URLS = [
   './js/core/nari-judge.js',
   './js/assets/asset-manifest.js',
   './js/assets/asset-fit.js',
-  './js/assets/layout-loader.js',
   // main.js が静的importする情報ポップアップ（初回案内）。main.js本体と同じ理由で必須。
   './js/ui/info-popup.js',
   './js/kifu-io/kif-parser.js',
