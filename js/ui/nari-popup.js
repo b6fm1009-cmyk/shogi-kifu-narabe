@@ -4,28 +4,10 @@
 import { PROMOTION_MAP } from '../models/board.js';
 import { resolvePieceCell, getPieceRenderRect, createPieceSpriteElement } from '../assets/asset-fit.js';
 import { loadAssetManifest, findPieceAsset } from '../assets/asset-manifest.js';
+import { loadLayouts } from '../assets/layout-loader.js';
 import { setNariPopupOpen } from '../state/app-state.js';
 
 let overlayEl = null;
-
-// piece-layout.json / piece-fit.json はアプリ内で不変のため、
-// asset-manifest.js の loadAssetManifest() 同様にモジュール内でキャッシュする。
-let cachedPieceLayout = null;
-let cachedPieceFit = null;
-
-function loadPieceLayout() {
-  if (cachedPieceLayout) return Promise.resolve(cachedPieceLayout);
-  return fetch('./assets/layout/piece-layout.json')
-    .then(r => r.json())
-    .then(json => (cachedPieceLayout = json));
-}
-
-function loadPieceFit() {
-  if (cachedPieceFit) return Promise.resolve(cachedPieceFit);
-  return fetch('./assets/layout/piece-fit.json')
-    .then(r => r.json())
-    .then(json => (cachedPieceFit = json));
-}
 
 /**
  * 成り選択ポップアップを表示する。
@@ -106,8 +88,8 @@ function closeNariPopup() {
  * でボタンサイズ基準の表示矩形を計算してから background-size を決める。
  */
 function renderPieceIcon(btn, pieceType, side, promoted, pieceId) {
-  Promise.all([loadAssetManifest(), loadPieceLayout(), loadPieceFit()])
-    .then(([manifest, pieceLayout, pieceFit]) => {
+  Promise.all([loadAssetManifest(), loadLayouts()])
+    .then(([manifest, { pieceLayout, pieceFit }]) => {
       // 修正③: 常にデフォルト駒(manifest.defaults.pieces)を参照していたため、
       // ユーザーが別の駒セットを選択していてもポップアップだけデフォルト駒のまま
       // だった。呼び出し元から渡された選択中のpieceIdを使う（未指定時のみ
